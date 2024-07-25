@@ -1,13 +1,27 @@
 
 # KeelCompass
 
-A sophisticated web-based knowledge management platform designed for educational foundations. It serves as a centralized repository to access, contribute to, and manage a wealth of resources aimed at supporting transformative life activities such as obtaining scholarships, accessing technology, and career development.
+This is a web-based application that will hold the answers to questions. These questions will be the ones that participants have when facing challenges for the first time. It will also be the questions our staff bring up when facing new challenges. Our goal is to capture lessons learned as we begin to help others and to continue to refine information so that neither we nor those who are addressing the challenges of change need to “_invent the wheel_” each time someone faces a redundant challenge.
+
+As with any good knowledge base, we’ll need an effective back end repository, a data model, an effective search strategy, and a front end that allows users to access answers.
+
+A knowledge base is a central place that allows structured storage of information where users can search for and access this information. Knowledge base software should be the key tool that helps make this process seamless, simplified, and efficient.
+
+Knowledge base software is designed to help you create and [manage your knowledge base](https://helpjuice.com/blog/knowledge-base-management) to the best of your ability.
+
+This usually includes:
+- Setting up the knowledge base architecture,
+- Creating and editing documentation,
+- Searching, and analyzing your knowledge base.
+
+Ideally, this is the irreplaceable piece of the puzzle that operates your entire [knowledge management system](https://helpjuice.com/knowledge-management-systems) that helps orchestrate, manage, and optimize the flow of knowledge within your organization.
 
 ## Table of Contents
 
 - [Features](#features)
 - [Technologies](#technologies)
 - [Installation](#installation)
+- [Documents](#documents)
 - [Usage](#usage)
 - [Contributing](#contributing)
 - [Development Team Leads](#development-team-leads)
@@ -19,6 +33,13 @@ A sophisticated web-based knowledge management platform designed for educational
 - Community Interaction and Support
 - Content Management and Review
 - Analytics and Feedback
+
+## Documents
+-	[Google Dive Folder](https://drive.google.com/drive/folders/1lPtXue4ErFi9l-SxbZTqGJ3RusBJCdwj?usp=drive_link)
+-	[Documentation](https://drive.google.com/drive/folders/1l4oKld82IrQ-mwEa3COWCl8WIWsywk46?usp=drive_link)
+-   [Figma Design File](https://www.figma.com/file/ASPq1pg9czXdu9aJF9dlWz/Knowledge-Base---KeelWorks?type=design&node-id=0%3A1&mode=design&t=1IjDcyfgsYEgxXyu-1)
+-   [Use Cases](https://docs.google.com/document/d/1pveOEdr3ilFkYWdhHzektoQj7rTboFUFinUfxK8nnKM/edit?usp=drive_link)
+-   [Product Requirements](https://docs.google.com/document/d/1E4hf2A1PZkprMrcW4joV-V8W2lVqC3mTrlsNQ5kn-_I/edit?usp=drive_link)
 
 ## Technologies
 
@@ -126,5 +147,4 @@ Thank you for your contributions! Together, we can make KeelCompass an even bett
 - **GitHub:** [yashnadkarni](https://github.com/yashnadkarni)
 
 ---
-
 Developed with ❤️ by The KeelWorks Foundation
