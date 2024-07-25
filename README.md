@@ -128,6 +128,10 @@ We welcome contributions from the community! To contribute to KeelCompass, pleas
 
 6. **Open a pull request**
 
+When opening a pull request, please include the following information:
+    - **Developer Name:** Your name
+    - **Feature Name:** A brief description of the feature or changes
+
 Please make sure to update tests as appropriate and follow the code of conduct.
 
 ---
