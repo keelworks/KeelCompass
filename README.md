@@ -146,7 +146,7 @@ Thank you for your contributions! Together, we can make KeelCompass an even bett
 - **GitHub:** [shivangmedhekar](https://github.com/shivangmedhekar)
 
 ## Backend Lead
-- **Name:** Yash Nandikiran
+- **Name:** Yash Nandkarni
 - **Email:** [yash.nadkarni@keelworks.org](mailto:yash.nadkarni@keelworks.org)
 - **GitHub:** [yashnadkarni](https://github.com/yashnadkarni)
 
