@@ -12,19 +12,21 @@ function App() {
 
   return (
     <>
+     <div className="app-container">
     <NavBar/>
+    <div className="content">
     <BrowserRouter>
 
       <Routes>
-
         <Route path="/signin" element={<SignIn />}/>
         <Route path="/signup" element={<SignUp />}/>
         <Route path="/faq" element={<FAQ />}/>
-
       </Routes>
-
+      
     </BrowserRouter>
+    </div>
     <Footer/>
+    </div>
     </>
   )
 }
