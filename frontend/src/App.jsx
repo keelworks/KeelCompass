@@ -12,7 +12,7 @@ function App() {
 
   return (
     <>
-      {/* <NavBar /> */}
+      <NavBar />
       <BrowserRouter>
         <Routes>
           <Route path="/signin" element={<SignIn />} />
@@ -20,7 +20,7 @@ function App() {
           <Route path="/faq" element={<FAQ />} />
         </Routes>
       </BrowserRouter>
-      {/* <Footer /> */}
+      <Footer />
     </>
   )
 }
