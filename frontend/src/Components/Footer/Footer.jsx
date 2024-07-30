@@ -1,5 +1,8 @@
 import React from "react";
 import './Footer.css';
+import { IoLogoFacebook } from "react-icons/io5";
+import { IoLogoTwitter } from "react-icons/io";
+import { GrLinkedinOption } from "react-icons/gr";
 
 const Footer = () => {
   const section1 = [
@@ -24,15 +27,15 @@ const Footer = () => {
   const icons = [
     {
       name: "facebook",
-      icon: "facebook",
+      icon: <IoLogoFacebook />
     },
     {
       name: "twitter",
-      icon: "twitter",
+      icon: <IoLogoTwitter></IoLogoTwitter>
     },
     {
       name: "linkedin",
-      icon: "linkedin",
+      icon: <GrLinkedinOption />
     },
   ];
 
@@ -44,10 +47,10 @@ const Footer = () => {
             <div key={index}>
               <h6 className="font-bold pt-2 text-xl">{section.title}</h6>
               <p className="text-white mt-2">{section.items}</p>
-              <div className="flex justify-center space-x-4 py-4">
+              <div className="flex justify-start space-x-4 py-4">
                 {icons.map((icon, index) => (
-                  <div key={index} className={`text-2xl ${icon.icon}`}>
-                    {icon.name}
+                  <div key={index} className="text-2xl">
+                    {icon.icon}
                   </div>
                 ))}
               </div>
