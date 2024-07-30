@@ -1,4 +1,5 @@
 import React from "react";
+import { CiSearch } from "react-icons/ci";
 
 const NavBar = () => {
   return (
@@ -11,11 +12,14 @@ const NavBar = () => {
             className="max-h-[61px]" 
           />
         </a>
-        <input
-          type="text"
-          placeholder="What do you want to know?"
-          className="border rounded-full py-2 px-4 focus:outline-none focus:border-blue-500 bg-[#DBEAFD] w-full max-w-[746px] h-[50px]"
-        />
+        <div className="relative w-full max-w-[746px] mt-4 md:mt-0">
+          <input
+            type="text"
+            placeholder="What do you want to know?"
+            className="border rounded-full py-2 pl-10 pr-4 focus:outline-none focus:border-blue-500 bg-[#DBEAFD] w-full h-[50px]"
+          />
+          <CiSearch className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500" size={24} />
+        </div>
         <ul className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 mt-4 md:mt-0">
           <li className="flex items-center">
             <a 
