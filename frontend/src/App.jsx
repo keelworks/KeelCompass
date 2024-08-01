@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import NavBar from "./Components/NavBar/NavBar";
 import Footer from "./Components/Footer/Footer";
-import SignIn from "./Components/Auth/SignIn/SignIn";
+import SignIn from "./Components/Auth/SignIn/SignInForm";
 import SignUp from "./Components/Auth/SignUp/SignUp";
 import FAQ from "./Components/FAQ/FAQ";
 
