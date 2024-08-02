@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import Contact from "./contact";
 
 const FAQ = () => {
   const [activeIndex, setActiveIndex] = useState(null);
+  const [isContactOpen, setIsContactOpen] = useState(false);
 
   const toggleFAQ = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
@@ -91,10 +93,14 @@ const FAQ = () => {
         <p className="mb-4">
           Lorem ipsum dolor sit amet consectetur adipisicing elit.
         </p>
-        <button className="bg-blue-500 text-white py-2 px-6 rounded-md">
+        <button
+          className="bg-blue-500 text-white py-2 px-6 rounded-md"
+          onClick={() => setIsContactOpen(true)}
+        >
           Contact Us
         </button>
       </div>
+      {isContactOpen && <Contact onClose={() => setIsContactOpen(false)} />}
     </div>
   );
 };
