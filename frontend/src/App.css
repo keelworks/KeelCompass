@@ -1,0 +1,14 @@
+body {
+    padding-top: 95px;
+  }
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 90vh;
+}
+
+.content {
+  flex: 1;
+}
+
