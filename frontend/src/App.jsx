@@ -10,7 +10,6 @@ import Settings from "./Components/Profile/Settings/Settings";
 import NotFound from "./Components/NotFound/NotFound";
 import './App.css'
 import EmailVerification from "./Components/Auth/Verify/Email";
-import OtpEmailVerification from "./Components/Auth/Verify/Otp";
 
 function App() {
 
@@ -27,7 +26,6 @@ function App() {
           <Route path="article" element={<Article />} />
           <Route path="settings" element={<Settings />} />
           <Route path="/signup/verify" element={<EmailVerification />} />
-          <Route path="/signin/verify" element={<OtpEmailVerification />} />
         </Routes>
       </BrowserRouter>
       <Footer />
