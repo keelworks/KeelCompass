@@ -32,7 +32,7 @@ const NavBar = () => {
           <li>
             <a
               className="inline-block text-center w-full md:w-[100px] border border-black rounded-full py-2 px-4 bg-transparent text-black text-[1rem]"
-              href="#"
+              href="signin"
             >
               Log In
             </a>
@@ -40,7 +40,7 @@ const NavBar = () => {
           <li>
             <a
               className="inline-block text-center w-full md:w-[100px] border border-[#0070FF] bg-[#0070FF] rounded-full py-2 px-4 text-white text-[1rem]"
-              href="#"
+              href="signup"
             >
               Sign Up
             </a>
