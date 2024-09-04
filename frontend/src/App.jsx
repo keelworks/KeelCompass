@@ -8,6 +8,8 @@ import FAQ from "./Components/FAQ/FAQ";
 import Article from "./Components/Article/Article";
 import Settings from "./Components/Profile/Settings/Settings";
 import NotFound from "./Components/NotFound/NotFound";
+import { ForgotPasswordForm } from './Components/Auth/ForgotPassword';
+import { NewPasswordForm } from './Components/Auth/NewPassword';
 import './App.css'
 
 function App() {
@@ -24,6 +26,8 @@ function App() {
           <Route path="/404" element={<NotFound />} />
           <Route path="article" element={<Article />}/>
           <Route path="settings" element={<Settings />}/>
+          <Route path="/forgot-password" element={<ForgotPasswordForm />} /> 
+          <Route path="/reset-password" element={<NewPasswordForm />} /> 
         </Routes>
       </BrowserRouter>
       <Footer />
