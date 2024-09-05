@@ -8,6 +8,8 @@ import FAQ from "./Components/FAQ/FAQ";
 import Article from "./Components/Article/Article";
 import Settings from "./Components/Profile/Settings/Settings";
 import NotFound from "./Components/NotFound/NotFound";
+import { ForgotPasswordForm } from './Components/Auth/ForgotPassword';
+import { NewPasswordForm } from './Components/Auth/NewPassword';
 import './App.css'
 import OtpEmailVerification from "./Components/Auth/Verify/Otp";
 import EmailVerification from "./Components/Auth/Verify/Email";
@@ -24,10 +26,15 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/404" element={<NotFound />} />
-          <Route path="article" element={<Article />} />
-          <Route path="settings" element={<Settings />} />
+
+          <Route path="article" element={<Article />}/>
+          <Route path="settings" element={<Settings />}/>
+          <Route path="/forgot-password" element={<ForgotPasswordForm />} /> 
+          <Route path="/reset-password" element={<NewPasswordForm />} /> 
+
           <Route path="/signin/verify" element={<OtpEmailVerification />} />
           <Route path="/signup/verify" element={<EmailVerification />} />
+
         </Routes>
       </BrowserRouter>
       <Footer />

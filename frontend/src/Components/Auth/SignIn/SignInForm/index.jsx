@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { userSignInSchema } from "../validation/userSignInSchema";
+import { Link } from "react-router-dom"; // Import Link from react-router-dom
 
 const SignInForm = () => {
     const {
@@ -94,6 +95,14 @@ const SignInForm = () => {
                                     )}
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="mt-2 text-right">
+                            <Link 
+                                to="/forgot-password"
+                                className="text-sm text-blue-500 hover:text-blue-700">
+                                Forgot Password?
+                            </Link>
                         </div>
 
                         <div className="mt-6">
