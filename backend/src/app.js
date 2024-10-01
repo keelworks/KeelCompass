@@ -1,11 +1,23 @@
-const express = require('express')
-const app = express()
-const port = 3000
+//importing and initializing express app
+const express = require("express");
 
-app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
+//importing routes
+const router = require("./routes/routes");
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+const cors = require("cors");
+app.use(cors());
+
+//initializing app to use routes
+app.use("/", router);
+
+//for all other invalid routes
+app.use("*", (req, res) => {
+  res.status(400).send("Invalid route");
+});
+
+module.exports = app;
