@@ -30,6 +30,7 @@ const getRoundedTimestamp = () => {
 };
 
 // Password reset method to generate OTP
+// Password reset method to generate OTP
 const passwordReset = async (req, res) => {
   const { email } = req.body;
 
@@ -51,6 +52,11 @@ const passwordReset = async (req, res) => {
     // Send the first 6 characters of the OTP hash as OTP to the user
     const otp = otpHash.slice(0, 6);
 
+    // Store OTP generation info in the session
+    req.session.otpGenerated = true;
+    req.session.email = email; // Store email in the session for validation
+    req.session.save(); // Ensure session is saved
+
     res.status(200).json({
       message: "OTP generated successfully",
       otp,
@@ -66,25 +72,30 @@ const passwordReset = async (req, res) => {
 const verifyOTP = async (req, res) => {
   const { email, otp } = req.body;
 
+  // Check if OTP was generated
+  if (!req.session.otpGenerated || req.session.email !== email) {
+    return res
+      .status(400)
+      .json({ message: "OTP not generated or session expired" });
+  }
+
   try {
-    // Fetch the user by email
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Get the rounded timestamp again (it should match the timestamp used during OTP generation)
     const roundedTime = getRoundedTimestamp().unix();
-
-    // Generate the hash again with the rounded timestamp
     const otpPayload = `${user.username}${user.password_hash}${roundedTime}`;
     const expectedOtpHash = await bcrypt.hash(otpPayload, 10);
-
-    // Compare the first 6 characters of the expected hash with the OTP sent by the user
     const expectedOtp = expectedOtpHash.slice(0, 6);
 
     if (otp === expectedOtp) {
+      // Mark OTP as verified in session
+      req.session.otpVerified = true;
+      req.session.save();
+
       res.status(200).json({ message: "OTP verified successfully" });
     } else {
       res.status(400).json({ message: "Invalid OTP" });
@@ -100,8 +111,14 @@ const verifyOTP = async (req, res) => {
 const updatePassword = async (req, res) => {
   const { email, newPassword } = req.body;
 
+  // Check if OTP was verified before allowing password update
+  if (!req.session.otpVerified || req.session.email !== email) {
+    return res
+      .status(400)
+      .json({ message: "OTP not verified or session expired" });
+  }
+
   try {
-    // Fetch the user by email
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
@@ -113,6 +130,9 @@ const updatePassword = async (req, res) => {
 
     // Update the user's password in the database
     await user.update({ password_hash: hashedPassword });
+
+    // Clear session after password update
+    req.session.destroy();
 
     res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
