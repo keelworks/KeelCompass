@@ -8,6 +8,9 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
   dialect: dbConfig.dialect,
   operatorsAliases: 0,
+  define: {
+    timestamps: false,
+  },
 
   pool: {
     max: dbConfig.pool.max,
@@ -32,8 +35,13 @@ const db = {};
 db.sequelize = Sequelize;
 db.sequelize = sequelize;
 
-db.sequelize.sync({ force: false }).then(() => {
-  console.log("Syncing DB...");
-});
+db.sequelize
+  .sync({ force: false })
+  .then(() => {
+    console.log("Syncing DB...");
+  })
+  .then(() => {
+    console.log("Syncing completed");
+  });
 
 module.exports = db;
