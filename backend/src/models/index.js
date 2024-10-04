@@ -1,8 +1,10 @@
 //initializing sequelize to make db calls through sequelize
 
 const { Sequelize, DataTypes } = require("sequelize");
+const logger = require("../utils/logger");
 
 const dbConfig = require("../configs/dbConfig.js");
+const { error } = require("winston");
 
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
@@ -18,16 +20,18 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     acquire: dbConfig.pool.acquire,
     idle: dbConfig.pool.idle,
   },
+
+  logging: (msg) => logger.info(msg), // redirect logs to Winston
 });
 
 //making a db connection using sequelize
 sequelize
   .authenticate()
   .then(() => {
-    console.log("connected");
+    logger.info("database connected");
   })
   .catch((error) => {
-    console.log("Error: " + error);
+    logger.error(`Error: database connection failed: ${error}`);
   });
 
 const db = {};
@@ -38,10 +42,13 @@ db.sequelize = sequelize;
 db.sequelize
   .sync({ force: false })
   .then(() => {
-    console.log("Syncing DB...");
+    logger.info("Syncing DB...");
   })
   .then(() => {
-    console.log("Syncing completed");
+    logger.info("Syncing DB completed");
+  })
+  .catch((error) => {
+    logger.error(`Error: syncing database failed: ${error}`);
   });
 
 module.exports = db;

@@ -1,20 +1,20 @@
 const User = require("../models/user");
 const Article = require("../models/article");
 const { HttpError, HttpStatusCodes } = require("../utils/httpError");
+const { logger } = require("../utils/logger");
 
 const createArticle = async (userID, title, content) => {
   // Check if the user exists
   const user = await User.findByPk(userID);
   if (!user) {
-    console.log("failed to find user: ", userID);
+    logger.warn(`failed to find user: ${userID}`);
     throw new HttpError(
       HttpStatusCodes.BAD_REQUEST,
       `user with id = ${userID} doesn't exist`
     );
   }
-  // console.log(user);
-  console.log(user.id);
-  console.log(user.username);
+
+  // TODO: add permission check
 
   // Create the new article
   try {
@@ -24,7 +24,7 @@ const createArticle = async (userID, title, content) => {
       author_id: userID,
     });
 
-    console.log("Article created:", article);
+    logger.debug(`Article created: ${article}`);
     return article.id;
   } catch (error) {
     throw new HttpError(

@@ -2,6 +2,7 @@
 
 const articleController = require("../controllers/articleController");
 const { body, validationResult } = require("express-validator");
+const { HttpStatusCodes } = require("../utils/httpError");
 
 const router = require("express").Router();
 
@@ -30,7 +31,9 @@ router.post(
           .array()
           .map((error) => error.msg)
           .join(", ");
-        return res.status(400).json({ message: errorMessages });
+        return res
+          .status(HttpStatusCodes.BAD_REQUEST)
+          .json({ message: errorMessages });
       }
       next();
     },
