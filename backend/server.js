@@ -1,11 +1,11 @@
 const app = require("./src/app.js");
 
-//using dotenv for accessing environment variables
+// using dotenv for accessing environment variables
 require("dotenv").config();
 
-const PORT = `${process.env.PORT}`;
+const PORT = process.env.PORT || 8080; // Add a default port if not provided
 
-//server listening on port <PORT> for incoming requests
+// server listening on port <PORT> for incoming requests
 app.listen(PORT, () => {
-  console.log(`running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
