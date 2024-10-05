@@ -1,11 +1,12 @@
 const articleService = require("../services/articleService");
 const { HttpError, HttpStatusCodes } = require("../utils/httpError");
-const { logger } = require("../utils/logger");
+const logger = require("../utils/logger");
+const util = require("util");
 
 module.exports = {
   createArticle: async (req, res) => {
     try {
-      logger.debug(`create article request, body = ${req.body}`);
+      logger.debug(`create article request, body = ${util.inspect(req.body)}`);
       const { authorID, title, content } = req.body;
 
       const articleID = await articleService.createArticle(

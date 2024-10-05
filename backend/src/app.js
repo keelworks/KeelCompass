@@ -6,9 +6,9 @@ const express = require("express");
 // importing middlewares and utils
 const morgan = require("morgan");
 const logger = require("./utils/logger");
-const HttpStatusCodes = require("./utils/httpError");
+const { HttpStatusCodes } = require("./utils/httpError");
 
-// importing routes
+// Importing routes
 const router = require("./routes/routes");
 
 // Import Redis session configuration
@@ -40,7 +40,7 @@ app.use("/", router);
 
 // For all other invalid routes
 app.use("*", (req, res) => {
-  res.status(HttpStatusCodes.BAD_REQUEST).send("Invalid route");
+  res.status(HttpStatusCodes.NOT_FOUND).send("Invalid route");
 });
 
 module.exports = app;

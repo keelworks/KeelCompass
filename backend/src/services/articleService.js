@@ -1,7 +1,9 @@
-const User = require("../models/user");
 const Article = require("../models/article");
 const { HttpError, HttpStatusCodes } = require("../utils/httpError");
-const { logger } = require("../utils/logger");
+const logger = require("../utils/logger");
+const db = require("../models/index");
+const User = db.users;
+const util = require("util");
 
 const createArticle = async (userID, title, content) => {
   // Check if the user exists
@@ -24,7 +26,7 @@ const createArticle = async (userID, title, content) => {
       author_id: userID,
     });
 
-    logger.debug(`Article created: ${article}`);
+    logger.debug(`Article created: ${article.id}`);
     return article.id;
   } catch (error) {
     throw new HttpError(
