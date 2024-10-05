@@ -1,40 +1,63 @@
-const Article = require('../models/Article');
-const Tag = require('../models/Tag');
+const articleService = require("../services/articleService");
+const { HttpError, HttpStatusCodes } = require("../utils/httpError");
+const logger = require("../utils/logger");
+const Article = require("../models/article");
+const Tag = require("../models/Tag");
+const util = require("util");
 
-exports.createArticle = async (req, res) => {
+module.exports = {
+  createArticle: async (req, res) => {
     try {
-        const { title, content, author_id, tags } = req.body; // Tags is an array of tag IDs
+      logger.debug(`create article request, body = ${util.inspect(req.body)}`);
+      const { authorID, title, content, tags } = req.body;
 
-        // Create the new article
-        const newArticle = await Article.create({ title, content, author_id });
+      const articleID = await articleService.createArticle(
+        authorID,
+        title,
+        content,
+        tags
+      );
 
-        // Associate tags with the article
-        if (tags && tags.length > 0) {
-            await newArticle.setTags(tags);
-        }
-
-        res.status(201).json({ message: 'Article created successfully', article: newArticle });
+      res.json({
+        message: "Article created successfully",
+        articleID: articleID,
+      });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+      if (error instanceof HttpError) {
+        res.status(error.statusCode).json({ message: error.message });
+      } else {
+        res
+          .status(HttpStatusCodes.INTERNAL_SERVER_ERROR)
+          .json({ message: "Server Error" });
+      }
     }
-};
+  },
 
-exports.getArticlesByTag = async (req, res) => {
+  getArticlesByTag: async (req, res) => {
+    logger.debug(
+      `create article request, params = ${util.inspect(req.params)}`
+    );
+
+    const { tagName } = req.params;
     try {
-        const { tagName } = req.params; 
+      const articles = await Article.findAll({
+        include: [
+          {
+            model: Tag,
+            where: { name: tagName },
+            through: { attributes: [] },
+          },
+        ],
+      });
 
-        const articles = await Article.findAll({
-            include: [
-                {
-                    model: Tag,
-                    where: { name: tagName }, 
-                    through: { attributes: [] },
-                },
-            ],
-        });
-
-        res.status(200).json(articles);
+      res.status(HttpStatusCodes.OK).json(articles);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+      logger.error(
+        `get article by tag failed, tag=${tagName}, error=${error.message}`
+      );
+      res
+        .status(HttpStatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ error: error.message });
     }
+  },
 };

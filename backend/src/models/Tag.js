@@ -1,15 +1,25 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/config');
+const { DataTypes } = require("sequelize");
+const db = require("./index");
 
-const Tag = sequelize.define('Tag', {
-    name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
+const Tag = db.sequelize.define(
+  "Tag",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
     },
-}, {
-    tableName: 'Tags',
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+  },
+  {
+    tableName: "Tags",
     timestamps: false,
-});
+  }
+);
 
 module.exports = Tag;

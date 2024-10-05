@@ -1,11 +1,12 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/config');
-const Article = require('./Article');
+const db = require("./index");
+const Article = require('./article');
 const Tag = require('./Tag');
 
-const ArticleTag = sequelize.define('ArticleTag', {
+const ArticleTag = db.sequelize.define('ArticleTag', {
     article_id: {
         type: DataTypes.INTEGER,
+        primaryKey: true,
         references: {
             model: Article,
             key: 'id',
@@ -13,6 +14,7 @@ const ArticleTag = sequelize.define('ArticleTag', {
     },
     tag_id: {
         type: DataTypes.INTEGER,
+        primaryKey: true,
         references: {
             model: Tag,
             key: 'id',
@@ -21,7 +23,6 @@ const ArticleTag = sequelize.define('ArticleTag', {
 }, {
     tableName: 'ArticleTags',
     timestamps: false,
-    primaryKey: false,
 });
 
 Article.belongsToMany(Tag, { through: ArticleTag, foreignKey: 'article_id' });
