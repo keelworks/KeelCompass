@@ -8,6 +8,8 @@ const articleRouter = require("./articleRoutes");
 
 //Route for GET method -- a health check method
 router.get("/health", controller.healthCheck);
+router.post('/', articleController.createArticle);
+router.get('/tag/:tagName', articleController.getArticlesByTag);
 
 //Route for GET method -- a health check method
 router.post("/resetpassword", controller.passwordReset);
