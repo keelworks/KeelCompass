@@ -1,9 +1,10 @@
 const articleService = require("../services/articleService");
 const { HttpError, HttpStatusCodes } = require("../utils/httpError");
 const logger = require("../utils/logger");
-const Article = require("../models/article");
-const Tag = require("../models/Tag");
+const db = require("../models/index");
 const util = require("util");
+const Article = db.articles;
+const Tag = db.tags;
 
 module.exports = {
   createArticle: async (req, res) => {
@@ -18,7 +19,7 @@ module.exports = {
         tags
       );
 
-      res.json({
+      res.status(HttpStatusCodes.CREATED).json({
         message: "Article created successfully",
         articleID: articleID,
       });
@@ -35,7 +36,7 @@ module.exports = {
 
   getArticlesByTag: async (req, res) => {
     logger.debug(
-      `create article request, params = ${util.inspect(req.params)}`
+      `get articles by tag request, params = ${util.inspect(req.params)}`
     );
 
     const { tagName } = req.params;

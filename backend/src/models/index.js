@@ -42,6 +42,9 @@ db.sequelize = sequelize;
 //utilizing DB Schema with sequelize
 db.users = require("./userModel")(sequelize, DataTypes);
 db.questions = require("./Questions")(sequelize, DataTypes, db.users); // Pass User model here
+db.articles = require("./article")(sequelize, db.users);
+db.tags = require("./Tag")(sequelize);
+db.articleTags = require("./ArticleTag")(sequelize, db.articles, db.tags);
 
 db.sequelize
   .sync({ force: false })
