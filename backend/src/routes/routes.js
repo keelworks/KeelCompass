@@ -5,6 +5,7 @@ const controller = require("../controllers/controller.js");
 const router = require("express").Router();
 
 const articleRouter = require("./articleRoutes");
+const questionRoutes = require("./questionsRoutes");
 
 //Route for GET method -- a health check method
 router.get("/health", controller.healthCheck);
@@ -19,5 +20,8 @@ router.post("/verifyOTP", controller.verifyOTP);
 router.post("/updatePassword", controller.updatePassword);
 
 router.use("/api/articles", articleRouter);
+
+// Route for questions
+router.use("/questions", questionRoutes);
 
 module.exports = router;

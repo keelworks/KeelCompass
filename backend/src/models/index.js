@@ -41,6 +41,8 @@ db.sequelize = sequelize;
 
 //utilizing DB Schema with sequelize
 db.users = require("./userModel")(sequelize, DataTypes);
+db.questions = require("./Questions")(sequelize, DataTypes, db.users); // Pass User model here
+
 db.sequelize
   .sync({ force: false })
   .then(() => {
