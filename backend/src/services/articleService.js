@@ -1,10 +1,8 @@
-const Article = require("../models/article");
 const { HttpError, HttpStatusCodes } = require("../utils/httpError");
 const logger = require("../utils/logger");
 const db = require("../models/index");
-const Tag = require("../models/Tag");
-const ArticleTag = require("../models/ArticleTag");
 const User = db.users;
+const Article = db.articles;
 const util = require("util");
 
 const createArticle = async (userID, title, content, tags) => {
@@ -37,7 +35,7 @@ const createArticle = async (userID, title, content, tags) => {
 
     return article.id;
   } catch (error) {
-    logger.error(`create article failed, err=${error}`)
+    logger.error(`create article failed, err=${error}`);
     if (error.name === "SequelizeForeignKeyConstraintError") {
       throw new HttpError(
         HttpStatusCodes.BAD_REQUEST,

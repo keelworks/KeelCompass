@@ -1,31 +1,34 @@
-const { DataTypes } = require('sequelize');
-const db = require("./index");
-const Article = require('./article');
-const Tag = require('./Tag');
+const { DataTypes } = require("sequelize");
 
-const ArticleTag = db.sequelize.define('ArticleTag', {
-    article_id: {
+module.exports = (sequelize, Article, Tag) => {
+  const ArticleTag = sequelize.define(
+    "ArticleTag",
+    {
+      article_id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         references: {
-            model: Article,
-            key: 'id',
+          model: Article,
+          key: "id",
         },
-    },
-    tag_id: {
+      },
+      tag_id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         references: {
-            model: Tag,
-            key: 'id',
+          model: Tag,
+          key: "id",
         },
+      },
     },
-}, {
-    tableName: 'ArticleTags',
-    timestamps: false,
-});
+    {
+      tableName: "ArticleTags",
+      timestamps: false,
+    }
+  );
 
-Article.belongsToMany(Tag, { through: ArticleTag, foreignKey: 'article_id' });
-Tag.belongsToMany(Article, { through: ArticleTag, foreignKey: 'tag_id' });
+  Article.belongsToMany(Tag, { through: ArticleTag, foreignKey: "article_id" });
+  Tag.belongsToMany(Article, { through: ArticleTag, foreignKey: "tag_id" });
 
-module.exports = ArticleTag;
+  return ArticleTag;
+};

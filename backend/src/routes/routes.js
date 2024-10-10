@@ -6,20 +6,22 @@ const router = require("express").Router();
 
 const articleRouter = require("./articleRoutes");
 const questionRoutes = require("./questionsRoutes");
+const tagRoutes = require("./tagRoutes");
 
-//Route for GET method -- a health check method
+// Route for GET method -- a health check method
 router.get("/health", controller.healthCheck);
 
-//Route for GET method -- a health check method
 router.post("/resetpassword", controller.passwordReset);
 
-//Route for GET method -- a health check method
 router.post("/verifyOTP", controller.verifyOTP);
 
-//Route for GET method -- a health check method
 router.post("/updatePassword", controller.updatePassword);
 
+// Route for articles
 router.use("/api/articles", articleRouter);
+
+// Route for tags
+router.use("/api/tags", tagRoutes);
 
 // Route for questions
 router.use("/questions", questionRoutes);
