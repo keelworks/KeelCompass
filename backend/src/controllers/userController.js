@@ -3,7 +3,9 @@ const moment = require("moment");
 
 const sequelize = require("../models/index");
 const db = require("../models");
-const User = db.users;
+
+// Destructure the models from db
+const { StudentProfile, FacilitatorProfile, AdminProfile, users: User } = db;
 
 // A health check method to check db connection status
 const healthCheck = async (req, res) => {
@@ -29,7 +31,6 @@ const getRoundedTimestamp = () => {
   }
 };
 
-// Password reset method to generate OTP
 // Password reset method to generate OTP
 const passwordReset = async (req, res) => {
   const { email } = req.body;
@@ -142,9 +143,105 @@ const updatePassword = async (req, res) => {
   }
 };
 
+// Sign-up method to handle different roles
+const signUp = async (req, res) => {
+  const { username, email, password, role, additionalInfo } = req.body;
+
+  try {
+    const password_hash = await bcrypt.hash(password, 10);
+
+    // Create new user
+    const user = await User.create({
+      username,
+      email,
+      password_hash,
+      role,
+    });
+
+    // Create role-specific profile
+    if (role === "Student") {
+      await StudentProfile.create({
+        user_id: user.id,
+        ...additionalInfo, // { educational_background, career_interests, past_interactions }
+      });
+    } else if (role === "Facilitator") {
+      await FacilitatorProfile.create({
+        user_id: user.id,
+        ...additionalInfo, // { expertise, roles, contributions }
+      });
+    } else if (role === "Super Admin") {
+      await AdminProfile.create({
+        user_id: user.id,
+        ...additionalInfo, // { administrative_privileges, system_configurations }
+      });
+    }
+
+    res.status(201).json({ message: "User created successfully", user });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error creating user", error: error.message });
+  }
+};
+
+const getProfile = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    let profile;
+    if (user.role === "Student") {
+      profile = await StudentProfile.findOne({ where: { user_id: user.id } });
+    } else if (user.role === "Facilitator") {
+      profile = await FacilitatorProfile.findOne({
+        where: { user_id: user.id },
+      });
+    } else if (user.role === "Super Admin") {
+      profile = await AdminProfile.findOne({ where: { user_id: user.id } });
+    }
+
+    res.status(200).json({ user, profile });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching profile", error: error.message });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  const { userId } = req.params;
+  const { profileData } = req.body;
+
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.role === "Student") {
+      await StudentProfile.update(profileData, { where: { user_id: user.id } });
+    } else if (user.role === "Facilitator") {
+      await FacilitatorProfile.update(profileData, {
+        where: { user_id: user.id },
+      });
+    } else if (user.role === "Super Admin") {
+      await AdminProfile.update(profileData, { where: { user_id: user.id } });
+    }
+
+    res.status(200).json({ message: "Profile updated successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error updating profile", error: error.message });
+  }
+};
+
 module.exports = {
   healthCheck,
   passwordReset,
   verifyOTP,
   updatePassword,
+  updateProfile,
+  getProfile,
+  signUp,
 };
