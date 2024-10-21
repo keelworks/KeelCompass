@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Education Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Welcome to the Education Portal</h1>
+        <nav>
+            <a href="#education">Educational Content</a>
+            <a href="#tools">Educational Tools</a>
+        </nav>
+    </header>
+
+    <section id="education">
+        <h2>Educational Articles</h2>
+        <input type="text" id="search" placeholder="Search articles..." onkeyup="searchArticles()">
+        <ul id="article-list">
+            <!-- Articles will be dynamically populated using JavaScript -->
+        </ul>
+    </section>
+
+    <section id="tools">
+        <h2>Educational Tools</h2>
+        <ul>
+            <li><a href="https://www.khanacademy.org">Khan Academy</a></li>
+            <li><a href="https://www.coursera.org">Coursera</a></li>
+            <li><a href="https://www.edx.org">edX</a></li>
+        </ul>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
