@@ -1,6 +1,6 @@
 Thank you for the clarification! Here's an updated version of the `README.md` that includes Tailwind CSS in the project setup:
 
-```markdown
+
 # KeelCompass Frontend
 
 This project is a frontend application built with **React**, **TypeScript**, **Vite**, and **Tailwind CSS**. It leverages modern tools for fast development and optimized production builds. The project comes with **ESLint** configuration for code quality and type safety, ensuring smooth development workflows.
