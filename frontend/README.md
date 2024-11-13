@@ -1,19 +1,16 @@
-Thank you for the clarification! Here's an updated version of the `README.md` that includes Tailwind CSS in the project setup:
-
-
 # KeelCompass Frontend
 
 This project is a frontend application built with **React**, **TypeScript**, **Vite**, and **Tailwind CSS**. It leverages modern tools for fast development and optimized production builds. The project comes with **ESLint** configuration for code quality and type safety, ensuring smooth development workflows.
 
-The application runs using a **Vite development server** with hot module replacement (HMR) enabled for a smooth, fast development experience. 
+The application runs using a **Vite development server** with hot module replacement (HMR) enabled for a smooth, fast development experience.
 
 ## Table of Contents
 
 - [Getting Started](#getting-started)
 - [Prerequisites](#prerequisites)
 - [Docker Setup](#docker-setup)
-  - [Using the Development Dockerfile](#using-the-development-dockerfile)
-  - [Using the Production Dockerfile](#using-the-production-dockerfile)
+  - [Development Setup](#development-setup)
+  - [Production Setup](#production-setup)
 - [Running the Application](#running-the-application)
 - [ESLint Setup](#eslint-setup)
 - [Tailwind CSS Setup](#tailwind-css-setup)
@@ -31,62 +28,44 @@ Follow the steps below to get the development environment running locally using 
 
 ## Docker Setup
 
-This project includes two Dockerfiles:
+This project includes two Docker Compose files for running the application in different environments:
 
-- **`Dockerfile`**: Used for creating the production build of the application.
-- **`Dockerfile.dev`**: Used for the development build with live reloading and other necessary development tools.
+- **`docker-compose.yml`**: Used for setting up the development environment.
+- **`docker-compose.prod.yml`**: Used for setting up the production environment.
 
-### Using the Development Dockerfile
+### Development Setup
 
-1. **Build the Docker Image**  
-   First, build the Docker image for the development environment by running the following command in your terminal:
-
-   ```bash
-   docker build -t keelcompass-frontend-dev . -f Dockerfile.dev
-   ```
-
-2. **Run the Docker Container**  
-   To start the container in development mode, use the following command:
+1. **Build and Run the Docker Containers for Development**  
+   To start the application in **development mode**, use the following command:
 
    ```bash
-   docker run -d -p 8080:5173 --name keelcompass-frontend-container keelcompass-frontend-dev
+   docker-compose up --build
    ```
 
-   - **`-p 8080:5173`**: Maps port `5173` (the Vite dev server port inside the container) to port `8080` on your host machine.
-   - **`-d`**: Runs the container in detached mode.
-   - **`keelcompass-frontend-dev`**: The name of the image you just built.
-   - **`--name keelcompass-frontend-container`**: Assigns a name to the container.
+   This will build and start the Docker container using `Dockerfile.dev` for the development environment, exposing the Vite development server on port `5173`. It will also set up live reloading for a smooth development experience.
 
-3. **Access the Development Server**  
-   Once the container is running, open your browser and navigate to:
+2. **Access the Development Server**  
+   Once the containers are up and running, open your browser and navigate to:
 
    ```
-   http://localhost:8080
+   http://localhost:5173
    ```
 
    This will display the Vite development server with hot reloading enabled. Any changes made to the source code will automatically update in the browser.
 
-### Using the Production Dockerfile
+### Production Setup
 
-1. **Build the Production Docker Image**  
-   To build the Docker image for production, run the following command:
-
-   ```bash
-   docker build -t keelcompass-frontend-prod .
-   ```
-
-2. **Run the Production Docker Container**  
-   To start the container in production mode, use the following command:
+1. **Build and Run the Docker Containers for Production**  
+   To start the application in **production mode**, use the following command:
 
    ```bash
-   docker run -d -p 80:80 --name keelcompass-frontend-prod keelcompass-frontend-prod
+   docker-compose -f docker-compose.prod.yml up --build
    ```
 
-   - **`-p 80:80`**: Maps port `80` inside the container to port `80` on your local machine, which is the standard port for web servers.
-   - The production environment is optimized for performance and does not include hot reloading.
+   This will build and start the Docker container using `Dockerfile` for the production environment, optimizing the application for performance and serving it on port `80`.
 
-3. **Access the Production Server**  
-   Once the container is running, open your browser and navigate to:
+2. **Access the Production Server**  
+   Once the containers are up and running, open your browser and navigate to:
 
    ```
    http://localhost
@@ -98,7 +77,7 @@ This project includes two Dockerfiles:
 
 After building and running the Docker containers, the application can be accessed as follows:
 
-- **Development mode**: Open `http://localhost:8080` in your browser to access the development environment with live reloading.
+- **Development mode**: Open `http://localhost:5173` in your browser to access the development environment with live reloading.
 - **Production mode**: Open `http://localhost` in your browser to access the optimized production environment.
 
 ## ESLint Setup
@@ -189,6 +168,8 @@ This project uses **Tailwind CSS** for utility-first CSS styling. To ensure it w
 
 ## Project Structure
 
+- `docker-compose.yml`: The Docker Compose configuration for building and running the development environment.
+- `docker-compose.prod.yml`: The Docker Compose configuration for building and running the production environment.
 - `Dockerfile`: The Dockerfile for building the production environment.
 - `Dockerfile.dev`: The Dockerfile for building the development environment with Vite and live reloading.
 - `tailwind.config.js`: Tailwind CSS configuration file.
@@ -201,5 +182,3 @@ This project uses **Tailwind CSS** for utility-first CSS styling. To ensure it w
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-
