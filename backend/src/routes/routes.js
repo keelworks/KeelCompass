@@ -7,6 +7,7 @@ const router = require("express").Router();
 const articleRouter = require("./articleRoutes");
 const questionRoutes = require("./questionsRoutes");
 const tagRoutes = require("./tagRoutes");
+const interestRoutes = require("./interestRoutes")
 
 // Route for GET method -- a health check method
 router.get("/health", controller.healthCheck);
@@ -25,5 +26,7 @@ router.use("/api/tags", tagRoutes);
 
 // Route for questions
 router.use("/questions", questionRoutes);
+
+router.use("/api/interests", interestRoutes)
 
 module.exports = router;
