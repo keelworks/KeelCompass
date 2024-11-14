@@ -379,3 +379,67 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2024-09-16 12:50:41
+
+-- Table structure for table `AdminProfile`
+DROP TABLE IF EXISTS `AdminProfile`;
+CREATE TABLE `AdminProfile` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `administrative_privileges` json DEFAULT NULL,
+  `system_configurations` json DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `admin_profile_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `Users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Sample data for `AdminProfile`
+INSERT INTO `AdminProfile` (`id`, `user_id`, `administrative_privileges`, `system_configurations`, `created_at`)
+VALUES
+(1, 1, '{"manageUsers": true, "accessReports": true}', '{"theme": "dark", "timezone": "UTC"}', '2024-09-12 23:49:25'),
+(2, 2, '{"manageUsers": true}', '{"theme": "light", "timezone": "PST"}', '2024-09-12 23:49:25'),
+(3, 3, '{"manageContent": true}', '{"theme": "dark", "timezone": "EST"}', '2024-09-12 23:49:25');
+
+-- Table structure for table `FacilitatorProfile`
+DROP TABLE IF EXISTS `FacilitatorProfile`;
+CREATE TABLE `FacilitatorProfile` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `expertise` text DEFAULT NULL,
+  `roles` text DEFAULT NULL,
+  `contributions` json DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `facilitator_profile_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `Users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Sample data for `FacilitatorProfile`
+INSERT INTO `FacilitatorProfile` (`id`, `user_id`, `expertise`, `roles`, `contributions`, `created_at`)
+VALUES
+(1, 4, 'Mathematics, Physics', 'Tutor', '{"articlesPublished": 5}', '2024-09-12 23:49:25'),
+(2, 5, 'Computer Science', 'Mentor', '{"coursesCreated": 3, "studentsMentored": 20}', '2024-09-12 23:49:25'),
+(3, 6, 'Biology', 'Instructor', '{"workshopsHosted": 2}', '2024-09-12 23:49:25');
+
+
+-- Table structure for table `StudentProfile`
+DROP TABLE IF EXISTS `StudentProfile`;
+CREATE TABLE `StudentProfile` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `educational_background` text DEFAULT NULL,
+  `career_interests` text DEFAULT NULL,
+  `past_interactions` json DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `student_profile_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `Users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Sample data for `StudentProfile`
+INSERT INTO `StudentProfile` (`id`, `user_id`, `educational_background`, `career_interests`, `past_interactions`, `created_at`)
+VALUES
+(1, 7, 'High School Diploma', 'Software Engineering', '{"coursesCompleted": 10, "certifications": 2}', '2024-09-12 23:49:25'),
+(2, 8, 'Bachelor of Science in Biology', 'Medical Research', '{"seminarsAttended": 4, "groupProjects": 2}', '2024-09-12 23:49:25'),
+(3, 9, 'Bachelor of Arts in English Literature', 'Journalism', '{"articlesWritten": 3}', '2024-09-12 23:49:25');
+

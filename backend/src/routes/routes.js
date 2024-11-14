@@ -1,21 +1,13 @@
-// defining routes to route request calls to corresponding methods
+const express = require("express");
+const router = express.Router();
 
-const controller = require("../controllers/controller.js");
-
-const router = require("express").Router();
-
+const userRoutes = require("./userRoutes"); // Import the new user routes
 const articleRouter = require("./articleRoutes");
 const questionRoutes = require("./questionsRoutes");
 const tagRoutes = require("./tagRoutes");
 
-// Route for GET method -- a health check method
-router.get("/health", controller.healthCheck);
-
-router.post("/resetpassword", controller.passwordReset);
-
-router.post("/verifyOTP", controller.verifyOTP);
-
-router.post("/updatePassword", controller.updatePassword);
+// Use user routes
+router.use("/api/users", userRoutes);
 
 // Route for articles
 router.use("/api/articles", articleRouter);
