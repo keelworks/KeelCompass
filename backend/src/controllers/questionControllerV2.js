@@ -1,5 +1,9 @@
 const db = require("../models/index");
-const { HttpError, HttpStatusCodes } = require("../utils/httpError");
+const {
+  HttpError,
+  HttpStatusCodes,
+  ServiceErrorHandler,
+} = require("../utils/httpError");
 const logger = require("../utils/logger");
 const util = require("util");
 const questionService = require("../services/questionService");
@@ -17,16 +21,9 @@ const createQuestion = async (req, res) => {
         questionID: questionID,
       });
     })
-    .catch((error) => {
-      logger.error("Error creating question: " + error.message || error);
-      if (error instanceof HttpError) {
-        res.status(error.statusCode).json({ message: error.message });
-      } else {
-        res
-          .status(HttpStatusCodes.INTERNAL_SERVER_ERROR)
-          .json({ message: "Server error" });
-      }
-    });
+    .catch((error) =>
+      ServiceErrorHandler(error, res, logger, "createQuestion")
+    );
   return;
 };
 
@@ -43,15 +40,63 @@ const getQuestionList = async (req, res) => {
         .status(HttpStatusCodes.OK)
         .json({ message: "success", questions: questions, offset: offset });
     })
-    .catch((error) => {
-      logger.error(error.message || error);
+    .catch((error) =>
+      ServiceErrorHandler(error, res, logger, "getQuestionList")
+    );
+};
+
+const deleteQuestionByID = async (req, res) => {
+  logger.debug(
+    `delete question request, query params = ${util.inspect(req.query)}`
+  );
+  const { questionID, loginUserID } = req.query;
+
+  questionService
+    .deleteQuestionByID(questionID, loginUserID)
+    .then(() => {
+      return res.status(HttpStatusCodes.OK).json({ message: "success" });
+    })
+    .catch((error) =>
+      ServiceErrorHandler(error, res, logger, "deleteQuestionByID")
+    );
+};
+
+const updateQuestion = async (req, res) => {
+  logger.debug(`update question request, body = ${util.inspect(req.body)}`);
+  const { title, description, loginUserID, questionID } = req.body;
+
+  questionService
+    .updateQuestion(questionID, title, description, loginUserID)
+    .then(() => {
+      return res.status(HttpStatusCodes.OK).json({ message: "success" });
+    })
+    .catch((error) =>
+      ServiceErrorHandler(error, res, logger, "updateQuestion")
+    );
+};
+
+const getQuestionByID = async (req, res) => {
+  logger.debug(
+    `get question by ID request, params = ${util.inspect(req.params)}`
+  );
+  const { questionID } = req.params;
+
+  questionService
+    .getQuestionByID(questionID)
+    .then((question) => {
       return res
-        .status(HttpStatusCodes.INTERNAL_SERVER_ERROR)
-        .json({ message: "Server error" });
-    });
+        .status(HttpStatusCodes.OK)
+        .json({ message: "success", question: question });
+    })
+    .catch((error) =>
+      ServiceErrorHandler(error, res, logger, "getQuestionByID")
+    );
 };
 
 module.exports = {
   createQuestion,
   getQuestionList,
+  deleteQuestionByID,
+  updateQuestion,
+  getQuestionByID,
 };
