@@ -18,7 +18,7 @@ const getUserInterests = async (userId) => {
       return interests;
     } catch (error) {
       console.error('Error fetching interests for user:', error);
-      throw new Error('Error fetching interests');
+      throw error;
     }
   };
 
