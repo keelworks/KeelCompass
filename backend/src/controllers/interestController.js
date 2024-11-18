@@ -1,28 +1,35 @@
 const interestService = require('../services/interestService');
 const db = require('../models/index');
-const Question = db.questions;
-const User = db.users;
+const {
+  HttpError,
+  HttpStatusCodes,
+  ServiceErrorHandler,
+} = require("../utils/httpError");
+const logger = require("../utils/logger");
+
 // Controller method to handle GET /api/interests
 const getUserInterests = async (req, res) => {
     //const userId = req.user.id;
-    console.log('Received request:', req.body);
-    const {user_id}=req.body
+    const { user_id } = req.body
     if (!user_id) {
-        return res.status(400).json({ error: 'UserId is required' });
-    }
-    const user = await User.findByPk(user_id);
-    if (!user) {
-      return res.status(400).json({ error: 'Invalid user ID' });
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ error: 'UserId is required' });
     }
     try {
-      const interests = await interestService.getUserInterests(user_id);
-      if(!interests){
-        return res.status(404).json({ error: 'Interests not Found' });
+      const interests = await interestService.getUserInterests(user_id)
+      if (!interests){
+        message = "no interests found"
       }
-      return res.status(200).json(interests);
+      else{
+        message = "success"
+      }
+      return res.status(HttpStatusCodes.OK).json(
+        { 
+          message: message,
+          interests: interests
+        }
+      );
     } catch (error) {
-      console.error(error.message);
-      return res.status(500).json({ error: 'Server error' });
+       ServiceErrorHandler(error, res, logger, "getUserInterests")
     }
   };
 
@@ -31,53 +38,45 @@ const saveInterest = async (req, res) => {
     //const userId = req.user.id;
     const { userId, question_id } = req.body;
     if (!userId) {
-        return res.status(400).json({ error: 'UserId is required' });
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ error: 'UserId is required' });
     }
     if (!question_id) {
-        return res.status(400).json({ error: 'Question Id is required' });
-    }
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(400).json({ error: 'Invalid user ID' });
-    }
-    const question = await Question.findByPk(question_id);
-    if (!question) {
-      return res.status(400).json({ error: 'Invalid question ID' });
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ error: 'Question Id is required' });
     }
     try {
       const result = await interestService.saveInterest(userId, question_id);
-  
-      if (result.error) {
-        return res.status(400).json({ error: result.error });
-      }
-  
-      return res.status(201).json(result);
+    
+      return res.status(HttpStatusCodes.CREATED).json(
+        {
+          message: "Interest created successfully",
+          InterestId: result,
+        }
+      );
     } catch (error) {
-      console.error(error.message);
-      return res.status(500).json({ error: 'Server error' });
+      ServiceErrorHandler(error, res, logger, "saveInterest")
     }
   };
   
   // DELETE /api/interests/:id - Delete a question from interests
   const deleteInterest = async (req, res) => {
     //const userId = req.user.id;
-    const userId=req.body
+    const { userId } = req.body
     if (!userId) {
-        return res.status(400).json({ error: 'UserId is required' });
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ error: 'UserId is required' });
     }
     const { id } = req.params;
   
     try {
-      const result = await interestService.deleteInterest(userId, id);
+      await interestService.deleteInterest(userId, id);
   
-      if (result.error) {
-        return res.status(404).json({ error: result.error });
-      }
-  
-      return res.status(200).json(result);
+      return res.status(HttpStatusCodes.OK).json(
+        {
+          message: "Interest deleted successfully",
+          InterestId: id,
+        }
+      );
     } catch (error) {
-      console.error(error.message);
-      return res.status(500).json({ error: 'Server error' });
+      ServiceErrorHandler(error, res, logger, "deleteInterest")
     }
   };
   
