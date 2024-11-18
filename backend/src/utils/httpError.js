@@ -17,7 +17,19 @@ const HttpStatusCodes = Object.freeze({
   SERVICE_UNAVAILABLE: 503,
 });
 
+const ServiceErrorHandler = (error, res, logger, serviceName) => {
+  if (error instanceof HttpError) {
+    res.status(error.statusCode).json({ message: error.message });
+  } else {
+    logger.error(`Service ${serviceName} error: ` + error.message || error);
+    res
+      .status(HttpStatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   HttpStatusCodes,
   HttpError,
+  ServiceErrorHandler,
 };
