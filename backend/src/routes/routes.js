@@ -5,7 +5,7 @@ const controller = require("../controllers/controller.js");
 const router = require("express").Router();
 
 const articleRouter = require("./articleRoutes");
-const questionRoutes = require("./questionsRoutes");
+const questionRoutes = require("./questionRoutesV2");
 const tagRoutes = require("./tagRoutes");
 const interestRoutes = require("./interestRoutes")
 
@@ -19,13 +19,13 @@ router.post("/verifyOTP", controller.verifyOTP);
 router.post("/updatePassword", controller.updatePassword);
 
 // Route for articles
-router.use("/api/articles", articleRouter);
+// router.use("/api/articles", articleRouter);
 
 // Route for tags
-router.use("/api/tags", tagRoutes);
+// router.use("/api/tags", tagRoutes);
 
 // Route for questions
-router.use("/questions", questionRoutes);
+router.use("/api/questions", questionRoutes);
 
 router.use("/api/interests", interestRoutes)
 
