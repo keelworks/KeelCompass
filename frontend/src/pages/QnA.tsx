@@ -14,11 +14,15 @@ const QnA = () => {
   };
 
   return (
-    <div>
-      <Navigation />
-      {/* Wrapper div for the rest of the content */}
-      <div>
-        {/* Add div with heading and search bar */}
+    <div className="flex h-screen">
+      {/* Navigation on the left */}
+      <div className="flex-none w-[240px] bg-gray-100">
+        <Navigation />
+      </div>
+
+      {/* Rest of the content */}
+      <div className="flex-1 px-6 pt-6 bg-[#F0F0F0]">
+        {/* Add heading and search bar */}
         <div
           className="flex items-center justify-between mb-6"
           style={{
@@ -41,33 +45,30 @@ const QnA = () => {
 
           {/* Search Bar */}
           <div
-            className="flex items-center"
+            className="flex items-center rounded-[8px] shadow-sm" // Added subtle shadow
             style={{
               width: "236px",
               height: "44px",
-              backgroundColor: "#FFFFFF", // White background
-              padding: "5px 10px", // Padding inside the bar
+              backgroundColor: "#FFFFFF",
+              padding: "5px 10px",
             }}
           >
-            {/* Input Field */}
             <input
               type="text"
               placeholder="Search"
               className="w-full h-full bg-transparent text-black text-sm font-lato focus:outline-none"
               style={{
-                marginRight: "10px", // Space between input and the icon placeholder
+                marginRight: "10px",
               }}
             />
-
-            {/* Icon */}
             <div
               className="flex items-center justify-center"
               style={{
-                width: "32px", // Icon container width
-                height: "32px", // Icon container height
+                width: "32px",
+                height: "32px",
               }}
             >
-              <CiSearch size={20} color="#8B5E83" /> {/* Add search icon */}
+              <CiSearch size={20} color="#8B5E83" />
             </div>
           </div>
         </div>
@@ -81,7 +82,7 @@ const QnA = () => {
           />
         </div>
 
-        {/* Add spacing above QnACard */}
+        {/* QnACard */}
         <div className="mt-4">
           <QnACard />
         </div>
