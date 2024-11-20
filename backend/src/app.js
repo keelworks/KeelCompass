@@ -2,14 +2,17 @@
 
 // Importing and initializing express app
 const express = require("express");
+const authMiddleware = require("./middlewares/authMiddleware"); 
 
 // importing middlewares and utils
 const morgan = require("morgan");
 const logger = require("./utils/logger");
 const { HttpStatusCodes } = require("./utils/httpError");
+require("dotenv").config(); 
 
 // Importing routes
 const router = require("./routes/routes");
+const authRoutes = require('./routes/authRoutes'); 
 
 // Import Redis session configuration
 const { redisSessionMiddleware } = require("./configs/redisConfig");
@@ -37,6 +40,10 @@ app.use(
 );
 
 app.use("/", router);
+
+// Register authentication routes
+app.use("/api/auth", authRoutes);
+
 
 // For all other invalid routes
 app.use("*", (req, res) => {
