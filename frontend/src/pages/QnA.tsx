@@ -90,5 +90,4 @@ const QnA = () => {
     </div>
   );
 };
-
 export default QnA;
