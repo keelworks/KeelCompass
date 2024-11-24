@@ -42,9 +42,6 @@ const authenticate = (req, res, next) => {
         // Attach user information to the request object
         req.userEmail = decoded.email;
         req.userId = decoded.id;
-        console.log("Decoded ----:", decoded);
-        console.log("Decoded USER ----:", req.userEmail);
-        console.log("Decoded USERID ----:", req.userId);
         next();
     } catch (error) {
         return res.status(401).json({ error: "Invalid or expired token. 99" });

@@ -12,7 +12,7 @@ require("dotenv").config();
 
 // Importing routes
 const router = require("./routes/routes");
-const authRoutes = require('./routes/authRoutes'); 
+
 
 // Import Redis session configuration
 const { redisSessionMiddleware } = require("./configs/redisConfig");
@@ -41,8 +41,6 @@ app.use(
 
 app.use("/", router);
 
-// Register authentication routes
-app.use("/api/auth", authRoutes);
 
 
 // For all other invalid routes
