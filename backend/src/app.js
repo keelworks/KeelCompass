@@ -2,13 +2,12 @@
 
 // Importing and initializing express app
 const express = require("express");
-const authMiddleware = require("./middlewares/authMiddleware"); 
 
 // importing middlewares and utils
 const morgan = require("morgan");
 const logger = require("./utils/logger");
 const { HttpStatusCodes } = require("./utils/httpError");
-require("dotenv").config(); 
+
 
 // Importing routes
 const router = require("./routes/routes");
