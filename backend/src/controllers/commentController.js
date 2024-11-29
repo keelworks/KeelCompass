@@ -16,7 +16,7 @@ const createComment = async (req, res) => {
     .then((commentID) => {
       res.status(HttpStatusCodes.CREATED).json({
         message: "Comment created successfully",
-        questionID: commentID,
+        commentID: commentID,
       });
     })
     .catch((error) => ServiceErrorHandler(error, res, logger, "createComment"));

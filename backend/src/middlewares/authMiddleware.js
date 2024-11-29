@@ -48,7 +48,7 @@ const authenticate = (req, res, next) => {
     };
     next();
   } catch (error) {
-    return res.status(401).json({ error: "Invalid or expired token. 99" });
+    return res.status(401).json({ error: "Invalid or expired token." });
   }
 };
 

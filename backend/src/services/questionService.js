@@ -63,7 +63,7 @@ const getQuestionList = async (count, offset) => {
   const totalCount = await Question.count();
 
   var resOffset = offset + questions.length;
-  if (resOffset == totalCount) {
+  if (resOffset >= totalCount) {
     resOffset = -1; // There's no more questions to return
   }
 
