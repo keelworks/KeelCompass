@@ -8,10 +8,8 @@ const morgan = require("morgan");
 const logger = require("./utils/logger");
 const { HttpStatusCodes } = require("./utils/httpError");
 
-
 // Importing routes
 const router = require("./routes/routes");
-
 
 // Import Redis session configuration
 const { redisSessionMiddleware } = require("./configs/redisConfig");
@@ -39,8 +37,6 @@ app.use(
 );
 
 app.use("/", router);
-
-
 
 // For all other invalid routes
 app.use("*", (req, res) => {
