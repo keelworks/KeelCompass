@@ -1,8 +1,11 @@
 const { HttpError, HttpStatusCodes } = require("../utils/httpError");
 const logger = require("../utils/logger");
 const db = require("../models/index");
+const Sequelize = db.sequelize;
 const User = db.users;
 const Question = db.questions;
+const UserQuestionAction = db.userQuestionActions;
+const ActionTypes = require("../constants/actionTypes");
 
 const createQuestion = async (title, description, loginUser) => {
   const user = await User.findByPk(loginUser.id);
@@ -21,17 +24,41 @@ const createQuestion = async (title, description, loginUser) => {
 };
 
 const getQuestionList = async (count, offset) => {
-  const questions = await Question.findAll({
-    order: [["created_at", "DESC"]],
+  const query = `
+  SELECT 
+    Questions.id,
+    Questions.title,
+    Questions.description,
+    Questions.created_at,
+    (
+      SELECT JSON_OBJECT('id', Users.id, 'username', Users.username)
+      FROM Users
+      WHERE Users.id = Questions.user_id
+      LIMIT 1
+    ) AS user,
+    (
+      SELECT COUNT(*)
+      FROM UserQuestionActions
+      WHERE UserQuestionActions.question_id = Questions.id AND UserQuestionActions.action_type = :likeAction
+    ) AS likeCount,
+    (
+      SELECT COUNT(*)
+      FROM UserQuestionActions
+      WHERE UserQuestionActions.question_id = Questions.id AND UserQuestionActions.action_type = :reportAction
+    ) AS reportCount
+  FROM Questions
+  ORDER BY Questions.created_at DESC
+  LIMIT :limit OFFSET :offset
+`;
+
+  const replacements = {
+    likeAction: ActionTypes.LIKE,
+    reportAction: ActionTypes.REPORT,
     limit: count,
     offset: offset,
-    include: {
-      model: User,
-      as: "user",
-      attributes: ["id", "username"],
-    },
-    attributes: ["id", "title", "description", "created_at"],
-  });
+  };
+
+  const questions = await Sequelize.query(query, { replacements, type: Sequelize.QueryTypes.SELECT });
 
   const totalCount = await Question.count();
 
@@ -79,15 +106,43 @@ const updateQuestion = async (questionID, title, description, loginUser) => {
 };
 
 const getQuestionByID = async (questionID) => {
-  const question = await Question.findByPk(questionID, {
-    include: {
-      model: User,
-      as: "user",
-      attributes: ["id", "username"],
-    },
-    attributes: ["id", "title", "description", "created_at"],
-  });
+  const [question] = await Sequelize.query(
+    `
+    SELECT 
+      Questions.id,
+      Questions.title,
+      Questions.description,
+      Questions.created_at,
+      (
+        SELECT JSON_OBJECT('id', Users.id, 'username', Users.username)
+        FROM Users
+        WHERE Users.id = Questions.user_id
+        LIMIT 1
+      ) AS user,
+      (
+        SELECT COUNT(*)
+        FROM UserQuestionActions
+        WHERE UserQuestionActions.question_id = Questions.id AND UserQuestionActions.action_type = :likeAction
+      ) AS likeCount,
+      (
+        SELECT COUNT(*)
+        FROM UserQuestionActions
+        WHERE UserQuestionActions.question_id = Questions.id AND UserQuestionActions.action_type = :reportAction
+      ) AS reportCount
+    FROM Questions
+    WHERE Questions.id = :questionID
+    `,
+    {
+      type: Sequelize.QueryTypes.SELECT,
+      replacements: {
+        likeAction: ActionTypes.LIKE,
+        reportAction: ActionTypes.REPORT,
+        questionID: questionID,
+      },
+    }
+  );
 
+  logger.debug(question);
   if (!question) {
     logger.warn("Warning get question by ID: question not found. ID = " + questionID);
     throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
@@ -103,7 +158,7 @@ const takeAction = async (questionID, actionType, loginUser) => {
     throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
   }
 
-  const [action, created] = await db.userQuestionActions.findOrCreate({
+  const [action, created] = await UserQuestionAction.findOrCreate({
     where: {
       user_id: loginUser.id,
       question_id: questionID,
@@ -125,7 +180,7 @@ const takeAction = async (questionID, actionType, loginUser) => {
 };
 
 const removeAction = async (questionID, actionType, loginUser) => {
-  const action = await db.userQuestionActions.findOne({
+  const action = await UserQuestionAction.findOne({
     where: {
       user_id: loginUser.id,
       question_id: questionID,

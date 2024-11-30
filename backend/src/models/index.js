@@ -36,7 +36,6 @@ sequelize
 
 const db = {};
 
-db.sequelize = Sequelize;
 db.sequelize = sequelize;
 
 //utilizing DB Schema with sequelize
