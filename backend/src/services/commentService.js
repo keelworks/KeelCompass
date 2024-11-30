@@ -77,7 +77,7 @@ const getCommentListByQuestionID = async (questionID, count, offset) => {
   });
 
   var resOffset = offset + comments.length;
-  if (resOffset == totalCount) {
+  if (resOffset >= totalCount) {
     resOffset = -1; // There's no more to return
   }
 
