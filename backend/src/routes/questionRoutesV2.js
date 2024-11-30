@@ -12,6 +12,8 @@ const {
   deleteQuestionByID,
   updateQuestion,
   getQuestionByID,
+  takeAction,
+  removeAction,
 } = require("../controllers/questionControllerV2");
 
 // POST /questions - Ask a question
@@ -122,6 +124,50 @@ router.delete(
     },
   ],
   deleteQuestionByID
+);
+
+// Take an action on a question
+router.post(
+  "/action",
+  authenticator,
+  [
+    body("questionID").isInt({ gt: 0 }).withMessage("invalid questionID").bail(),
+    body("actionType").notEmpty().withMessage("actionType is required").bail(),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        const errorMessages = errors
+          .array()
+          .map((error) => error.msg)
+          .join(", ");
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
+      }
+      next();
+    },
+  ],
+  takeAction
+);
+
+// Delete an action on a question
+router.delete(
+  "/action",
+  authenticator,
+  [
+    body("questionID").isInt({ gt: 0 }).withMessage("invalid questionID").bail(),
+    body("actionType").notEmpty().withMessage("actionType is required").bail(),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        const errorMessages = errors
+          .array()
+          .map((error) => error.msg)
+          .join(", ");
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
+      }
+      next();
+    },
+  ],
+  removeAction
 );
 
 module.exports = router;

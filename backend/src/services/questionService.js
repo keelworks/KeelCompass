@@ -63,7 +63,7 @@ const deleteQuestionByID = async (questionID, loginUser) => {
 const updateQuestion = async (questionID, title, description, loginUser) => {
   const question = await Question.findByPk(questionID);
   if (!question) {
-    logger.warn("Warning updating updating: question not found. ID = " + questionID);
+    logger.warn("Warning updating question: question not found. ID = " + questionID);
     throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
   }
 
@@ -96,10 +96,58 @@ const getQuestionByID = async (questionID) => {
   return question;
 };
 
+const takeAction = async (questionID, actionType, loginUser) => {
+  const question = await Question.findByPk(questionID);
+  if (!question) {
+    logger.warn("Warning adding actions: question not found. ID = " + questionID);
+    throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
+  }
+
+  const [action, created] = await db.userQuestionActions.findOrCreate({
+    where: {
+      user_id: loginUser.id,
+      question_id: questionID,
+      action_type: actionType,
+    },
+    defaults: {
+      user_id: loginUser.id,
+      question_id: questionID,
+      action_type: actionType,
+    },
+  });
+
+  if (!created) {
+    logger.warn("Warning adding actions: action existed");
+    throw new HttpError(HttpStatusCodes.CONFLICT, "record existed");
+  }
+
+  return;
+};
+
+const removeAction = async (questionID, actionType, loginUser) => {
+  const action = await db.userQuestionActions.findOne({
+    where: {
+      user_id: loginUser.id,
+      question_id: questionID,
+      action_type: actionType,
+    },
+  });
+
+  if (!action) {
+    throw new HttpError(HttpStatusCodes.NOT_FOUND, "record not found");
+  }
+
+  await action.destroy();
+
+  return;
+};
+
 module.exports = {
   createQuestion,
   getQuestionList,
   deleteQuestionByID,
   updateQuestion,
   getQuestionByID,
+  takeAction,
+  removeAction,
 };

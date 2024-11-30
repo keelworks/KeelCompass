@@ -1,6 +1,7 @@
 const db = require("../models/index");
 const { HttpError, HttpStatusCodes, ServiceErrorHandler } = require("../utils/httpError");
 const logger = require("../utils/logger");
+const { IsValidAction } = require("../utils/actionTypes");
 const util = require("util");
 const questionService = require("../services/questionService");
 
@@ -77,10 +78,50 @@ const getQuestionByID = async (req, res) => {
     .catch((error) => ServiceErrorHandler(error, res, logger, "getQuestionByID"));
 };
 
+const takeAction = async (req, res) => {
+  logger.debug(`take action on question request, body = ${util.inspect(req.body)}`);
+  logger.debug(`take action on question request, loginUser = ${util.inspect(req.loginUser)}`);
+  const loginUser = req.loginUser;
+  const { questionID, actionType } = req.body;
+
+  if (!IsValidAction(actionType)) {
+    return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: "invalid actionType" });
+  }
+
+  questionService
+    .takeAction(questionID, actionType, loginUser)
+    .then(() => {
+      return res.status(HttpStatusCodes.OK).json({ message: "success" });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "takeAction"));
+  return;
+};
+
+const removeAction = async (req, res) => {
+  logger.debug(`remove action on question request, body = ${util.inspect(req.body)}`);
+  logger.debug(`remove action on question request, loginUser = ${util.inspect(req.loginUser)}`);
+  const loginUser = req.loginUser;
+  const { questionID, actionType } = req.body;
+
+  if (!IsValidAction(actionType)) {
+    return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: "invalid actionType" });
+  }
+
+  questionService
+    .removeAction(questionID, actionType, loginUser)
+    .then(() => {
+      return res.status(HttpStatusCodes.OK).json({ message: "success" });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "removeAction"));
+  return;
+};
+
 module.exports = {
   createQuestion,
   getQuestionList,
   deleteQuestionByID,
   updateQuestion,
   getQuestionByID,
+  takeAction,
+  removeAction,
 };
