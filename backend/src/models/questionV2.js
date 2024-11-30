@@ -25,6 +25,10 @@ module.exports = (sequelize, User) => {
       description: {
         type: DataTypes.TEXT,
       },
+      status: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,

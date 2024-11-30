@@ -36,7 +36,6 @@ sequelize
 
 const db = {};
 
-db.sequelize = Sequelize;
 db.sequelize = sequelize;
 
 //utilizing DB Schema with sequelize
@@ -45,6 +44,9 @@ db.users = require("./userV2")(sequelize);
 // db.questions = require("./Questions")(sequelize, DataTypes, db.users); // Pass User model here
 db.questions = require("./questionV2")(sequelize, db.users);
 db.comments = require("./comment")(sequelize, db.users, db.questions);
+db.userQuestionActions = require("./userQuestionAction")(sequelize, db.users, db.questions);
+db.categories = require("./category")(sequelize);
+db.questionCategory = require("./questionCategory")(sequelize, db.questions, db.categories);
 // db.articles = require("./article")(sequelize, db.users);
 // db.tags = require("./Tag")(sequelize);
 // db.articleTags = require("./ArticleTag")(sequelize, db.articles, db.tags);
