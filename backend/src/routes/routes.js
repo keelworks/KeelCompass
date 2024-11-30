@@ -6,10 +6,10 @@ const router = require("express").Router();
 
 const articleRouter = require("./articleRoutes");
 const questionRoutes = require("./questionRoutesV2");
+const commentRoutes = require("./commentRoutes");
 const tagRoutes = require("./tagRoutes");
 const interestRoutes = require("./interestRoutes");
 const authRoutes = require("./authRoutes");
-
 
 // Route for GET method -- a health check method
 router.get("/health", controller.healthCheck);
@@ -32,6 +32,8 @@ router.use("/api/auth", authRoutes);
 // Route for questions
 router.use("/api/questions", questionRoutes);
 
-router.use("/api/interests", interestRoutes)
+router.use("/api/comments", commentRoutes);
+
+router.use("/api/interests", interestRoutes);
 
 module.exports = router;
