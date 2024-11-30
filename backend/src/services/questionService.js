@@ -4,8 +4,8 @@ const db = require("../models/index");
 const User = db.users;
 const Question = db.questions;
 
-const createQuestion = async (title, description, loginUserID) => {
-  const user = await User.findByPk(loginUserID);
+const createQuestion = async (title, description, loginUser) => {
+  const user = await User.findByPk(loginUser.id);
   if (!user) {
     throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "user not found");
   }
@@ -40,19 +40,17 @@ const getQuestionList = async (count, offset) => {
     resOffset = -1; // There's no more questions to return
   }
 
-  return [questions, resOffset];
+  return [questions, resOffset, totalCount];
 };
 
-const deleteQuestionByID = async (questionID, loginUserID) => {
+const deleteQuestionByID = async (questionID, loginUser) => {
   const question = await Question.findByPk(questionID);
   if (!question) {
-    logger.warn(
-      "Warning deleting question: question not found. ID = " + questionID
-    );
+    logger.warn("Warning deleting question: question not found. ID = " + questionID);
     throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
   }
 
-  if (question.user_id != loginUserID) {
+  if (question.user_id != loginUser.id) {
     logger.warn("Warning deleting question: no permission to delete");
     throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
   }
@@ -62,16 +60,14 @@ const deleteQuestionByID = async (questionID, loginUserID) => {
   return;
 };
 
-const updateQuestion = async (questionID, title, description, loginUserID) => {
+const updateQuestion = async (questionID, title, description, loginUser) => {
   const question = await Question.findByPk(questionID);
   if (!question) {
-    logger.warn(
-      "Warning updating updating: question not found. ID = " + questionID
-    );
+    logger.warn("Warning updating updating: question not found. ID = " + questionID);
     throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
   }
 
-  if (question.user_id != loginUserID) {
+  if (question.user_id != loginUser.id) {
     logger.warn("Warning updating question: no permission to delete");
     throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
   }
@@ -93,13 +89,11 @@ const getQuestionByID = async (questionID) => {
   });
 
   if (!question) {
-    logger.warn(
-      "Warning get question by ID: question not found. ID = " + questionID
-    );
+    logger.warn("Warning get question by ID: question not found. ID = " + questionID);
     throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
   }
 
-  return packQuestionResponse(question);
+  return question;
 };
 
 module.exports = {
