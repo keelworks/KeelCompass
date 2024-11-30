@@ -1,16 +1,11 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../models/index");
-const { User } = require('../models/userV2'); 
+const { User } = require("../models/userV2");
 // Register a new user
 exports.register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
-
-    // Check if the user already exists
-    // Check if the user already exists
-    console.log('User model:', db.users); 
-    console.log('User model:', db.User);
 
     const userExists = await db.users.findOne({ where: { email } });
     if (userExists) {
