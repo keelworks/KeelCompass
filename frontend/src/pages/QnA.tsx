@@ -1,16 +1,23 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation/Navigation";
 import QnACard from "../components/qna/QnACard";
 import CategoryFilter from "../components/qna/CategoryFilter";
 import { CiSearch } from "react-icons/ci";
 
 const QnA = () => {
+  const navigate = useNavigate();
+
   const categories = ["All", "My Posts", "Education", "Jobs", "Bookmarked"];
   const subcategories = ["Posted", "Pending", "Drafts"];
 
   const handleFilterChange = (mainCategory: string, subCategory: string) => {
     console.log("Selected Category:", mainCategory);
     console.log("Selected Subcategory:", subCategory);
+  };
+
+  const handleAskQuestionClick = () => {
+    navigate("/post-question"); // Navigate to PostQuestion page
   };
 
   return (
@@ -21,7 +28,7 @@ const QnA = () => {
       </div>
 
       {/* Rest of the content */}
-      <div className="flex-1 px-6 pt-6 bg-[#F0F0F0]">
+      <div className="flex-1 flex flex-col px-6 pt-6 bg-[#F0F0F0]">
         {/* Add heading and search bar */}
         <div
           className="flex items-center justify-between mb-6"
@@ -45,7 +52,7 @@ const QnA = () => {
 
           {/* Search Bar */}
           <div
-            className="flex items-center rounded-[8px] shadow-sm" // Added subtle shadow
+            className="flex items-center rounded-[8px] shadow-sm"
             style={{
               width: "236px",
               height: "44px",
@@ -83,11 +90,27 @@ const QnA = () => {
         </div>
 
         {/* QnACard */}
-        <div className="mt-4">
+        <div className="mt-4 flex-grow">
           <QnACard />
+        </div>
+
+        {/* Ask Question Button */}
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={handleAskQuestionClick}
+            className="rounded-md text-white font-lato text-sm"
+            style={{
+              width: "322px",
+              height: "44px",
+              backgroundColor: "#58B6BE",
+            }}
+          >
+            Ask Question
+          </button>
         </div>
       </div>
     </div>
   );
 };
+
 export default QnA;
