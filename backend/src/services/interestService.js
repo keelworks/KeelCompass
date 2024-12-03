@@ -4,13 +4,13 @@ const Interest = db.interests;
 const User = db.users;
 const Question = db.questions;
 
-const getUserInterests = async (userId) => {
-    const user = await User.findByPk(userId);  
+const getUserInterests = async (loginUser) => {
+    const user = await User.findByPk(loginUser.id);  
     if (!user) {
       throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "user not found");
     }
     const interests = await Interest.findAll({
-      where: { user_id: userId }, // Filter by user ID
+      where: { user_id: loginUser.id }, // Filter by user ID
       include: [
         {
           model: Question,
@@ -22,8 +22,8 @@ const getUserInterests = async (userId) => {
     return interests;
   };
 
-const saveInterest = async (userId, questionId) => {
-    const user = await User.findByPk(userId);  
+const saveInterest = async (loginUser, questionId) => {
+    const user = await User.findByPk(loginUser.id);  
     if (!user) {
       throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "user not found");
     }
@@ -31,10 +31,10 @@ const saveInterest = async (userId, questionId) => {
     if (!question) {
       throw new HttpError(HttpStatusCodes.NOT_FOUND, 'question not found' );
     }
-    const interest = await Interest.findOne({ where: { user_id: userId, question_id: questionId } });
+    const interest = await Interest.findOne({ where: { user_id: loginUser.id, question_id: questionId } });
     if (!interest){
       // Create a new interest
-      const newInterest = await Interest.create({ user_id: userId, question_id: questionId });
+      const newInterest = await Interest.create({ user_id: loginUser.id, question_id: questionId });
       return newInterest.id
     }
     else{
@@ -43,12 +43,12 @@ const saveInterest = async (userId, questionId) => {
 
 };
 
-  const deleteInterest = async (userId, interestId) => {
+  const deleteInterest = async (loginUser, interestId) => {
     const interest = await Interest.findByPk(interestId);
     if (!interest) {
       throw new HttpError(HttpStatusCodes.NOT_FOUND, 'interest not found' );
     }
-    if (interest.user_id != userId) {
+    if (interest.user_id != loginUser.id) {
       throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
     }
     await interest.destroy();
