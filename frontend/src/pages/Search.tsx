@@ -6,7 +6,7 @@ const Search = () => {
   return (
     <div>
         <Navigation />
-      
+        Search
     </div>
   )
 }
