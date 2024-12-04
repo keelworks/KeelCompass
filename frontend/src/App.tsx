@@ -6,8 +6,8 @@ import Search from './pages/Search';
 import './App.css'
 import PostQuestion from './components/qna/PostQuestion';
 
-function App() {
 
+function App() {
   return (
     <>
       <Router>
@@ -20,6 +20,6 @@ function App() {
       </Router>
     </>
   )
-}
 
-export default App
+
+export default App;
