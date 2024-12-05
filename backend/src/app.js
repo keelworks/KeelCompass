@@ -12,7 +12,7 @@ const { HttpStatusCodes } = require("./utils/httpError");
 const router = require("./routes/routes");
 
 // Import Redis session configuration
-// const { redisSessionMiddleware } = require("./configs/redisConfig");
+const { redisSessionMiddleware } = require("./configs/redisConfig");
 
 const app = express();
 
@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Apply the Redis session middleware
-// app.use(redisSessionMiddleware);
+app.use(redisSessionMiddleware);
 
 const cors = require("cors");
 app.use(cors());

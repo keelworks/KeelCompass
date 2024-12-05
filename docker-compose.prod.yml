@@ -1,0 +1,10 @@
+# docker-compose.prod.yml
+version: '3'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"  # Expose port 80 for production
