@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 9.0.1, for macos14 (arm64)
 --
--- Host: localhost    Database: KeelCompassV3
+-- Host: localhost    Database: KeelCompass_dev
 -- ------------------------------------------------------
 -- Server version	9.0.1
 
@@ -18,6 +18,9 @@
 --
 -- Table structure for table `Categories`
 --
+
+CREATE DATABASE IF NOT EXISTS KeelCompass_dev;
+USE KeelCompass_dev;
 
 DROP TABLE IF EXISTS `Categories`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
