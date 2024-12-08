@@ -1,8 +1,11 @@
 # KeelCompass Backend
-## Desciption
-This is the backend part of KeelCompass prject built with Express.js. 
+
+## Description
+
+This is the backend part of KeelCompass project built with Express.js.
 
 ## Project Structure
+
 ```
 .
 ├── /node_modules/          # Installed packages
@@ -22,19 +25,37 @@ This is the backend part of KeelCompass prject built with Express.js.
 ```
 
 ## Running the Project
-To install dependencies, enter the backend folder and run:
+
+### Run the project locally in the development environment.
+
+**Requirements**
+
+Ensure the following software is installed on your local machine:
+
+- Node.js (Recommended version: 14.x or higher)
+- MySQL
+- npm
+
+**Install Dependencies**
+
 ```bash
 npm install
 ```
 
-To start the server, use the following command:
+**Set Up Environment Variables**
+
+Create a .env file in the project root and copy the example file. Replace the configurations in the example file.
+
+**Initialize the Database**
 
 ```bash
-npm start
+mysql -u username -p < ./database/latest_dump_file
 ```
 
-Alternatively, use nodemon for development, run:
+**Start the Development Server**
+
 ```bash
 npm run dev
 ```
-The server will start at http://localhost:3000 by default
+
+The server will start at http://localhost:8080 by default
