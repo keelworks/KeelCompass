@@ -20,7 +20,7 @@ const Dashboard = () => {
       <div className="col-span-1 flex flex-col">
         {/* Ask Question Button */}
         <div className="mb-8">
-          <button className="bg-customGreen text-white font-medium w-full py-3 rounded-lg hover:bg-teal-500/90 transition duration-200">
+          <button className= "bg-custom-gradient text-white font-medium w-full py-3 rounded-lg hover:bg-teal-500/90 transition duration-200">
             Ask Question
           </button>
         </div>

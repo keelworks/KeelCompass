@@ -21,7 +21,7 @@ const ToggleButton: React.FC<ToggleButtonProps> = ({ options, onToggle }) => {
           onClick={() => handleToggle(option)}
           className={`px-4 py-2 text-sm font-normal rounded-full ${
             selected === option
-            ? "bg-customGreen text-white" // Custom green background and white text
+            ? "bg-custom-gradient text-white" // Custom green background and white text
             : "bg-white text-gray-600 hover:bg-gray-300" // Default styles
           }`}
         >
