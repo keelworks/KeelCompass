@@ -141,14 +141,14 @@ Thank you for your contributions! Together, we can make KeelCompass an even bett
 ## Development Team Leads
 
 ## Frontend Lead
-- **Name:** Shivang Medhekar
-- **Email:** [shivang.medhekar@keelworks.org](mailto:shivang.medhekar@keelworks.org)
-- **GitHub:** [shivangmedhekar](https://github.com/shivangmedhekar)
+- **Name:** Manas Acharekar 
+- **Email:** [manas.acharekar@keelworks.org](mailto:manas.acharekar@keelworks.org)
+- **GitHub:** [maniach1998](https://github.com/maniach1998)
 
 ## Backend Lead
-- **Name:** Yash Nandkarni
-- **Email:** [yash.nadkarni@keelworks.org](mailto:yash.nadkarni@keelworks.org)
-- **GitHub:** [yashnadkarni](https://github.com/yashnadkarni)
+- **Name:** Nancy Gupta
+- **Email:** [nancy.gupta@keelworks.org](mailto:nancy.gupta@keelworks.org)
+- **GitHub:** [NancyGuptaEr](https://github.com/NancyGuptaEr)
 
 ---
 Developed with ❤️ by The KeelWorks Foundation
