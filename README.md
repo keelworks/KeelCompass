@@ -49,7 +49,9 @@ Ideally, this is the irreplaceable piece of the puzzle that operates your entire
   - Tailwind CSS
 
 - **Backend:**
-  - (To be developed)
+  - Node.js
+  - Express
+  - MySQL
 
 - **Tools and Platforms:**
   - GitHub
