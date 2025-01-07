@@ -6,7 +6,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    image: shivangkeelworks/keelcompass-frontend:1.0
     ports:
       - "5173:5173"  # Expose Vite's default development server port
     volumes:
