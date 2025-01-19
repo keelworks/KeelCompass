@@ -1,23 +1,6 @@
-import { useState } from "react";
-
-const LikeButton = () => {
-
-  const [likes, setLikes] = useState(3);
-
-    return (
-      <button  className= "flex items-center space-x-1 text-gray-700 hover:text-blue-500">
-      <img
-        src= "/images/like-svgrepo-com.svg" // Correct path to the image
-        alt="like"
-        onClick={() => setLikes(likes + 1)}
-        className="w-3 h-3 cursor-pointer"
-      />
-      <span>{likes}</span>
-      </button>
-    )
-
-    
-    };
+const LikeButton = () => (
+    <button className="text-green-500 hover:text-green-600">Like</button>
+  );
   
   export default LikeButton;
   

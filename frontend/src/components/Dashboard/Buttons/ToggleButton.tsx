@@ -14,15 +14,15 @@ const ToggleButton: React.FC<ToggleButtonProps> = ({ options, onToggle }) => {
   };
 
   return (
-    <div className="flex items-center bg-gray-200 rounded-full w-fit p-0.5">
+    <div className="flex space-x-2 bg-gray-200 p-2 rounded-lg">
       {options.map((option) => (
         <button
           key={option}
           onClick={() => handleToggle(option)}
-          className={`px-4 py-2 text-sm font-normal rounded-full ${
+          className={`px-4 py-2 rounded-md ${
             selected === option
-            ? "bg-custom-gradient text-white" // Custom green background and white text
-            : "bg-white text-gray-600 hover:bg-gray-300" // Default styles
+              ? "bg-blue-500 text-white"
+              : "bg-white text-gray-600 hover:bg-gray-300"
           }`}
         >
           {option}
