@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: KeelCompass_dev
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./database/keelcompass_dump_2.2.sql:/docker-entrypoint-initdb.d/keelcompass_dump_3.0.sql
+
+    restart: always
