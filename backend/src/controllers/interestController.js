@@ -9,13 +9,9 @@ const logger = require("../utils/logger");
 
 // Controller method to handle GET /api/interests
 const getUserInterests = async (req, res) => {
-    //const userId = req.user.id;
-    const { user_id } = req.body
-    if (!user_id) {
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ error: 'UserId is required' });
-    }
+    const user = req.loginUser;
     try {
-      const interests = await interestService.getUserInterests(user_id)
+      const interests = await interestService.getUserInterests(user)
       if (!interests){
         message = "no interests found"
       }
@@ -35,16 +31,13 @@ const getUserInterests = async (req, res) => {
 
 // POST /api/interests - Save a question to interests
 const saveInterest = async (req, res) => {
-    //const userId = req.user.id;
-    const { userId, question_id } = req.body;
-    if (!userId) {
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ error: 'UserId is required' });
-    }
+    const user = req.loginUser;
+    const { question_id } = req.body;
     if (!question_id) {
         return res.status(HttpStatusCodes.BAD_REQUEST).json({ error: 'Question Id is required' });
     }
     try {
-      const result = await interestService.saveInterest(userId, question_id);
+      const result = await interestService.saveInterest(user, question_id);
     
       return res.status(HttpStatusCodes.CREATED).json(
         {
@@ -60,14 +53,11 @@ const saveInterest = async (req, res) => {
   // DELETE /api/interests/:id - Delete a question from interests
   const deleteInterest = async (req, res) => {
     //const userId = req.user.id;
-    const { userId } = req.body
-    if (!userId) {
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ error: 'UserId is required' });
-    }
+    const user = req.loginUser;
     const { id } = req.params;
   
     try {
-      await interestService.deleteInterest(userId, id);
+      await interestService.deleteInterest(user, id);
   
       return res.status(HttpStatusCodes.OK).json(
         {

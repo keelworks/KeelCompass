@@ -1,18 +1,25 @@
 import React from "react";
 
 interface BackdropProps {
-  children: React.ReactNode; // Content inside the backdrop
-  className?: string; // Custom class names for styling
-  style?: React.CSSProperties; // Inline styles for flexibility
+  show: boolean;
+  onClose: () => void;
+  children?: React.ReactNode;
 }
 
-const Backdrop: React.FC<BackdropProps> = ({ children, className = "", style = {} }) => {
+const Backdrop: React.FC<BackdropProps> = ({ show, onClose, children }) => {
+  if (!show) return null;
+
   return (
     <div
-      className={`bg-gray-50 shadow-md rounded-lg p-4 ${className}`}
-      style={{ ...style }}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={onClose} // Close backdrop on click
     >
-      {children}
+      <div
+        className="bg-white rounded-lg shadow-lg p-6"
+        onClick={(e) => e.stopPropagation()} // Prevent click propagation to backdrop
+      >
+        {children}
+      </div>
     </div>
   );
 };
