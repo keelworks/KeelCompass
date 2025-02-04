@@ -14,8 +14,8 @@ const Navigation: React.FC = () => {
   // Define menu items
   const menuItems = [
     { name: "Dashboard", icon: <BsHouseDoor />, path: "/" },
-    { name: "Q&A Discussion", icon: <RiQuestionnaireLine />, path: "/qna" },
-    { name: "Search", icon: <BsSearch />, path: "/search" },
+    { name: "Q&A Discussion", icon: <RiQuestionnaireLine />, path: "/qna" }
+
   ];
 
   return (

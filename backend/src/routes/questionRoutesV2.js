@@ -64,6 +64,7 @@ router.get(
     query("count").isInt({ gt: 0 }).withMessage("invalid count").bail(),
     query("offset").isInt({ min: 0 }).withMessage("invalid offset").bail(),
     (req, res, next) => {
+      console.log(req);
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         const errorMessages = errors

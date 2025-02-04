@@ -6,6 +6,7 @@ const logger = require("./src/utils/logger");
 const PORT = process.env.PORT || 8080; // Add a default port if not provided
 const ENV = `${process.env.NODE_ENV}`;
 
+
 // server listening on port <PORT> for incoming requests
 app.listen(PORT, () => {
   logger.info(
