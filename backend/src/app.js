@@ -37,6 +37,8 @@ app.use(
 );
 
 app.use("/", router);
+app.use("/static/career",express.static("src/career"));
+app.use("/static/education",express.static("src/education"));
 
 // For all other invalid routes
 app.use("*", (req, res) => {
