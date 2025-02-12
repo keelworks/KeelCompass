@@ -1,8 +1,8 @@
 // defining routes to route request calls to corresponding methods
-
+const express = require("express");
 const controller = require("../controllers/controller.js");
 
-const router = require("express").Router();
+const router = express.Router();
 
 const articleRouter = require("./articleRoutes");
 const questionRoutes = require("./questionRoutesV2");
@@ -35,5 +35,8 @@ router.use("/api/questions", questionRoutes);
 router.use("/api/comments", commentRoutes);
 
 router.use("/api/interests", interestRoutes);
+
+router.use("/static/career",express.static("src/career"));
+router.use("/static/education",express.static("src/education"));
 
 module.exports = router;
