@@ -142,7 +142,7 @@ CREATE TABLE `Questions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `title` varchar(255) NOT NULL,
-  `description` text,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `status` int DEFAULT '0',
   PRIMARY KEY (`id`),
