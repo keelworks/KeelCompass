@@ -5,9 +5,16 @@ import QnA from './pages/QnA';
 import Search from './pages/Search';
 import './App.css'
 import PostQuestion from './components/qna/PostQuestion';
-
+import { useEffect } from "react";
+import { useAuthStore } from "./utils/store";
 
 function App() {
+  const restoreAuth = useAuthStore((state) => state.restoreAuth);
+
+  useEffect(() => {
+    restoreAuth(); // Restore session on page load
+  }, [restoreAuth]);
+
   return (
     <>
       <Router>
