@@ -29,6 +29,10 @@ module.exports = (sequelize, User) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      attachment: {
+        type: DataTypes.JSON,
+        allowNull: true,
+      },
       created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
