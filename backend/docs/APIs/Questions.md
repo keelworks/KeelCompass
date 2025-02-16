@@ -181,7 +181,7 @@ Get a question using its ID
 
 ### Path & Method:
 
-POST: `/api/questions/:questionID`
+GET: `/api/questions/:questionID`
 
 ### Authentication Required
 
