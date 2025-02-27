@@ -3,122 +3,99 @@ import React from "react";
 const PostQuestion: React.FC = () => {
   return (
     <div
-      className="flex items-center justify-center"
+      className="flex items-center justify-center h-screen"
       style={{
-        width: "676px",
-        height: "588px",
-        border: "1px solid #e5e7eb", // Optional border for outer frame
-        padding: "16px",
+        borderRadius: "7px",
+        padding: "28px 24px 24px 24px",
       }}
     >
-      {/* Inner Frame */}
+      {/* Container Frame */}
       <div
         className="flex flex-col items-center"
         style={{
-          width: "628px",
-          height: "530px",
-          border: "1px solid #e5e7eb", // Optional border for inner frame
-          padding: "16px",
+          width: "676px",
+          padding: "28px 24px 24px 24px",
+          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+          borderRadius: "7px",
+          backgroundColor: "#FFFFFF",
         }}
       >
-        {/* Form Container */}
-        <form
-          className="flex flex-col"
-          style={{
-            width: "588px",
-            height: "464px",
-          }}
-        >
-          {/* Question Title */}
-          <div
-            className="mb-6"
+        <form className="flex flex-col gap-6 w-full">
+          <h1
             style={{
-              width: "582px",
-              height: "63px",
+              color: "#5E7A84",
+              fontWeight: 600,
+              fontSize: "20px",
+              lineHeight: "24px",
+              letterSpacing: "0%",
             }}
           >
+            Post your question
+          </h1>
+
+          {/* Question Title */}
+          <div className="flex flex-col gap-2">
             <label
-              htmlFor="questionTitle"
-              className="flex items-center text-gray-700 font-medium mb-2"
               style={{
+                fontWeight: 600,
                 fontSize: "16px",
-                height: "19px",
+                lineHeight: "19.2px",
               }}
             >
-              Question Title{" "}
-              <span
-                className="text-red-500 ml-1"
-                style={{
-                  fontSize: "16px",
-                }}
-              >
-                *
-              </span>
+              Question Title<span style={{ color: "red" }}>*</span>
             </label>
             <input
+            required
               type="text"
               id="questionTitle"
               name="questionTitle"
-              className="block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="px-3 py-2 focus:outline-none focus:ring-1"
               style={{
-                width: "582px",
+                width: "100%",
                 height: "36px",
                 fontSize: "16px",
+                borderRadius: "3px",
+                border: "1px solid #D1DBDD",
+                backgroundColor: "#FFFFFF",
+                color: "#063E53",
               }}
             />
           </div>
 
           {/* Description */}
-          <div
-            className="mb-6"
-            style={{
-              width: "582px",
-              height: "115px",
-            }}
-          >
+          <div className="flex flex-col gap-2">
             <label
-              htmlFor="description"
-              className="flex items-center text-gray-700 font-medium mb-2"
               style={{
+                fontWeight: 600,
                 fontSize: "16px",
-                height: "19px",
+                lineHeight: "19.2px",
               }}
             >
-              Description{" "}
-              <span
-                className="text-red-500 ml-1"
-                style={{
-                  fontSize: "16px",
-                }}
-              >
-                *
-              </span>
+              Description
             </label>
             <textarea
               id="description"
               name="description"
-              className="block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="px-3 py-2 focus:outline-none focus:ring-1"
               style={{
-                width: "582px",
+                width: "100%",
                 height: "88px",
                 fontSize: "16px",
+                borderRadius: "3px",
+                border: "1px solid #D1DBDD",
+                backgroundColor: "#FFFFFF",
+                color: "#063E53",
               }}
             />
           </div>
 
           {/* Categories & Tags */}
-          <div
-            className="mb-6"
-            style={{
-              width: "582px",
-              height: "63px",
-            }}
-          >
+          <div className="flex flex-col gap-2">
             <label
-              className="text-gray-700 font-medium mb-2"
               style={{
+                fontWeight: 600,
                 fontSize: "16px",
-                height: "19px",
+                lineHeight: "19.2px",
               }}
             >
               Categories & Tags
@@ -127,19 +104,24 @@ const PostQuestion: React.FC = () => {
               {["Education", "Jobs", "Compass Help"].map((category, index) => (
                 <button
                   key={index}
-                  className="flex items-center px-3 py-1 text-gray-700 font-medium border border-gray-300 rounded-full hover:bg-gray-100"
+                  className="flex items-center px-3 py-1 font-medium border border-gray-300 rounded-full"
                   style={{
                     height: "36px",
+                    borderRadius: "18px",
+                    color: "#063E53",
+                    backgroundColor: "#064C651A",
                   }}
                 >
                   + {category}
                 </button>
               ))}
-              {/* Add Tag Button */}
               <button
-                className="flex items-center px-3 py-1 text-gray-700 font-medium border border-gray-300 rounded-full hover:bg-gray-100"
+                className="flex items-center px-3 py-1 font-medium border border-gray-300 rounded-full"
                 style={{
                   height: "36px",
+                  borderRadius: "18px",
+                  color: "#063E53",
+                  backgroundColor: "#064C651A",
                 }}
               >
                 +
@@ -147,46 +129,36 @@ const PostQuestion: React.FC = () => {
             </div>
           </div>
 
-          {/* Buttons */}
-          <div
-            className="flex justify-start items-center gap-4"
-            style={{
-              width: "336px",
-              height: "44px",
-            }}
-          >
-            {/* Post Button */}
+          {/* Action Buttons */}
+          <div className="flex items-center gap-6">
             <button
-              type="submit"
-              className="px-4 py-2 text-white font-medium rounded-md"
+              className="px-4 py-2 font-medium rounded-md"
               style={{
                 width: "94px",
                 height: "40px",
-                backgroundColor: "#000000", // Explicitly black
+                backgroundColor: "#116989",
+                color: "#FFFFFF",
               }}
             >
               Post
             </button>
-
-            {/* Save Button */}
             <button
-              type="button"
-              className="px-4 py-2 text-blue-700 font-medium border border-blue-700 hover:bg-blue-50 rounded-md"
+              className="px-4 py-2 font-medium border rounded-md"
               style={{
                 width: "94px",
                 height: "40px",
+                color: "#116989",
+                borderColor: "#11698980",
               }}
             >
               Save
             </button>
-
-            {/* Cancel Button */}
             <button
-              type="button"
-              className="px-4 py-2 text-blue-700 font-medium hover:underline"
+              className="px-4 py-2 font-medium hover:underline"
               style={{
                 width: "94px",
                 height: "40px",
+                color: "#116989",
               }}
             >
               Cancel

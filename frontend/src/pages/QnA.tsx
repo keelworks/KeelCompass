@@ -1,19 +1,35 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation/Navigation";
 import QnACard from "../components/qna/QnACard";
 import CategoryFilter from "../components/qna/CategoryFilter";
 import { CiSearch } from "react-icons/ci";
+import QnACard2 from "../components/qna/QnACard2";
 
 const QnA = () => {
   const navigate = useNavigate();
 
-  const categories = ["All", "My Posts", "Education", "Jobs", "Bookmarked"];
-  const subcategories = ["Posted", "Pending", "Drafts"];
+  const categories = [
+    "My Interests",
+    "All",
+    "Job Search",
+    "Career Development",
+    "Education",
+    "KeelWorks",
+  ];
+  const subcategories = ["Posted", "Bookmarked", "Drafts"];
+
+  // State to manage selected main category
+  const [selectedMainCategory, setSelectedMainCategory] = useState<string>(
+    categories[0]
+  );
 
   const handleFilterChange = (mainCategory: string, subCategory: string) => {
     console.log("Selected Category:", mainCategory);
     console.log("Selected Subcategory:", subCategory);
+
+    // Update the selected main category to reset subcategory in QnACard2
+    setSelectedMainCategory(mainCategory);
   };
 
   const handleAskQuestionClick = () => {
@@ -92,6 +108,10 @@ const QnA = () => {
         {/* QnACard */}
         <div className="mt-4 flex-grow">
           <QnACard />
+          <QnACard2
+            subcategories={subcategories}
+            selectedMainCategory={selectedMainCategory}
+          />
         </div>
 
         {/* Ask Question Button */}
