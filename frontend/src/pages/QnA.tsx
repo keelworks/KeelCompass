@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation/Navigation";
-import QnACard from "../components/qna/QnACard";
 import CategoryFilter from "../components/qna/CategoryFilter";
 import { CiSearch } from "react-icons/ci";
 import QnACard2 from "../components/qna/QnACard2";
@@ -10,13 +9,13 @@ const QnA = () => {
   const navigate = useNavigate();
 
   const categories = [
-    "My Interests",
-    "All",
-    "Job Search",
     "Career Development",
+    "Job Search",
     "Education",
     "KeelWorks",
+    "KCompass Help",
   ];
+
   const subcategories = ["Posted", "Bookmarked", "Drafts"];
 
   // State to manage selected main category
@@ -24,9 +23,8 @@ const QnA = () => {
     categories[0]
   );
 
-  const handleFilterChange = (mainCategory: string, subCategory: string) => {
+  const handleFilterChange = (mainCategory: string) => {
     console.log("Selected Category:", mainCategory);
-    console.log("Selected Subcategory:", subCategory);
 
     // Update the selected main category to reset subcategory in QnACard2
     setSelectedMainCategory(mainCategory);
@@ -96,37 +94,44 @@ const QnA = () => {
           </div>
         </div>
 
-        {/* CategoryFilter */}
-        <div className="mb-8">
-          <CategoryFilter
-            categories={categories}
-            subcategories={subcategories}
-            onFilterChange={handleFilterChange}
-          />
-        </div>
+        {/* CategoryFilter (Only Main Categories) */}
+        <div className="flex">
+          <div>
+            <div className="mb-4">
+              <CategoryFilter
+                categories={categories}
+                onFilterChange={(mainCategory) =>
+                  handleFilterChange(mainCategory)
+                }
+              />
+            </div>
 
-        {/* QnACard */}
-        <div className="mt-4 flex-grow">
-          <QnACard />
-          <QnACard2
-            subcategories={subcategories}
-            selectedMainCategory={selectedMainCategory}
-          />
-        </div>
+            {/* QnACard2 (Subcategories only rendered here) */}
+            <div className="flex-grow">
+              <QnACard2
+                subcategories={subcategories}
+                selectedMainCategory={selectedMainCategory}
+                // Pass submitted questions if needed
+              />
+            </div>
+          </div>
 
-        {/* Ask Question Button */}
-        <div className="flex justify-center mt-8">
-          <button
-            onClick={handleAskQuestionClick}
-            className="rounded-md text-white font-lato text-sm"
-            style={{
-              width: "322px",
-              height: "44px",
-              backgroundColor: "#58B6BE",
-            }}
-          >
-            Ask Question
-          </button>
+          <div>
+            {/* Ask Question Button */}
+            <div className="flex mt-11 ml-5 absolute">
+              <button
+                onClick={handleAskQuestionClick}
+                className="rounded-md text-white font-lato text-sm"
+                style={{
+                  width: "231px",
+                  height: "45px",
+                  backgroundColor: "#58B6BE",
+                }}
+              >
+                Ask Question
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

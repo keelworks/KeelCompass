@@ -5,7 +5,11 @@ interface QnACard2Props {
   selectedMainCategory: string;
 }
 
-const QnACard2 = ({ subcategories, selectedMainCategory }: QnACard2Props) => {
+const QnACard2 = ({
+  subcategories,
+  selectedMainCategory,
+
+}: QnACard2Props) => {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>(
     subcategories[0]
   );
@@ -14,21 +18,19 @@ const QnACard2 = ({ subcategories, selectedMainCategory }: QnACard2Props) => {
     setSelectedSubcategory(subcategory);
   };
 
-  // Reset subcategory to "Posted" when main category changes
   useEffect(() => {
     setSelectedSubcategory(subcategories[0]);
   }, [selectedMainCategory, subcategories]);
 
   return (
     <div
-      className="shadow-md rounded-md p-6"
+      className="shadow-md rounded-md p-6 flex"
       style={{
         width: "740px",
         height: "480.13px",
         borderRadius: "7px",
         padding: "24px",
-        marginTop: "156px",
-        marginLeft: "262px",
+        marginTop: "10px",
         gap: "10px",
         background: "linear-gradient(0deg, #FFFFFF 0%, #FFFFFF 100%)",
       }}

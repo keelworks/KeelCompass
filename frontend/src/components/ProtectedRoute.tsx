@@ -7,3 +7,16 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 };
 
 export default ProtectedRoute;
+
+
+<button
+                className="flex items-center px-3 py-1 font-medium border border-gray-300 rounded-full"
+                style={{
+                  height: "36px",
+                  borderRadius: "18px",
+                  color: "#063E53",
+                  backgroundColor: "#064C651A",
+                }}
+              >
+                +
+              </button>

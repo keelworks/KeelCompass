@@ -1,6 +1,30 @@
-import React from "react";
+import React, { useState } from "react";
 
 const PostQuestion: React.FC = () => {
+  const [questionTitle, setQuestionTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const availableTags = ["Career Development", "Job Search", "Education"];
+
+  const handleTagClick = (tag: string) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(selectedTags.filter((t) => t !== tag));
+    } else {
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = {
+      questionTitle,
+      description,
+      tags: selectedTags,
+    };
+    console.log("Form Submitted:", formData);
+  };
+
   return (
     <div
       className="flex items-center justify-center h-screen"
@@ -9,7 +33,6 @@ const PostQuestion: React.FC = () => {
         padding: "28px 24px 24px 24px",
       }}
     >
-      {/* Container Frame */}
       <div
         className="flex flex-col items-center"
         style={{
@@ -20,7 +43,7 @@ const PostQuestion: React.FC = () => {
           backgroundColor: "#FFFFFF",
         }}
       >
-        <form className="flex flex-col gap-6 w-full">
+        <form className="flex flex-col gap-6 w-full" onSubmit={handleSubmit}>
           <h1
             style={{
               color: "#5E7A84",
@@ -33,7 +56,6 @@ const PostQuestion: React.FC = () => {
             Post your question
           </h1>
 
-          {/* Question Title */}
           <div className="flex flex-col gap-2">
             <label
               style={{
@@ -45,10 +67,11 @@ const PostQuestion: React.FC = () => {
               Question Title<span style={{ color: "red" }}>*</span>
             </label>
             <input
-            required
               type="text"
               id="questionTitle"
               name="questionTitle"
+              value={questionTitle}
+              onChange={(e) => setQuestionTitle(e.target.value)}
               className="px-3 py-2 focus:outline-none focus:ring-1"
               style={{
                 width: "100%",
@@ -62,7 +85,6 @@ const PostQuestion: React.FC = () => {
             />
           </div>
 
-          {/* Description */}
           <div className="flex flex-col gap-2">
             <label
               style={{
@@ -71,11 +93,13 @@ const PostQuestion: React.FC = () => {
                 lineHeight: "19.2px",
               }}
             >
-              Description
+              Description<span style={{ color: "red" }}>*</span>
             </label>
             <textarea
               id="description"
               name="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               className="px-3 py-2 focus:outline-none focus:ring-1"
               style={{
                 width: "100%",
@@ -89,7 +113,6 @@ const PostQuestion: React.FC = () => {
             />
           </div>
 
-          {/* Categories & Tags */}
           <div className="flex flex-col gap-2">
             <label
               style={{
@@ -101,18 +124,23 @@ const PostQuestion: React.FC = () => {
               Categories & Tags
             </label>
             <div className="flex items-center gap-2 flex-wrap">
-              {["Education", "Jobs", "Compass Help"].map((category, index) => (
+              {availableTags.map((tag, index) => (
                 <button
                   key={index}
+                  type="button"
+                  onClick={() => handleTagClick(tag)}
                   className="flex items-center px-3 py-1 font-medium border border-gray-300 rounded-full"
                   style={{
                     height: "36px",
                     borderRadius: "18px",
-                    color: "#063E53",
-                    backgroundColor: "#064C651A",
+                    color: selectedTags.includes(tag) ? "#FFFFFF" : "#063E53",
+                    backgroundColor: selectedTags.includes(tag)
+                      ? "#116989"
+                      : "#064C651A",
                   }}
                 >
-                  + {category}
+                  {selectedTags.includes(tag) ? "✓ " : "+ "}
+                  {tag}
                 </button>
               ))}
               <button
@@ -129,9 +157,9 @@ const PostQuestion: React.FC = () => {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex items-center gap-6">
             <button
+              type="submit"
               className="px-4 py-2 font-medium rounded-md"
               style={{
                 width: "94px",
@@ -143,6 +171,7 @@ const PostQuestion: React.FC = () => {
               Post
             </button>
             <button
+              type="button"
               className="px-4 py-2 font-medium border rounded-md"
               style={{
                 width: "94px",
@@ -154,6 +183,7 @@ const PostQuestion: React.FC = () => {
               Save
             </button>
             <button
+              type="button"
               className="px-4 py-2 font-medium hover:underline"
               style={{
                 width: "94px",
@@ -165,6 +195,7 @@ const PostQuestion: React.FC = () => {
             </button>
           </div>
         </form>
+        
       </div>
     </div>
   );
