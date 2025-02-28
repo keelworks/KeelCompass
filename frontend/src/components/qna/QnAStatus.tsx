@@ -1,6 +1,4 @@
 import React from "react";
-import { BsThreeDotsVertical } from "react-icons/bs";
-import ThreeDotsIcon from "./ThreeDotsIcon";
 
 interface QnAStatusProps {
   icon: React.ReactNode;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation/Navigation";
 import CategoryFilter from "../components/qna/CategoryFilter";

@@ -1,4 +1,3 @@
-import React from "react";
 import DashboardWrapper from "../components/Dashboard/DashboardWrapper";
 import PostsSection from "../components/Dashboard/Sections/PostsSection";
 import CommunityUpdatesSection from "../components/Dashboard/Sections/CommunityUpdatesSection";
