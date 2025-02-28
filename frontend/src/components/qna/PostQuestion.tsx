@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const PostQuestion: React.FC = () => {
   const [questionTitle, setQuestionTitle] = useState("");
@@ -6,6 +7,7 @@ const PostQuestion: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const availableTags = ["Career Development", "Job Search", "Education"];
+  const navigate = useNavigate();
 
   const handleTagClick = (tag: string) => {
     if (selectedTags.includes(tag)) {
@@ -22,7 +24,12 @@ const PostQuestion: React.FC = () => {
       description,
       tags: selectedTags,
     };
+    navigate('/qna')
     console.log("Form Submitted:", formData);
+  };
+
+  const handleCancel = () => {
+    navigate("/qna");
   };
 
   return (
@@ -67,6 +74,7 @@ const PostQuestion: React.FC = () => {
               Question Title<span style={{ color: "red" }}>*</span>
             </label>
             <input
+              required
               type="text"
               id="questionTitle"
               name="questionTitle"
@@ -93,7 +101,7 @@ const PostQuestion: React.FC = () => {
                 lineHeight: "19.2px",
               }}
             >
-              Description<span style={{ color: "red" }}>*</span>
+              Description
             </label>
             <textarea
               id="description"
@@ -183,6 +191,7 @@ const PostQuestion: React.FC = () => {
               Save
             </button>
             <button
+              onClick={handleCancel}
               type="button"
               className="px-4 py-2 font-medium hover:underline"
               style={{
@@ -195,7 +204,6 @@ const PostQuestion: React.FC = () => {
             </button>
           </div>
         </form>
-        
       </div>
     </div>
   );

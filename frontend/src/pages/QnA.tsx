@@ -4,6 +4,7 @@ import Navigation from "../components/Navigation/Navigation";
 import CategoryFilter from "../components/qna/CategoryFilter";
 import { CiSearch } from "react-icons/ci";
 import QnACard2 from "../components/qna/QnACard2";
+import FilterTab from "../components/qna/FilterTab";
 
 const QnA = () => {
   const navigate = useNavigate();
@@ -118,18 +119,22 @@ const QnA = () => {
 
           <div>
             {/* Ask Question Button */}
-            <div className="flex mt-11 ml-5 absolute">
+            <div className="flex mt-11 ml-5 absolute flex-col">
               <button
                 onClick={handleAskQuestionClick}
                 className="rounded-md text-white font-lato text-sm"
                 style={{
                   width: "231px",
                   height: "45px",
-                  backgroundColor: "#58B6BE",
+                  backgroundColor: "#D2EEF0",
+                  color:"#00929C"
                 }}
               >
                 Ask Question
               </button>
+              <div className="flex flex-col mt-3">
+              <FilterTab></FilterTab>
+              </div>
             </div>
           </div>
         </div>
