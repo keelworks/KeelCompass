@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 
-interface QnACardProps {
+interface QnACard2Props {
   subcategories: string[];
   selectedMainCategory: string;
 }
 
-const QnACard = ({ subcategories, selectedMainCategory }: QnACardProps) => {
+const QnACard2 = ({
+  subcategories,
+  selectedMainCategory,
+
+}: QnACard2Props) => {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>(
     subcategories[0]
   );
@@ -14,7 +18,6 @@ const QnACard = ({ subcategories, selectedMainCategory }: QnACardProps) => {
     setSelectedSubcategory(subcategory);
   };
 
-  // Reset subcategory to "Posted" when main category changes
   useEffect(() => {
     setSelectedSubcategory(subcategories[0]);
   }, [selectedMainCategory, subcategories]);
@@ -27,8 +30,7 @@ const QnACard = ({ subcategories, selectedMainCategory }: QnACardProps) => {
         height: "480.13px",
         borderRadius: "7px",
         padding: "24px",
-        marginTop: "156px",
-        marginLeft: "262px",
+        marginTop: "10px",
         gap: "10px",
         background: "linear-gradient(0deg, #FFFFFF 0%, #FFFFFF 100%)",
       }}
@@ -74,4 +76,4 @@ const QnACard = ({ subcategories, selectedMainCategory }: QnACardProps) => {
   );
 };
 
-export default QnACard;
+export default QnACard2;
