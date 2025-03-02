@@ -1,15 +1,15 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://your-api.com/api"; // Replace with actual API URL
+const API_BASE_URL = "https://localhost:8080/api"; // Replace with actual API URL
 
 // Create Axios instance with default settings
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // Allows HTTP-only cookies
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // withCredentials: true, // Allows HTTP-only cookies
+  headers: {"Content-Type": "application/json",}
 });
+
+
 
 // Attach JWT token to every request if available
 axiosInstance.interceptors.request.use((config) => {

@@ -7,6 +7,7 @@ interface AuthState {
   user: any | null;
   token: string | null;
   isAuthenticated: boolean;
+  setToken: (token: string) => void;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   restoreAuth: () => Promise<void>;
@@ -19,6 +20,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
+      setToken: (token) => set({ token }), // function to store token after registration
 
       // Login action
       login: async (credentials) => {
@@ -57,6 +59,6 @@ export const useAuthStore = create<AuthState>()(
         }
       },
     }),
-    { name: "auth-store" }
+    { name: "auth-store" } // Saves token in localStorage
   )
 );
