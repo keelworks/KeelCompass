@@ -20,7 +20,10 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
-      setToken: (token) => set({ token }), // function to store token after registration
+      setToken: (token) => {
+        set({ token })
+        localStorage.setItem("token", token)
+      }, // function to store token after registration
 
       // Login action
       login: async (credentials) => {
@@ -58,7 +61,9 @@ export const useAuthStore = create<AuthState>()(
           set({ user: null, token: null, isAuthenticated: false });
         }
       },
+      getToken: () => get().token,
     }),
     { name: "auth-store" } // Saves token in localStorage
   )
 );
+

@@ -1,4 +1,5 @@
 import axios from "axios";
+import {useAuthStore} from "./store"
 
 const API_BASE_URL = "https://localhost:8080/api"; // Replace with actual API URL
 
@@ -8,8 +9,6 @@ const axiosInstance = axios.create({
   // withCredentials: true, // Allows HTTP-only cookies
   headers: {"Content-Type": "application/json",}
 });
-
-
 
 // Attach JWT token to every request if available
 axiosInstance.interceptors.request.use((config) => {
@@ -35,4 +34,21 @@ export const logoutUser = async () => {
 export const refreshToken = async () => {
   const response = await axiosInstance.get("/auth/refresh");
   return response.data; // { user, newToken }
+};
+
+// Function to register a user and store the token automatically
+export const registerUser = async (userData: { username: string; email: string; password: string }) => {
+  try {
+    const response = await axiosInstance.post("/auth/register", userData);
+    
+    if (response.data.token) { // If token is received, store it in Zustand
+      useAuthStore.getState().setToken(response.data.token);
+      console.log("Token stored in Zustand:", response.data.token);
+    }
+
+    return response.data; // Return full response (message + token)
+  } catch (error) {
+    console.error("Registration failed:");
+    throw error;
+  }
 };
