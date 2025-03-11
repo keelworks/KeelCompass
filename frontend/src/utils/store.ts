@@ -1,69 +1,98 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { loginUser, logoutUser, refreshToken } from "./api";
+// src/utils/store.ts
+import {create} from "zustand";
+import axiosInstance from "./api";
 
-// Define the authentication state interface
-interface AuthState {
-  user: any | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  setToken: (token: string) => void;
-  login: (credentials: { email: string; password: string }) => Promise<void>;
-  logout: () => Promise<void>;
-  restoreAuth: () => Promise<void>;
+interface User {
+  id: number;
+  username: string;
 }
 
-// Zustand store with persistence
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      setToken: (token) => {
-        set({ token })
-        localStorage.setItem("token", token)
-      }, // function to store token after registration
+export interface Question {
+  id: number;
+  title: string;
+  description: string;
+  created_at: string;
+  user: User;
+  likeCount: number;
+  reportCount: number;
+}
 
-      // Login action
-      login: async (credentials) => {
-        try {
-          const response = await loginUser(credentials);
-          set({ user: response.user, token: response.token, isAuthenticated: true });
-          localStorage.setItem("token", response.token);
-        } catch (error) {
-          console.error("Login failed:", error);
-        }
-      },
+export interface Interest {
+  id: number;
+  name: string;
+}
 
-      // Logout action
-      logout: async () => {
-        try {
-          await logoutUser();
-          set({ user: null, token: null, isAuthenticated: false });
-          localStorage.removeItem("token");
-        } catch (error) {
-          console.error("Logout failed:", error);
-        }
-      },
+interface FetchQuestionsResponse {
+  message: string;
+  questions: Question[];
+  offset: number;
+  total: number;
+}
 
-      // Restore auth state on page refresh
-      restoreAuth: async () => {
-        try {
-          const token = localStorage.getItem("token");
-          if (token) {
-            const response = await refreshToken();
-            set({ user: response.user, token: response.newToken, isAuthenticated: true });
-            localStorage.setItem("token", response.newToken);
-          }
-        } catch (error) {
-          console.error("Session restore failed:", error);
-          set({ user: null, token: null, isAuthenticated: false });
-        }
-      },
-      getToken: () => get().token,
-    }),
-    { name: "auth-store" } // Saves token in localStorage
-  )
-);
+interface AppState {
+  // For "posts"
+  questions: Question[];
+  offset: number;
+  total: number;
+  fetchQuestions: (count: number, offset: number) => Promise<void>;
 
+  // For "interests"
+  interests: Interest[];
+  fetchInterests: () => Promise<void>;
+
+  // Loading & error states (optional)
+  isLoading: boolean;
+  error: string | null;
+}
+
+export const useStore = create<AppState>((set) => ({
+  questions: [],
+  offset: 0,
+  total: 0,
+  interests: [],
+  isLoading: false,
+  error: null,
+
+  fetchQuestions: async (count, offset) => {
+    try {
+      set({ isLoading: true, error: null });
+      // GET /questions?count={count}&offset={offset}
+      const response = await axiosInstance.get<FetchQuestionsResponse>("/questions", {
+        params: { count, offset },
+      });
+
+    //   set({
+    //     questions: response.data.questions,
+    //     offset: response.data.offset,
+    //     total: response.data.total,
+    //     isLoading: false,
+    //   });
+
+    set((state) => ({
+        questions: offset === 0 
+          ? response.data.questions 
+          : [...state.questions, ...response.data.questions],
+        offset: response.data.offset,
+        total: response.data.total,
+        isLoading: false,
+      }));
+      
+    } catch (err: any) {
+      console.error("Error fetching questions:", err);
+      set({ error: err.message ?? "Failed to fetch posts", isLoading: false });
+    }
+  },
+
+  fetchInterests: async () => {
+    // For now, you can stub this out or do a real request if/when your API is ready
+    try {
+      set({ isLoading: true, error: null });
+      // e.g., const response = await axiosInstance.get<Interest[]>("/interests");
+      // set({ interests: response.data, isLoading: false });
+      set({ interests: [], isLoading: false });
+    } catch (err: any) {
+      console.error("Error fetching interests:", err);
+      set({ error: err.message ?? "Failed to fetch interests", isLoading: false });
+    }
+  },
+}));

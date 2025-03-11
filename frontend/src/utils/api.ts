@@ -1,54 +1,32 @@
+// src/utils/api.ts
 import axios from "axios";
-import {useAuthStore} from "./store"
 
-const API_BASE_URL = "https://localhost:8080/api"; // Replace with actual API URL
-
-// Create Axios instance with default settings
+// Create an Axios instance with a base URL
 const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  // withCredentials: true, // Allows HTTP-only cookies
-  headers: {"Content-Type": "application/json",}
+  baseURL: "http://localhost:8080/api", 
+  // or your real backend URL
 });
 
-// Attach JWT token to every request if available
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// (Optional) Attach interceptors for auth tokens or error handling
+// axiosInstance.interceptors.request.use(
+//   (config) => {
+//     // e.g., attach token from localStorage if needed
+//     const token = localStorage.getItem("token");
+//     if (token && config.headers) {
+//       config.headers.Authorization = `Bearer ${token}`;
+//     }
+//     return config;
+//   },
+//   (error) => Promise.reject(error)
+// );
+
+// (Optional) Response error handling
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // e.g., handle 401 or show a notification
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
-// Login function
-export const loginUser = async (credentials: { email: string; password: string }) => {
-  const response = await axiosInstance.post("/auth/login", credentials);
-  return response.data; // { user, token }
-};
-
-// Logout function
-export const logoutUser = async () => {
-  await axiosInstance.post("/auth/logout");
-};
-
-// Token refresh function
-export const refreshToken = async () => {
-  const response = await axiosInstance.get("/auth/refresh");
-  return response.data; // { user, newToken }
-};
-
-// Function to register a user and store the token automatically
-export const registerUser = async (userData: { username: string; email: string; password: string }) => {
-  try {
-    const response = await axiosInstance.post("/auth/register", userData);
-    
-    if (response.data.token) { // If token is received, store it in Zustand
-      useAuthStore.getState().setToken(response.data.token);
-      console.log("Token stored in Zustand:", response.data.token);
-    }
-
-    return response.data; // Return full response (message + token)
-  } catch (error) {
-    console.error("Registration failed:");
-    throw error;
-  }
-};
+export default axiosInstance;
