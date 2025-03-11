@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const PostQuestion: React.FC = () => {
+const PostQuestionDashboard: React.FC = () => {
   const [questionTitle, setQuestionTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -24,13 +24,13 @@ const PostQuestion: React.FC = () => {
       description,
       tags: selectedTags,
     };
-    navigate('/qna')
+    navigate('/')
     console.log("Form Submitted:", formData);
   };
 
   const handleCancel = () => {
     
-    navigate("/qna");
+    navigate("/");
   };
 
   return (
@@ -210,4 +210,4 @@ const PostQuestion: React.FC = () => {
   );
 };
 
-export default PostQuestion;
+export default PostQuestionDashboard;

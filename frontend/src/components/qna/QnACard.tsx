@@ -1,133 +1,79 @@
-import React, { useState } from "react";
-import QnAUserName from "./QnAUserName";
-import QnAStatus from "./QnAStatus";
-import { GrNotes } from "react-icons/gr";
-import ReplyButton from "./ReplyButton";
-import ShowAllRepliesButton from "./ShowAllRepliesButton";
-import LikeButton from "./LikeButton";
-import DislikeButton from "./DislikeButton";
-import Tag from "./Tag";
-import BodyContent from "./BodyContent";
-import { RxAvatar } from "react-icons/rx";
-import VerticalIndicator from "./VerticalIndicator";
+import { useState, useEffect } from "react";
 
-const QnACard: React.FC = () => {
-  const [likeCount, setLikeCount] = useState(0);
-  const [dislikeCount, setDislikeCount] = useState(0);
-  const [liked, setLiked] = useState(false);
-  const [disliked, setDisliked] = useState(false);
+interface QnACard2Props {
+  subcategories: string[];
+  selectedMainCategory: string;
+}
 
-  const handleLikeToggle = () => {
-    if (liked) {
-      setLikeCount((prev) => prev - 1);
-      setLiked(false);
-    } else {
-      setLikeCount((prev) => prev + 1);
-      setLiked(true);
+const QnACard2 = ({
+  subcategories,
+  selectedMainCategory,
 
-      if (disliked) {
-        setDislikeCount((prev) => prev - 1);
-        setDisliked(false);
-      }
-    }
+}: QnACard2Props) => {
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>(
+    subcategories[0]
+  );
+
+  const handleSubcategoryChange = (subcategory: string) => {
+    setSelectedSubcategory(subcategory);
   };
 
-  const handleDislikeToggle = () => {
-    if (disliked) {
-      setDislikeCount((prev) => prev - 1);
-      setDisliked(false);
-    } else {
-      setDislikeCount((prev) => prev + 1);
-      setDisliked(true);
-
-      if (liked) {
-        setLikeCount((prev) => prev - 1);
-        setLiked(false);
-      }
-    }
-  };
+  useEffect(() => {
+    setSelectedSubcategory(subcategories[0]);
+  }, [selectedMainCategory, subcategories]);
 
   return (
-    <div className="flex">
-      {/* Left Vertical Indicator */}
-      <VerticalIndicator />
-
-      {/* Card Content */}
+    <div
+      className="shadow-md rounded-md p-6 flex"
+      style={{
+        width: "740px",
+        height: "480.13px",
+        borderRadius: "7px",
+        padding: "24px",
+        marginTop: "10px",
+        gap: "10px",
+        background: "linear-gradient(0deg, #FFFFFF 0%, #FFFFFF 100%)",
+      }}
+    >
       <div
-        className="w-[671px] h-[288px] bg-white shadow-md p-4"
-        style={{
-          borderTopRightRadius: "8px", // Top-right corner rounded
-          borderBottomRightRadius: "8px", // Bottom-right corner rounded
-        }}
+        className="flex flex-col bg-[#FFFFFF] p-4 rounded-md"
+        style={{ width: "692px", height: "432.13px", gap: "32px" }}
       >
-        {/* Main Flex Container */}
-        <div className="flex flex-col justify-between h-full space-y-4">
-          {/* Top Section */}
-          <div className="flex justify-between items-center w-full h-[36px]">
-            <QnAUserName
-              icon={<div className="w-[8.43px] h-[10px]"><RxAvatar size={28} /></div>}
-              name="Name"
-              time="August 20, 2024 9:30 am"
-            />
-            <QnAStatus icon={<div className="w-[8.43px] h-[10px]"><GrNotes size={10} /></div>} statusText="In Review" />
-          </div>
-
-          {/* BodyContent Section */}
-          <BodyContent
-            title="Title"
-            text="This is a sample body content. It can be very long, requiring truncation for better UI. Add your full content here, and it will be shortened dynamically based on the user's interaction. 'See more' allows users to expand the content."
-          />
-
-          {/* Tags Section */}
-          <div
-            className="flex items-center h-[32px]"
-            style={{
-              minWidth: "16px",
-              width: "fit-content",
-              maxWidth: "100%",
-              overflowX: "auto",
-              whiteSpace: "nowrap",
-            }}
-          >
-            <p className="flex text-sm gap-[16px]">
-              <Tag label={"Education"} />
-              <Tag label={"Technology"} />
-              <Tag label={"Science"} />
-            </p>
-          </div>
-
-          {/* Combined Bottom Section */}
-          <div className="flex justify-between items-center w-full h-[32px]">
-            {/* Left Section: Reply and Show All Replies */}
-            <div className="flex items-center gap-[21px]">
-              <ReplyButton
-                label="Reply"
-                onClick={() => alert("Reply button clicked!")}
-              />
-              <ShowAllRepliesButton
-                label="Show All Replies (21)"
-                onClick={() => alert("Show All Replies button clicked!")}
-              />
-            </div>
-
-            {/* Right Section: Like and Dislike Buttons */}
-            <div className="flex items-center gap-2">
-              <LikeButton
-                count={likeCount}
-                active={liked}
-                onToggle={handleLikeToggle}
-              />
-              <DislikeButton
-                count={dislikeCount}
-                active={disliked}
-                onToggle={handleDislikeToggle}
-              />
-            </div>
-          </div>
+        <div
+          className="flex space-x-4 bg-[#F0F0F0] p-2 rounded-md"
+          style={{ width: "333.92px", height: "42.13px", padding: "4px" }}
+        >
+          {subcategories.map((subcategory) => (
+            <button
+              key={subcategory}
+              className={`flex items-center justify-center px-4 h-full text-lg transition-all duration-200 rounded-md shadow-sm ${
+                selectedSubcategory === subcategory
+                  ? "text-[#306E74] bg-white shadow-md"
+                  : "text-[#306E74] bg-transparent hover:bg-[#E0E0E0]"
+              }`}
+              onClick={() => handleSubcategoryChange(subcategory)}
+              style={{
+                minWidth: "100px",
+                padding: "5px 10px",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 500,
+                  lineHeight: "42.13px",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                {subcategory}
+              </span>
+            </button>
+          ))}
         </div>
       </div>
     </div>
   );
 };
 
-export default QnACard;
+export default QnACard2;
