@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BsHouseDoor, BsSearch } from "react-icons/bs"; // Import icons
+import { BsHouseDoor} from "react-icons/bs"; // Import icons
 import { RiQuestionnaireLine } from "react-icons/ri";
 import { FaBook } from "react-icons/fa"; // Import book icon for footer
 import Logo from "../assets/logo.png";
