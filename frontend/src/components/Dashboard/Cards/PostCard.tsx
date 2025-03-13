@@ -1,79 +1,85 @@
-// src/components/posts/PostCard.tsx
 import React, { useState } from "react";
 import { Question } from "../../../utils/store";
-// import { Link } from "react-router-dom";
+import { FaRegThumbsUp, FaRegCommentDots, FaRegBookmark } from "react-icons/fa";
+import { MdOutlineRateReview } from "react-icons/md";
 
 interface PostCardProps {
   question: Question;
 }
 
 const PostCard: React.FC<PostCardProps> = ({ question }) => {
-  // Maybe truncate the description
-  const truncatedDescription = question.description.length > 100
-    ? question.description.substring(0, 100) + "..."
-    : question.description;
-
   const [elongated, setElongated] = useState(false);
+  const [likes, setLikes] = useState(3); // Placeholder for frontend only
+  const [comments, setComments] = useState(8); // Placeholder for frontend only
 
-  
+  const shouldTruncate = question.description.length > 150;
+  const displayText = elongated ? question.description : question.description.substring(0, 150) + "...";
 
   return (
-    <div className={`border p-4 rounded`}>
-      <h3 className="text-lg font-normal text-[#004466] leading-relaxed">{question.title}</h3>
-      <div className= {`${!elongated && "truncate"}`}>
-      <p
-      className={`
-        text-base 
-        text-[#616161] 
-        leading-[1.5] 
-        mb-4 
-        ${!elongated && "truncate"}
-      `}
-    >{elongated ? question.description : truncatedDescription}</p>
+    <div className="border p-4 rounded bg-white shadow-md w-full max-w-2xl">
+      {/* Top Section: User Info + Review & Bookmark Icons */}
+      <div className="flex justify-between items-center mb-2">
+        {/* User Info */}
+        <div className="flex items-center">
+          <img
+            src="/default-avatar.png" // Placeholder image
+            alt="Dummy Name"
+            className="w-8 h-8 rounded-full mr-2"
+          />
+          <div className="flex items-center">
+            <p className="text-sm font-medium text-gray-800">Dummy Name</p>
+            <span className="text-xs text-gray-500 ml-2">• November 8, 2024</span>
+          </div>
+        </div>
+
+        {/* Review and Bookmark Icons */}
+        <div className="flex items-center text-gray-500 text-sm">
+          <MdOutlineRateReview className="mr-1" />
+          <span className="mr-4">In Review</span>
+          <FaRegBookmark className="cursor-pointer" />
+        </div>
       </div>
-      {/* <p className="text-sm text-gray-500">by {question.user.username} on {question.created_at}</p> */}
-      {/* "Read More" could link to a detail page if you have routing */}
-      
-      {question.description.length > 100 && (
-        <div className="bg-custom-gradient bg-clip-text text-transparent cursor-pointer hover:opacity-80 transition" onClick={() => setElongated(!elongated)}>
-          {elongated ? (
-          // When showing full text
-          <span>Read less   <span
-          className="
-            inline-block
-            w-0 
-            h-0 
-            ml-1
-            border-l-[5px] 
-            border-r-[5px] 
-            border-b-[6px]
-            border-l-transparent 
-            border-r-transparent 
-            border-b-teal-500
-          "
-        /></span>
-        ) : (
-          // When truncated, show "Read more" + arrow
-          <span className="flex items-center">
-            Read more
-            <span
-              className="
-                inline-block 
-                w-0 
-                h-0 
-                ml-1
-                border-l-[5px] 
-                border-r-[5px] 
-                border-t-[6px]
-                border-l-transparent 
-                border-r-transparent 
-                border-t-teal-500
-              "
-            />
+
+      {/* Title */}
+      <h3 className="text-lg font-semibold text-[#004466] leading-relaxed mb-2">
+        {question.title}
+      </h3>
+
+      {/* Expandable Description */}
+      <p className="text-base text-[#616161] leading-[1.5] inline">
+        {displayText}
+        {shouldTruncate && (
+          <span
+            className="text-blue-600 cursor-pointer hover:opacity-80 transition ml-1 inline-flex items-center"
+            onClick={() => setElongated(!elongated)}
+          >
+            {elongated ? "Read less" : "Read more"}{" "}
+            <span className="ml-1">{elongated ? "▲" : "▼"}</span>
           </span>
         )}
+      </p>
+
+      {/* Tags Section */}
+      {/* <div className="flex mt-3 space-x-2">
+        <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm">
+          Education
+        </span>
+        <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm">
+          Technology
+        </span>
+      </div> */}
+
+      {/* Like and Comment Section (Aligned Right) */}
+      <div className="flex justify-end mt-3 text-gray-600 text-sm">
+        <div className="flex items-center mr-4 cursor-pointer">
+          <FaRegThumbsUp className="mr-1" />
+          <span>{likes}</span>
         </div>
-      )}
+        <div className="flex items-center cursor-pointer">
+          <FaRegCommentDots className="mr-1" />
+          <span>{comments}</span>
+        </div>
+      </div>
     </div>
   );
 };
