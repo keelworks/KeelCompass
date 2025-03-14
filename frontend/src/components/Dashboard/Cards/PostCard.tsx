@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Question } from "../../../utils/store";
 import { FaRegThumbsUp, FaRegCommentDots, FaRegBookmark } from "react-icons/fa";
 import { MdOutlineRateReview } from "react-icons/md";
+import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 
 interface PostCardProps {
   question: Question;
@@ -16,7 +17,7 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
   const displayText = elongated ? question.description : question.description.substring(0, 150) + "...";
 
   return (
-    <div className="border p-4 rounded bg-white shadow-md w-full max-w-2xl">
+    <div className="p-4 rounded-lg bg-white w-full max-w-2xl shadow-b-md">
       {/* Top Section: User Info + Review & Bookmark Icons */}
       <div className="flex justify-between items-center mb-2">
         {/* User Info */}
@@ -50,24 +51,14 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
         {displayText}
         {shouldTruncate && (
           <span
-            className="text-blue-600 cursor-pointer hover:opacity-80 transition ml-1 inline-flex items-center"
+            className="text-[#007880] cursor-pointer hover:opacity-80 transition ml-1 inline-flex items-center"
             onClick={() => setElongated(!elongated)}
           >
             {elongated ? "Read less" : "Read more"}{" "}
-            <span className="ml-1">{elongated ? "▲" : "▼"}</span>
+            <span className="ml-1">{elongated ? <IoIosArrowUp /> : <IoIosArrowDown />}</span>
           </span>
         )}
       </p>
-
-      {/* Tags Section */}
-      {/* <div className="flex mt-3 space-x-2">
-        <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm">
-          Education
-        </span>
-        <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm">
-          Technology
-        </span>
-      </div> */}
 
       {/* Like and Comment Section (Aligned Right) */}
       <div className="flex justify-end mt-3 text-gray-600 text-sm">
