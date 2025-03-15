@@ -7,7 +7,7 @@ const dbConfig = require("../configs/dbConfig.js");
 const { error } = require("winston");
 
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
-  host: dbConfig.HOST,
+  host: dbConfig.HOST, // use the default port 3306 for mysql
   dialect: dbConfig.dialect,
   operatorsAliases: 0,
   define: {
