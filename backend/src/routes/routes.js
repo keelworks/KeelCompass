@@ -10,6 +10,7 @@ const commentRoutes = require("./commentRoutes");
 const tagRoutes = require("./tagRoutes");
 const interestRoutes = require("./interestRoutes");
 const authRoutes = require("./authRoutes");
+const uploadRoutes = require("./uploadRoutes");
 
 // Route for GET method -- a health check method
 router.get("/health", controller.healthCheck);
@@ -36,7 +37,10 @@ router.use("/api/comments", commentRoutes);
 
 router.use("/api/interests", interestRoutes);
 
-router.use("/static/career",express.static("src/career"));
-router.use("/static/education",express.static("src/education"));
+router.use("/static/career", express.static("src/career"));
+router.use("/static/education", express.static("src/education"));
+
+// Upload file
+router.use("/api/upload", uploadRoutes);
 
 module.exports = router;
