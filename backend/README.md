@@ -9,6 +9,7 @@ This is the backend part of KeelCompass project built with Express.js.
 ```
 .
 ├── /node_modules/          # Installed packages
+├── /docs/                  # Documents
 ├── /src/                   # Source files
 │   ├── /configs/           # Configuration files (e.g., environment, database, etc.)
 │   ├── /controllers/       # Route handlers (controllers for different resources)
@@ -16,6 +17,8 @@ This is the backend part of KeelCompass project built with Express.js.
 │   ├── /routes/            # API route definitions
 │   ├── /services/          # Business logic and service layer
 │   ├── /utils/             # Utility functions (helpers, formatters, etc.)
+│   ├── /libs/              # Library functions
+│   ├── /middlewares/       # Middleware functions
 │   └── app.js              # Express app configuration
 ├── .gitignore              # Git ignore file
 ├── package.json            # NPM dependencies and scripts
