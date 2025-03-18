@@ -11,6 +11,9 @@ const { HttpStatusCodes } = require("./utils/httpError");
 // Importing routes
 const router = require("./routes/routes");
 
+// Initialize google cloud service
+require("./lib/googleCloudStorage");
+
 // Import Redis session configuration
 // const { redisSessionMiddleware } = require("./configs/redisConfig");
 
@@ -24,6 +27,15 @@ app.use(express.urlencoded({ extended: true }));
 
 const cors = require("cors");
 app.use(cors());
+
+// Check request format
+app.use(express.json());
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError) {
+    return res.status(400).json({ error: "Invalid JSON format" });
+  }
+  next();
+});
 
 // Initializing app to use routes
 // use morgan to log http requests
