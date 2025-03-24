@@ -69,7 +69,6 @@ exports.login = async (req, res) => {
 };
 
 // Reset Password
-// Reset Password
 exports.resetPassword = async (req, res) => {
   const { username, email, newPassword } = req.body;
 
@@ -78,7 +77,7 @@ exports.resetPassword = async (req, res) => {
   }
 
   try {
-    // Find the user by username and email
+    // Finding the user by username and email
     const user = await db.users.findOne({
       where: { username, email }
     });
@@ -87,14 +86,14 @@ exports.resetPassword = async (req, res) => {
       return res.status(404).json({ message: 'User not found with provided username and email' });
     }
 
-    // Hash the new password
+    // Hashing the new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password
+    // Updating password
     user.password = hashedPassword;
     await user.save();
 
-    // Generate new JWT token
+    // Generating new JWT token
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
