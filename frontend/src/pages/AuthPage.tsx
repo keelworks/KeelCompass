@@ -51,6 +51,8 @@ const AuthPage = () => {
    
      localStorage.setItem("token", data.token);
      localStorage.setItem("lastActive", new Date().getTime().toString());
+     localStorage.setItem("userId", user.id.toString());
+localStorage.setItem("username", user.username);
 
      navigate("/dashboard");
    } catch (err) {
