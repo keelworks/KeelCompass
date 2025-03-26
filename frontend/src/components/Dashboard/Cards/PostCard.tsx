@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { Question } from "../../../utils/store";
-import { FaRegThumbsUp, FaRegCommentDots, FaRegBookmark } from "react-icons/fa";
+import {
+  FaRegThumbsUp,
+  FaRegCommentDots,
+  FaRegBookmark,
+} from "react-icons/fa";
 import { MdOutlineRateReview } from "react-icons/md";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import ExplodedPostCard from "./ExplodedPostCard";
@@ -11,8 +15,7 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ question }) => {
   const [elongated, setElongated] = useState(false);
-  const [likes, setLikes] = useState(3);
-  const [comments, setComments] = useState(8);
+  const [comments, setComments] = useState(8); // Still static
   const [showModal, setShowModal] = useState(false);
   const [postData, setPostData] = useState(question);
 
@@ -27,6 +30,46 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
       title: updatedTitle,
       description: updatedDescription,
     }));
+  };
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("You must be logged in to like a question.");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:8080/api/questions/action", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          questionID: postData.id,
+          actionType: "like",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.message === "success") {
+        setPostData((prev) => ({
+          ...prev,
+          likeCount: prev.likeCount + 1,
+        }));
+      } else if (data.message === "record existed") {
+        alert("You've already liked this question.");
+      } else {
+        alert(data.message || "Failed to like the question");
+      }
+    } catch (error) {
+      console.error("Error liking the question:", error);
+      alert("An error occurred while liking the question.");
+    }
   };
 
   return (
@@ -48,12 +91,13 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
                 {postData.user?.username || "Anonymous"}
               </p>
               <span className="text-xs text-gray-500 ml-2">
-  • {new Date(postData.created_at).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  })}
-</span>
+                •{" "}
+                {new Date(postData.created_at).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
             </div>
           </div>
 
@@ -80,7 +124,7 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
                 setElongated(!elongated);
               }}
             >
-              {elongated ? "Read less" : "Read more"}
+              {elongated ? "Read less" : "Read more"}{" "}
               <span className="ml-1">
                 {elongated ? <IoIosArrowUp /> : <IoIosArrowDown />}
               </span>
@@ -90,12 +134,9 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
 
         {/* Likes & Comments */}
         <div className="flex justify-end mt-3 text-gray-600 text-sm">
-          <div
-            className="flex items-center mr-4 cursor-pointer"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="flex items-center mr-4 cursor-pointer" onClick={handleLike}>
             <FaRegThumbsUp className="mr-1" />
-            <span>{likes}</span>
+            <span>{postData.likeCount}</span>
           </div>
           <div
             className="flex items-center cursor-pointer"
@@ -112,9 +153,11 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <ExplodedPostCard
             question={postData}
-            likes={likes}
+            likes={postData.likeCount}
             comments={comments}
-            setLikes={setLikes}
+            setLikes={(newCount: number) =>
+              setPostData((prev) => ({ ...prev, likeCount: newCount }))
+            }
             handleClose={() => setShowModal(false)}
             handleEdit={handleEdit}
           />

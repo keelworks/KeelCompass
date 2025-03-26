@@ -5,11 +5,10 @@ import { IoSend } from "react-icons/io5";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import axios from "axios";
 
-
 interface ExplodedPostCardProps {
   question: Question;
   likes: number;
-  setLikes: React.Dispatch<React.SetStateAction<number>>;
+  setLikes: (newCount: number) => void
   comments: number;
   handleClose: () => void;
   handleEdit: (updatedTitle: string, updatedDescription: string) => void;
@@ -28,18 +27,56 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(question.title);
-  const [editedDescription, setEditedDescription] = useState(question.description);
+  const [editedDescription, setEditedDescription] = useState(
+    question.description
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleLike = () => {
-    setLikes((prev) => (liked ? prev - 1 : prev + 1));
-    setLiked(!liked);
+  // API-based like functionality
+  const handleLike = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("You must be logged in to like a question.");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:8080/api/questions/action", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          questionID: question.id,
+          actionType: "like",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.message === "success") {
+        setLikes(likes + 1);
+        setLiked(true);
+      } else if (data.message === "record existed") {
+        alert("You've already liked this question.");
+      } else {
+        alert(data.message || "Failed to like the question.");
+      }
+    } catch (error) {
+      console.error("Like error:", error);
+      alert("An error occurred while liking the question.");
+    }
   };
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setShowDropdown(false);
       }
     };
@@ -80,8 +117,12 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
               >
                 Edit
               </li>
-              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Delete</li>
-              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Report</li>
+              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                Delete
+              </li>
+              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                Report
+              </li>
             </ul>
           </div>
         )}
@@ -127,7 +168,9 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
               <h3 className="text-lg font-semibold text-[#004466] mb-2">
                 {question.title}
               </h3>
-              <p className="text-sm text-[#616161] mb-4">{question.description}</p>
+              <p className="text-sm text-[#616161] mb-4">
+                {question.description}
+              </p>
             </>
           )}
 
@@ -154,41 +197,38 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
               Cancel
             </button>
             <button
-  className="px-3 py-1 bg-blue-500 text-white rounded"
-  onClick={async () => {
-    try {
-      // API Call
-      const response = await axios.put(
-        "/api/questions",
-        {
-          questionID: question.id, // Assuming question has 'id' field
-          title: editedTitle,
-          description: editedDescription,
-        },
-        { withCredentials: true } // Include if authentication cookies/tokens required
-      );
+              className="px-3 py-1 bg-blue-500 text-white rounded"
+              onClick={async () => {
+                try {
+                  const response = await axios.put(
+                    "/api/questions",
+                    {
+                      questionID: question.id,
+                      title: editedTitle,
+                      description: editedDescription,
+                    },
+                    { withCredentials: true }
+                  );
 
-      if (response.data.message === "success") {
-        // Reflect changes in frontend
-        handleEdit(editedTitle, editedDescription);
-        setIsEditing(false);
-      } else {
-        alert(response.data.message); // Handle failure response
-      }
-    } catch (err: any) {
-      console.error("Error updating question:", err);
-      alert("Error updating question. Please try again.");
-    }
-  }}
->
-  Save
-</button>
+                  if (response.data.message === "success") {
+                    handleEdit(editedTitle, editedDescription);
+                    setIsEditing(false);
+                  } else {
+                    alert(response.data.message);
+                  }
+                } catch (err: any) {
+                  console.error("Error updating question:", err);
+                  alert("Error updating question. Please try again.");
+                }
+              }}
+            >
+              Save
+            </button>
           </div>
         )}
 
         {/* Bottom Section */}
         <div className="flex justify-between items-center mt-4">
-          {/* View All Replies Button */}
           <button
             className="flex items-center justify-center text-sm font-medium"
             style={{
@@ -203,10 +243,11 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
             View All Replies
           </button>
 
-          {/* Likes & Comments */}
           <div className="flex items-center space-x-4">
             <div
-              className={`flex items-center text-sm cursor-pointer ${liked ? "text-blue-600" : "text-gray-600"}`}
+              className={`flex items-center text-sm cursor-pointer ${
+                liked ? "text-blue-600" : "text-gray-600"
+              }`}
               onClick={handleLike}
             >
               <FaRegThumbsUp className="mr-1" />
