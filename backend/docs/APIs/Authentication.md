@@ -174,7 +174,7 @@ Failure response:
 Reset Password a existing user.
 
 ### Path & Method:
-POST: `/api/auth/reset-password`
+PUT: `/api/auth/reset-password`
 
 ### Authentication Required:
 No
