@@ -14,14 +14,13 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
   const [likes, setLikes] = useState(3);
   const [comments, setComments] = useState(8);
   const [showModal, setShowModal] = useState(false);
-  const [postData, setPostData] = useState(question); // New State to hold editable post data
+  const [postData, setPostData] = useState(question);
 
   const shouldTruncate = postData.description.length > 150;
   const displayText = elongated
     ? postData.description
     : postData.description.substring(0, 150) + "...";
 
-  // Function to handle edits
   const handleEdit = (updatedTitle: string, updatedDescription: string) => {
     setPostData((prev) => ({
       ...prev,
@@ -32,7 +31,6 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
 
   return (
     <>
-      {/* Post Card */}
       <div
         className="p-4 rounded-lg bg-white w-full max-w-2xl shadow-b-md cursor-pointer hover:shadow-lg transition"
         onClick={() => setShowModal(true)}
@@ -42,12 +40,20 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
           <div className="flex items-center">
             <img
               src="/default-avatar.png"
-              alt="Dummy Name"
+              alt={postData.user?.username || "User"}
               className="w-8 h-8 rounded-full mr-2"
             />
             <div className="flex items-center">
-              <p className="text-sm font-medium text-gray-800">Dummy Name</p>
-              <span className="text-xs text-gray-500 ml-2">• November 8, 2024</span>
+              <p className="text-sm font-medium text-gray-800">
+                {postData.user?.username || "Anonymous"}
+              </p>
+              <span className="text-xs text-gray-500 ml-2">
+  • {new Date(postData.created_at).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  })}
+</span>
             </div>
           </div>
 
@@ -74,7 +80,7 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
                 setElongated(!elongated);
               }}
             >
-              {elongated ? "Read less" : "Read more"}{" "}
+              {elongated ? "Read less" : "Read more"}
               <span className="ml-1">
                 {elongated ? <IoIosArrowUp /> : <IoIosArrowDown />}
               </span>
@@ -110,7 +116,7 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
             comments={comments}
             setLikes={setLikes}
             handleClose={() => setShowModal(false)}
-            handleEdit={handleEdit} // Pass edit handler
+            handleEdit={handleEdit}
           />
         </div>
       )}
