@@ -5,6 +5,7 @@ const PostQuestionDashboard: React.FC = () => {
   const [questionTitle, setQuestionTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [error, setError] = useState("");
 
   const availableTags = ["Career Development", "Job Search", "Education"];
   const navigate = useNavigate();
@@ -17,19 +18,41 @@ const PostQuestionDashboard: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = {
-      questionTitle,
-      description,
-      tags: selectedTags,
-    };
-    navigate('/')
-    console.log("Form Submitted:", formData);
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("You must be logged in to post a question.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:8080/api/questions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: questionTitle,
+          description,
+          tags: selectedTags,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to post question");
+      }
+
+      navigate("/");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+    }
   };
 
   const handleCancel = () => {
-    
     navigate("/");
   };
 
@@ -64,14 +87,12 @@ const PostQuestionDashboard: React.FC = () => {
             Post your question
           </h1>
 
+          {error && (
+            <p className="text-red-500 text-sm text-center -mt-2">{error}</p>
+          )}
+
           <div className="flex flex-col gap-2">
-            <label
-              style={{
-                fontWeight: 600,
-                fontSize: "16px",
-                lineHeight: "19.2px",
-              }}
-            >
+            <label style={{ fontWeight: 600, fontSize: "16px" }}>
               Question Title<span style={{ color: "red" }}>*</span>
             </label>
             <input
@@ -95,13 +116,7 @@ const PostQuestionDashboard: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label
-              style={{
-                fontWeight: 600,
-                fontSize: "16px",
-                lineHeight: "19.2px",
-              }}
-            >
+            <label style={{ fontWeight: 600, fontSize: "16px" }}>
               Description
             </label>
             <textarea
@@ -123,13 +138,7 @@ const PostQuestionDashboard: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label
-              style={{
-                fontWeight: 600,
-                fontSize: "16px",
-                lineHeight: "19.2px",
-              }}
-            >
+            <label style={{ fontWeight: 600, fontSize: "16px" }}>
               Categories & Tags
             </label>
             <div className="flex items-center gap-2 flex-wrap">
@@ -152,17 +161,6 @@ const PostQuestionDashboard: React.FC = () => {
                   {tag}
                 </button>
               ))}
-              <button
-                className="flex items-center px-3 py-1 font-medium border border-gray-300 rounded-full"
-                style={{
-                  height: "36px",
-                  borderRadius: "18px",
-                  color: "#063E53",
-                  backgroundColor: "#064C651A",
-                }}
-              >
-                +
-              </button>
             </div>
           </div>
 
