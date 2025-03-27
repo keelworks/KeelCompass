@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../models/index");
 const { User } = require("../models/userV2");
+
 // Register a new user
 exports.register = async (req, res) => {
   try {
@@ -66,6 +67,47 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+// Reset Password
+exports.resetPassword = async (req, res) => {
+  const { username, email, newPassword } = req.body;
+
+  if (!username || !email || !newPassword) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  try {
+    // Finding the user by username and email
+    const user = await db.users.findOne({
+      where: { username, email }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found with provided username and email' });
+    }
+
+    // Hashing the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Updating password
+    user.password = hashedPassword;
+    await user.save();
+
+    // Generating new JWT token
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    res.status(200).json({
+      message: "Password updated successfully",
+      token,
+    });
+  } catch (error) {
+    console.error('Error updating password:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
 
 // Logout user (usually just invalidating the JWT client-side)
 exports.logout = (req, res) => {

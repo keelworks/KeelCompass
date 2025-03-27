@@ -1,7 +1,7 @@
 
 # Authentication APIs
 
-### Update time: 02/08/2025
+### Update time: 03/24/2025
 
 ## General
 - All endpoints require **authentication** via `Authorization: Bearer <token>` in the request header, including login.
@@ -168,3 +168,62 @@ Failure response:
     "error": "Invalid or expired token."
 }
 ```
+## 4. Reset Password
+
+### Description:
+Reset Password a existing user.
+
+### Path & Method:
+PUT: `/api/auth/reset-password`
+
+### Authentication Required:
+No
+
+### Parameters:
+Request body:
+| Name     | Type   | Required | Description               |
+|----------|--------|----------|---------------------------|
+| username | string | Yes      | Username for the new user |
+| email    | string | Yes      | Email address             |
+| newPassword | string | Yes      | New Password                  |
+
+Sample request body:
+```json
+{
+    "username": "john_doe",
+    "email": "john@example.com",
+    "newPassword": "newPassword123"
+}
+```
+
+### Responses:
+| Name    | Type   | Required | Description              |
+|---------|--------|----------|--------------------------|
+| message | string | Yes      | Response message         |
+| token   | string | Yes      | JWT token for the session|
+
+Sample response:
+```json
+{
+    "message": "Password updated successfully",
+    "token": "<jwt_token>"
+}
+```
+
+Failure response:
+```json
+{
+    "message": "Missing required fields"
+}
+{
+    "message": "Server error"
+}
+{
+    "message": "User not found with provided username and email"
+}
+{
+    "message": "Error updating password:"
+}
+```
+
+---
