@@ -1,10 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Question } from "../../../utils/store";
-import {
-  FaRegThumbsUp,
-  FaRegCommentDots,
-  FaRegBookmark,
-} from "react-icons/fa";
+import { FaRegThumbsUp, FaRegCommentDots, FaRegBookmark } from "react-icons/fa";
 import { MdOutlineRateReview } from "react-icons/md";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import ExplodedPostCard from "./ExplodedPostCard";
@@ -15,7 +11,7 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ question }) => {
   const [elongated, setElongated] = useState(false);
-  const [comments, setComments] = useState(8); // Still static
+  const [comments, setComments] = useState(0); // Still static
   const [showModal, setShowModal] = useState(false);
   const [postData, setPostData] = useState(question);
 
@@ -71,6 +67,28 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
       alert("An error occurred while liking the question.");
     }
   };
+  // fetch the total number of comments 
+  useEffect(() => {
+    if (!postData.id) return;
+
+    const fetchCommentCount = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/api/comments?questionID=${postData.id}&count=1&offset=0`
+        );
+        const data = await res.json();
+        console.log("Fetched comment count:", data);
+        if (res.ok && data.message === "success") {
+          setComments(data.total);
+          console.log("Set comments to", data.total);
+        }
+      } catch (error) {
+        console.error("Error fetching comment count:", error);
+      }
+    };
+
+    fetchCommentCount();
+  }, [postData.id]);
 
   return (
     <>
@@ -134,7 +152,10 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
 
         {/* Likes & Comments */}
         <div className="flex justify-end mt-3 text-gray-600 text-sm">
-          <div className="flex items-center mr-4 cursor-pointer" onClick={handleLike}>
+          <div
+            className="flex items-center mr-4 cursor-pointer"
+            onClick={handleLike}
+          >
             <FaRegThumbsUp className="mr-1" />
             <span>{postData.likeCount}</span>
           </div>
@@ -158,8 +179,10 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
             setLikes={(newCount: number) =>
               setPostData((prev) => ({ ...prev, likeCount: newCount }))
             }
+            username={postData.user.username}
             handleClose={() => setShowModal(false)}
             handleEdit={handleEdit}
+            setComments={setComments}
           />
         </div>
       )}
