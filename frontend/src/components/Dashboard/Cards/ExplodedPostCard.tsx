@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Question } from "../../../utils/store";
+import { Question, useStore } from "../../../utils/store";
 import { FaRegThumbsUp, FaRegCommentDots, FaFileAlt } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import CommentBox from "./CommentBox";
@@ -16,7 +16,7 @@ interface ExplodedPostCardProps {
   likes: number;
   setLikes: (newCount: number) => void;
   comments: number;
-  setComments: (count: number) => void
+  setComments: (count: number) => void;
   handleClose: () => void;
   handleEdit: (updatedTitle: string, updatedDescription: string) => void;
 }
@@ -37,6 +37,10 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   const [commentList, setCommentList] = useState<Comment[]>([]);
   const [showAll, setShowAll] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const deletePostFromStore = useStore((state) => state.deletePost);
+  const updatePostInStore = useStore((state) => state.updatePost);
+  const loggedInUserId = Number(localStorage.getItem("userId"));
+  const isAuthor = loggedInUserId === question.user.id;
 
   const fetchComments = async (limit = 2, offset = 0) => {
     try {
@@ -46,11 +50,28 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
       const data = await res.json();
       if (res.ok && data.message === "success") {
         setCommentList(data.comments);
-        setComments(data.total)
-        console.log(data)
+        setComments(data.total);
       }
     } catch (err) {
       console.error("Error fetching comments:", err);
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm("Are you sure you want to delete this post?");
+    if (!confirmed) return;
+
+    const success = await deletePostFromStore(question.id);
+    if (success) {
+      handleClose();
+    }
+  };
+
+  const handleUpdate = async () => {
+    const success = await updatePostInStore(question.id, editedTitle, editedDescription);
+    if (success) {
+      handleEdit(editedTitle, editedDescription); // Update parent state as well
+      setIsEditing(false);
     }
   };
 
@@ -59,10 +80,9 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   }, [question.id]);
 
   const handleAddComment = () => {
-    //setCommentList((prev) => [...prev, newComment]);
-    fetchComments(showAll? 100:2)
+    fetchComments(showAll ? 100 : 2);
   };
-  // handling like action on the post
+
   const handleLike = async () => {
     const token = localStorage.getItem("token");
     if (!token) return alert("You must be logged in to like a question.");
@@ -98,17 +118,48 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   }, []);
 
   return (
-    <div className="p-6 flex flex-col items-center space-y-4 relative" style={{ width: "676px", backgroundColor: "#FFFFFF", borderRadius: "7px", boxShadow: "0px 6px 18px 0px #442756" }}>
+    <div
+      className="p-6 flex flex-col items-center space-y-4 relative"
+      style={{
+        width: "676px",
+        backgroundColor: "#FFFFFF",
+        borderRadius: "7px",
+        boxShadow: "0px 6px 18px 0px #442756",
+      }}
+    >
       {/* Dropdown */}
       <div className="absolute top-4 right-4">
         <button onClick={() => setShowDropdown(!showDropdown)}>
           <BsThreeDotsVertical size={20} />
         </button>
         {showDropdown && (
-          <div ref={dropdownRef} className="absolute right-0 mt-2 w-32 bg-white shadow-md rounded-md z-50">
+          <div
+            ref={dropdownRef}
+            className="absolute right-0 mt-2 w-32 bg-white shadow-md rounded-md z-50"
+          >
             <ul className="text-sm text-gray-700">
-              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => { setIsEditing(true); setShowDropdown(false); }}>Edit</li>
-              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Delete</li>
+              {isAuthor && (
+                <>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => {
+                      setIsEditing(true);
+                      setShowDropdown(false);
+                    }}
+                  >
+                    Edit
+                  </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => {
+                      setShowDropdown(false);
+                      handleDelete();
+                    }}
+                  >
+                    Delete
+                  </li>
+                </>
+              )}
               <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Report</li>
             </ul>
           </div>
@@ -117,14 +168,24 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
 
       {/* Post Section */}
       <div className="w-full bg-[#F9F9F9] rounded p-4">
-        {isEditing ? (
+        {isAuthor && isEditing ? (
           <>
-            <input value={editedTitle} onChange={(e) => setEditedTitle(e.target.value)} className="w-full border p-1 mb-2 rounded" />
-            <textarea value={editedDescription} onChange={(e) => setEditedDescription(e.target.value)} className="w-full border p-1 mb-2 rounded" />
+            <input
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              className="w-full border p-1 mb-2 rounded"
+            />
+            <textarea
+              value={editedDescription}
+              onChange={(e) => setEditedDescription(e.target.value)}
+              className="w-full border p-1 mb-2 rounded"
+            />
           </>
         ) : (
           <>
-            <h3 className="text-lg font-semibold text-[#004466] mb-2">{question.title}</h3>
+            <h3 className="text-lg font-semibold text-[#004466] mb-2">
+              {question.title}
+            </h3>
             <p className="text-sm text-[#616161] mb-4">{question.description}</p>
           </>
         )}
@@ -136,18 +197,36 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
           </div>
         </div>
 
-        {isEditing && (
+        {isAuthor && isEditing && (
           <div className="flex justify-end space-x-2">
-            <button className="px-3 py-1 bg-gray-200 rounded" onClick={() => setIsEditing(false)}>Cancel</button>
-            <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={() => { handleEdit(editedTitle, editedDescription); setIsEditing(false); }}>Save</button>
+            <button className="px-3 py-1 bg-gray-200 rounded" onClick={() => setIsEditing(false)}>
+              Cancel
+            </button>
+            <button
+              className="px-3 py-1 bg-blue-500 text-white rounded"
+              onClick={handleUpdate}
+            >
+              Save
+            </button>
           </div>
         )}
 
         {/* Like + View Replies */}
         <div className="flex justify-between mt-4">
-          <button onClick={() => { setShowAll(true); fetchComments(100); }} className="text-sm font-medium border px-3 py-1 rounded">View All Replies</button>
+          <button
+            onClick={() => {
+              setShowAll(true);
+              fetchComments(100);
+            }}
+            className="text-sm font-medium border px-3 py-1 rounded"
+          >
+            View All Replies
+          </button>
           <div className="flex items-center space-x-4">
-            <div className={`flex items-center text-sm cursor-pointer ${liked ? "text-blue-600" : "text-gray-600"}`} onClick={handleLike}>
+            <div
+              className={`flex items-center text-sm cursor-pointer ${liked ? "text-blue-600" : "text-gray-600"}`}
+              onClick={handleLike}
+            >
               <FaRegThumbsUp className="mr-1" /> {likes} Likes
             </div>
             <div className="flex items-center text-gray-600 text-sm">
@@ -168,15 +247,13 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
 
       {/* Comment Box */}
       <CommentBox questionID={question.id} onCommentAdded={handleAddComment} />
+
       {/* Close Button */}
-<div className="absolute top-4 right-12">
-  <button
-    onClick={handleClose}
-    className="text-gray-500 hover:text-gray-700 text-xl"
-  >
-    ✕
-  </button>
-</div>
+      <div className="absolute top-4 right-12">
+        <button onClick={handleClose} className="text-gray-500 hover:text-gray-700 text-xl">
+          ✕
+        </button>
+      </div>
     </div>
   );
 };

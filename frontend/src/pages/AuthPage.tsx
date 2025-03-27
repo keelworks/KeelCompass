@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+
 
 
 const AuthPage = () => {
@@ -51,10 +53,16 @@ const AuthPage = () => {
    
      localStorage.setItem("token", data.token);
      localStorage.setItem("lastActive", new Date().getTime().toString());
-     localStorage.setItem("userId", user.id.toString());
-localStorage.setItem("username", user.username);
+//      localStorage.setItem("userId", data.user.id.toString());
+// localStorage.setItem("username", data.user.username);
+const decoded = jwtDecode<{ id: number; username: string }>(data.token);
+localStorage.setItem("userId", decoded.id.toString());
+localStorage.setItem("username", decoded.username);
+console.log("Decoded JWT:", decoded);
+
 
      navigate("/dashboard");
+     console.log(data)
    } catch (err) {
      setError(err instanceof Error ? err.message : "An unknown error occurred");
    }
