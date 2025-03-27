@@ -4,7 +4,6 @@ import PostsSection from "../components/Dashboard/Sections/PostsSection";
 import MyInterestsSection from "../components/Dashboard/Sections/MyInterestsSection";
 import DashboardWrapper from "../components/Dashboard/DashboardWrapper";
 import { useNavigate } from "react-router-dom";
-import { CiSearch } from "react-icons/ci";
 import SearchBar from "../components/SearchBar";
 
 const Dashboard: React.FC = () => {

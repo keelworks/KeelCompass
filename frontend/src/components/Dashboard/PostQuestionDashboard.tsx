@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const PostQuestionDashboard: React.FC = () => {
@@ -9,6 +9,17 @@ const PostQuestionDashboard: React.FC = () => {
 
   const availableTags = ["Career Development", "Job Search", "Education"];
   const navigate = useNavigate();
+
+useEffect(() => {
+  const draft = localStorage.getItem('questionDraft');
+  if (draft) {
+    const { questionTitle, description, tags } = JSON.parse(draft);
+    setQuestionTitle(questionTitle);
+    setDescription(description);
+    setSelectedTags(tags);
+  }
+}, []);
+
 
   const handleTagClick = (tag: string) => {
     if (selectedTags.includes(tag)) {
@@ -52,9 +63,30 @@ const PostQuestionDashboard: React.FC = () => {
     }
   };
 
+  const handleClearDraft = () => {
+    localStorage.removeItem('questionDraft');
+    setQuestionTitle('');
+    setDescription('');
+    setSelectedTags([]);
+    alert('Draft cleared!');
+  };
+  
+
   const handleCancel = () => {
     navigate("/");
   };
+
+  const handleSaveDraft = () => {
+    const draftData = {
+      questionTitle,
+      description,
+      tags: selectedTags,
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem('questionDraft', JSON.stringify(draftData));
+    alert('Your draft has been saved!');
+  };
+  
 
   return (
     <div
@@ -179,6 +211,7 @@ const PostQuestionDashboard: React.FC = () => {
             </button>
             <button
               type="button"
+              onClick={handleSaveDraft}
               className="px-4 py-2 font-medium border rounded-md"
               style={{
                 width: "94px",
@@ -188,6 +221,19 @@ const PostQuestionDashboard: React.FC = () => {
               }}
             >
               Save
+            </button>
+            <button
+              type="button"
+              onClick={handleClearDraft}
+              className="px-4 py-2 font-medium border rounded-md text-red-500 border-red-500"
+              style={{
+                width: "120px",
+                height: "40px",
+                color: "#116989",
+                borderColor: "#11698980",
+              }}
+            >
+              Clear Draft
             </button>
             <button
               onClick={handleCancel}

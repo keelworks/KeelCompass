@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation/Navigation";
 import CategoryFilter from "../components/qna/CategoryFilter";
-import { CiSearch } from "react-icons/ci";
 import QnACard2 from "../components/qna/QnACard";
 import FilterTab from "../components/qna/FilterTab";
 import SearchBar from "../components/SearchBar";
