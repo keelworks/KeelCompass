@@ -179,6 +179,7 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
             setLikes={(newCount: number) =>
               setPostData((prev) => ({ ...prev, likeCount: newCount }))
             }
+            username={postData.user.username}
             handleClose={() => setShowModal(false)}
             handleEdit={handleEdit}
             setComments={setComments}

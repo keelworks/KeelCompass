@@ -19,6 +19,7 @@ interface ExplodedPostCardProps {
   setComments: (count: number) => void;
   handleClose: () => void;
   handleEdit: (updatedTitle: string, updatedDescription: string) => void;
+  username: string
 }
 
 const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
@@ -28,6 +29,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   setComments,
   handleClose,
   handleEdit,
+  username
 }) => {
   const [liked, setLiked] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -70,7 +72,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   const handleUpdate = async () => {
     const success = await updatePostInStore(question.id, editedTitle, editedDescription);
     if (success) {
-      handleEdit(editedTitle, editedDescription); // Update parent state as well
+      handleEdit(editedTitle, editedDescription);
       setIsEditing(false);
     }
   };
@@ -117,9 +119,19 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const formatDateTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   return (
     <div
-      className="p-6 flex flex-col items-center space-y-4 relative"
+      className="p-6 flex flex-col items-center space-y-4 relative overflow-y-auto max-h-[90vh]"
       style={{
         width: "676px",
         backgroundColor: "#FFFFFF",
@@ -183,10 +195,17 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
           </>
         ) : (
           <>
+          <h3 className="text-lg font-semibold text-[#004466] mb-2">{username}</h3>
+          <p className="text-xs text-gray-500 mb-4">
+              {formatDateTime(question.created_at)}
+            </p>
             <h3 className="text-lg font-semibold text-[#004466] mb-2">
               {question.title}
             </h3>
-            <p className="text-sm text-[#616161] mb-4">{question.description}</p>
+            <p className="text-sm text-[#616161] mb-2">
+              {question.description}
+            </p>
+            
           </>
         )}
 
@@ -240,7 +259,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
       <div className="w-full space-y-2 px-2">
         {commentList.slice(0, showAll ? commentList.length : 2).map((comment) => (
           <div key={comment.id} className="bg-gray-100 rounded p-2 text-sm">
-            <strong>{comment.user.username}:</strong> {comment.content}
+            <strong>{comment.user.username}</strong> <p className="text-xs text-gray-500">{formatDateTime(comment.created_at)}</p> {comment.content}
           </div>
         ))}
       </div>
