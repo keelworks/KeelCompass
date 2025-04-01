@@ -7,7 +7,7 @@ const Question = db.questions;
 const UserQuestionAction = db.userQuestionActions;
 const ActionTypes = require("../constants/actionTypes");
 
-const createQuestion = async (title, description, loginUser) => {
+const createQuestion = async (title, description, loginUser, attachment) => {
   const user = await User.findByPk(loginUser.id);
   if (!user) {
     throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "user not found");
@@ -18,6 +18,7 @@ const createQuestion = async (title, description, loginUser) => {
     title,
     description,
     user_id: user.id,
+    attachment: attachment,
   });
 
   return newQuestion.id;
@@ -29,6 +30,7 @@ const getQuestionList = async (count, offset) => {
     Questions.id,
     Questions.title,
     Questions.description,
+    Questions.attachment,
     Questions.created_at,
     (
       SELECT JSON_OBJECT('id', Users.id, 'username', Users.username)
@@ -59,6 +61,9 @@ const getQuestionList = async (count, offset) => {
   };
 
   const questions = await Sequelize.query(query, { replacements, type: Sequelize.QueryTypes.SELECT });
+  questions.forEach((row) => {
+    row.attachment = row.attachment ?? [];
+  });
 
   const totalCount = await Question.count();
 
@@ -112,6 +117,7 @@ const getQuestionByID = async (questionID) => {
       Questions.id,
       Questions.title,
       Questions.description,
+      Questions.attachment,
       Questions.created_at,
       (
         SELECT JSON_OBJECT('id', Users.id, 'username', Users.username)
@@ -147,6 +153,8 @@ const getQuestionByID = async (questionID) => {
     logger.warn("Warning get question by ID: question not found. ID = " + questionID);
     throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
   }
+
+  question.attachment = question.attachment ?? [];
 
   return question;
 };

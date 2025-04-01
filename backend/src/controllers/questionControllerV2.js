@@ -10,10 +10,16 @@ const createQuestion = async (req, res) => {
   logger.debug(`create question request, body = ${util.inspect(req.body)}`);
   logger.debug(`create question request, loginUser = ${util.inspect(req.loginUser)}`);
   const loginUser = req.loginUser;
-  const { title, description } = req.body;
+  const { title, description, attachment } = req.body;
+
+  if (attachment != undefined && !checkAttachment(attachment)) {
+    return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: "invalid attachment format" });
+  }
+
+  let attachmentData = attachment ?? [];
 
   questionService
-    .createQuestion(title, description, loginUser)
+    .createQuestion(title, description, loginUser, attachmentData)
     .then((questionID) => {
       res.status(HttpStatusCodes.CREATED).json({
         message: "Question created successfully",
@@ -23,6 +29,19 @@ const createQuestion = async (req, res) => {
     .catch((error) => ServiceErrorHandler(error, res, logger, "createQuestion"));
   return;
 };
+
+function checkAttachment(attachment) {
+  console.log("check");
+  if (!Array.isArray(attachment)) {
+    return false;
+  }
+
+  attachment.forEach((item) => {
+    console.log(typeof item);
+  });
+
+  return attachment.every((item) => typeof item === "object" && item !== null);
+}
 
 const getQuestionList = async (req, res) => {
   logger.debug(`get question request, query params = ${util.inspect(req.query)}`);

@@ -38,15 +38,27 @@ Request body:
 | ----------- | ------ | -------- | ----------------------- |
 | title | string | Yes | title of the question |
 | description | string | No | content of the question |
+| attachment | **array** of object | No | attachment info |
 
 Sample request body:
 
 ```Json
 {
     "title": "test title",
-    "description": "test description"
+    "description": "test description",
+    "attachment": [
+    {
+      "url": "https://storage.googleapis.com/xxx-bucket/file1.jpg",
+      "filename": "file1.jpg",
+      "uploadedAt": "2025-02-15T12:00:00Z"
+    }
+  ]
 }
 ```
+
+Note:
+
+The `attachment` field in the request body MUST be an array if it is present
 
 ### Responses
 
@@ -105,6 +117,13 @@ Sample response:
             "id": 16,
             "title": "How can I access online course materials?",
             "description": "Is there a way to download course materials or access them offline?",
+            "attachment": [
+                {
+                    "url": "https://storage.googleapis.com/your-bucket/file1.jpg",
+                    "filename": "file1.jpg",
+                    "uploadedAt": "2025-02-15T12:00:00Z"
+                }
+            ],
             "created_at": "2024-11-12T00:00:00.000Z",
             "user": {
                 "id": 3,
@@ -117,6 +136,7 @@ Sample response:
             "id": 15,
             "title": "What housing options are available for first-year students?",
             "description": "Are there specific dorms or residence halls for first-year students? How do I apply for them?",
+            "attachment": [],
             "created_at": "2024-11-11T23:30:00.000Z",
             "user": {
                 "id": 10,
@@ -129,6 +149,7 @@ Sample response:
             "id": 14,
             "title": "How do I join clubs and societies on campus?",
             "description": "I am interested in joining some clubs. Can anyone explain how to get involved in campus activities?",
+            "attachment": [],
             "created_at": "2024-11-11T23:00:00.000Z",
             "user": {
                 "id": 9,
@@ -160,7 +181,7 @@ Get a question using its ID
 
 ### Path & Method:
 
-POST: `/api/questions/:questionID`
+GET: `/api/questions/:questionID`
 
 ### Authentication Required
 
@@ -189,6 +210,7 @@ Sample response:
         "id": 10,
         "title": "What is the application deadline for the fall semester?",
         "description": "Does anyone know the deadline for submitting applications for the upcoming fall semester?",
+        "attachment": [],
         "created_at": "2024-11-11T21:00:00.000Z",
         "user": {
             "id": 5,
