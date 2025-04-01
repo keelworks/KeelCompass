@@ -1,4 +1,4 @@
-# Interest Related APIs
+# Interest/Bookmark Related APIs
 
 ### Update time: 12/02/2024
 
