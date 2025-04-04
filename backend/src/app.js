@@ -11,6 +11,9 @@ const { HttpStatusCodes } = require("./utils/httpError");
 // Importing routes
 const router = require("./routes/routes");
 
+// Initialize google cloud service
+require("./lib/googleCloudStorage");
+
 // Import Redis session configuration
 // const { redisSessionMiddleware } = require("./configs/redisConfig");
 
