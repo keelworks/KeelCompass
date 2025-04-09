@@ -1,6 +1,5 @@
-import React from 'react'
-import Navigation from '../components/Navigation/Navigation'
-import SearchBar from '../components/SearchBar'
+import Navigation from '../components/navigation/Navigation'
+import SearchBar from '../components/searchBar'
 
 
 const Search = () => {

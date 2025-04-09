@@ -1,4 +1,4 @@
-const db = require("../models/index");
+const db = require("../models");
 const { HttpError, HttpStatusCodes } = require("../utils/httpError");
 const Interest = db.interests;
 const User = db.users;

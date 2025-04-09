@@ -13,7 +13,7 @@ module.exports = (sequelize, User, Question) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: User, // Reference the User model
+          model: User,
           key: "id",
         },
       },
@@ -21,7 +21,7 @@ module.exports = (sequelize, User, Question) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: Question, // Reference the Question model
+          model: Question,
           key: "id",
         },
       },
@@ -34,10 +34,7 @@ module.exports = (sequelize, User, Question) => {
         defaultValue: DataTypes.NOW,
       },
     },
-    {
-      tableName: "UserQuestionActions",
-      timestamps: false,
-    }
+    { tableName: "UserQuestionActions", timestamps: false }
   );
 
   UserQuestionAction.belongsTo(User, { foreignKey: "user_id" });

@@ -1,9 +1,9 @@
 // src/components/posts/PostsSection.tsx
 import React, { useEffect } from "react";
 import { useStore } from "../../../utils/store";
-import PostCard from "../Cards/PostCard";
+import PostCard from "../cards/PostCard";
 import Backdrop from "../modals/BackkDrop";
-import ToggleButton from "../Buttons/ToggleButton";
+import ToggleButton from "../buttons/ToggleButton";
 
 const PostsSection: React.FC = () => {
   const { questions, offset, isLoading, error, fetchQuestions } = useStore();

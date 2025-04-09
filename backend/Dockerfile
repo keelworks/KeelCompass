@@ -1,13 +1,10 @@
-FROM node:14.21.3-alpine
+FROM node:18-slim
 
-WORKDIR /usr/src/app
-
+WORKDIR /app
 COPY package*.json ./
-
-RUN npm install --production
-
+RUN npm install
 COPY . .
 
-EXPOSE 3000
+EXPOSE 8080
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "dev"]

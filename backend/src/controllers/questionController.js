@@ -1,86 +1,153 @@
-// controllers/questionController.js
-const db = require('../models/index');
-const Question = db.questions;
-const User = db.users;
+const questionService = require("../services/questionService");
+const util = require("util");
+const { IsValidAction } = require("../utils/actionTypes");
+const logger = require("../utils/logger");
+const { HttpStatusCodes, ServiceErrorHandler } = require("../utils/httpError");
 
-// POST /questions - Register a question
-const askQuestion = async (req, res) => {
-  const { title, content, userId, status } = req.body;
+// post question
+const createQuestion = async (req, res) => {
+  logger.debug(`create question request, body = ${util.inspect(req.body)}`);
+  logger.debug(`create question request, loginUser = ${util.inspect(req.loginUser)}`);
+  const loginUser = req.loginUser;
+  const { title, description, attachment } = req.body;
 
-  try {
-    // Validate title and content
-    if (!title) {
-        return res.status(400).json({ error: 'Title is required' });
-    }
-    if (!content) {
-        return res.status(400).json({ error: 'Content is required' });
-    }
-    // Validate user existence
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(400).json({ error: 'Invalid user ID' });
-    }
-
-    const questionStatus = status || 'Open'; // Default value set to 'Open'. TODO: Decide the logic for status
-
-    // Create the question
-    const newQuestion = await Question.create({
-      title,
-      content,
-      user_id: userId,
-      status: questionStatus,
-    });
-
-    return res.status(201).json(newQuestion);
-  } catch (error) {
-    console.error('Error creating question:', error);
-    return res.status(500).json({ error: 'Server error' });
+  if (attachment != undefined && !checkAttachment(attachment)) {
+    return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: "invalid attachment format" });
   }
+
+  let attachmentData = attachment ?? [];
+
+  questionService
+    .createQuestion(title, description, loginUser, attachmentData)
+    .then((questionID) => {
+      res.status(HttpStatusCodes.CREATED).json({
+        message: "Question created successfully",
+        questionID: questionID,
+      });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "createQuestion"));
+  return;
 };
 
-// GET /questions - Get all questions
-const getAllQuestions = async (req, res) => {
-  try {
-    const questions = await Question.findAll({
-      include: {
-        model: User,
-        as: 'user',
-        attributes: ['id', 'username'],
-      },
-    });
-    return res.status(200).json(questions);
-  } catch (error) {
-    console.error('Error fetching questions:', error);
-    return res.status(500).json({ error: 'Server error' });
-  }
+// get all questions
+const getQuestionList = async (req, res) => {
+  logger.debug(`get question request, query params = ${util.inspect(req.query)}`);
+  const { count, offset } = req.query;
+
+  questionService
+    .getQuestionList(Number(count), Number(offset))
+    .then(([questions, offset, total]) => {
+      return res
+        .status(HttpStatusCodes.OK)
+        .json({ message: "success", questions: questions, offset: offset, total: total });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "getQuestionList"));
 };
 
-// GET /questions/:id - Get a specific question by ID
-const getQuestionById = async (req, res) => {
-  const { id } = req.params;
+// get question by id
+const getQuestionByID = async (req, res) => {
+  logger.debug(`get question by ID request, params = ${util.inspect(req.params)}`);
+  const { questionID } = req.params;
 
-  try {
-    const question = await Question.findByPk(id, {
-      include: {
-        model: User,
-        as: 'user',
-        attributes: ['id', 'username'],
-      },
-    });
+  questionService
+    .getQuestionByID(questionID)
+    .then((question) => {
+      return res.status(HttpStatusCodes.OK).json({ message: "success", question: question });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "getQuestionByID"));
+};
 
-    if (!question) {
-      return res.status(404).json({ error: 'Question not found' });
-    }
+// check attachment
+// function checkAttachment(attachment) {
+//   console.log("check");
+//   if (!Array.isArray(attachment)) {
+//     return false;
+//   }
 
-    return res.status(200).json(question);
-  } catch (error) {
-    console.error('Error fetching question:', error);
-    return res.status(500).json({ error: 'Server error' });
+//   attachment.forEach((item) => {
+//     console.log(typeof item);
+//   });
+
+//   return attachment.every((item) => typeof item === "object" && item !== null);
+// }
+
+// update question by id
+const updateQuestion = async (req, res) => {
+  logger.debug(`update question request, body = ${util.inspect(req.body)}`);
+  logger.debug(`update question request, loginUser = ${util.inspect(req.loginUser)}`);
+  const loginUser = req.loginUser;
+  const { title, description, questionID } = req.body;
+
+  questionService
+    .updateQuestion(questionID, title, description, loginUser)
+    .then(() => {
+      return res.status(HttpStatusCodes.OK).json({ message: "success" });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "updateQuestion"));
+};
+
+// delete question by id
+const deleteQuestionByID = async (req, res) => {
+  logger.debug(`delete question request, query params = ${util.inspect(req.query)}`);
+  logger.debug(`delete question request, loginUser = ${util.inspect(req.loginUser)}`);
+  const loginUser = req.loginUser;
+  const { questionID } = req.query;
+
+  questionService
+    .deleteQuestionByID(questionID, loginUser)
+    .then(() => {
+      return res.status(HttpStatusCodes.OK).json({ message: "success" });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "deleteQuestionByID"));
+};
+
+// take action on question
+const takeAction = async (req, res) => {
+  logger.debug(`take action on question request, body = ${util.inspect(req.body)}`);
+  logger.debug(`take action on question request, loginUser = ${util.inspect(req.loginUser)}`);
+  const loginUser = req.loginUser;
+  const { questionID, actionType } = req.body;
+
+  if (!IsValidAction(actionType)) {
+    return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: "invalid actionType" });
   }
+
+  questionService
+    .takeAction(questionID, actionType, loginUser)
+    .then(() => {
+      return res.status(HttpStatusCodes.OK).json({ message: "success" });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "takeAction"));
+  return;
+};
+
+// remove action on question
+const removeAction = async (req, res) => {
+  logger.debug(`remove action on question request, body = ${util.inspect(req.body)}`);
+  logger.debug(`remove action on question request, loginUser = ${util.inspect(req.loginUser)}`);
+  const loginUser = req.loginUser;
+  const { questionID, actionType } = req.body;
+
+  if (!IsValidAction(actionType)) {
+    return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: "invalid actionType" });
+  }
+
+  questionService
+    .removeAction(questionID, actionType, loginUser)
+    .then(() => {
+      return res.status(HttpStatusCodes.OK).json({ message: "success" });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "removeAction"));
+  return;
 };
 
 module.exports = {
-  askQuestion,
-  getAllQuestions,
-  getQuestionById,
+  createQuestion,
+  getQuestionList,
+  getQuestionByID,
+  // checkAttachment,
+  updateQuestion,
+  deleteQuestionByID,
+  takeAction,
+  removeAction,
 };

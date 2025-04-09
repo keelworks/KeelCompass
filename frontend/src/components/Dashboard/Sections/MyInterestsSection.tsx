@@ -1,4 +1,4 @@
-import InterestCard from "../../Dashboard/Cards/InterestCard"
+import InterestCard from "../cards/InterestCard"
 import Backdrop from "../modals/BackkDrop";
 
 const MyInterestsSection = () => {

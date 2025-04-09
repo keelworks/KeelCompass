@@ -1,10 +1,10 @@
 // src/pages/Dashboard.tsx
 import React from "react";
-import PostsSection from "../components/Dashboard/Sections/PostsSection";
-import MyInterestsSection from "../components/Dashboard/Sections/MyInterestsSection";
-import DashboardWrapper from "../components/Dashboard/DashboardWrapper";
+import PostsSection from "../components/dashboard/sections/PostsSection";
+import MyInterestsSection from "../components/dashboard/sections/MyInterestsSection";
+import DashboardWrapper from "../components/dashboard/DashboardWrapper";
 import { useNavigate } from "react-router-dom";
-import SearchBar from "../components/SearchBar";
+import SearchBar from "../components/searchBar";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();

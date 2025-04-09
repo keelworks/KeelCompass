@@ -1,22 +1,20 @@
-// Question related routes
-
-const { body, param, query, validationResult } = require("express-validator");
-const { HttpStatusCodes } = require("../utils/httpError");
-
 const express = require("express");
-const router = express.Router();
+const { body, param, query, validationResult } = require("express-validator");
 const authenticator = require("../middlewares/authMiddleware");
 const {
   createQuestion,
-  getQuestionList,
-  deleteQuestionByID,
-  updateQuestion,
   getQuestionByID,
+  getQuestionList,
+  updateQuestion,
+  deleteQuestionByID,
   takeAction,
   removeAction,
-} = require("../controllers/questionControllerV2");
+} = require("../controllers/questionController");
+const { HttpStatusCodes } = require("../utils/httpError");
 
-// POST /questions - Ask a question
+const router = express.Router();
+
+// post question
 router.post(
   "/",
   authenticator,
@@ -37,7 +35,7 @@ router.post(
   createQuestion
 );
 
-// GET /questions - Get a question by ID
+// get question by id
 router.get(
   "/:questionID",
   [
@@ -57,7 +55,7 @@ router.get(
   getQuestionByID
 );
 
-// Get recent questions
+// get recent questions
 router.get(
   "/",
   [
@@ -78,7 +76,7 @@ router.get(
   getQuestionList
 );
 
-// Update a question
+// update question by id
 router.put(
   "/",
   authenticator,
@@ -105,7 +103,7 @@ router.put(
   updateQuestion
 );
 
-// Delete a question by ID
+// delete question by id
 router.delete(
   "/",
   authenticator,
@@ -126,7 +124,7 @@ router.delete(
   deleteQuestionByID
 );
 
-// Take an action on a question
+// take action on question
 router.post(
   "/action",
   authenticator,
@@ -148,7 +146,7 @@ router.post(
   takeAction
 );
 
-// Delete an action on a question
+// delete action on question
 router.delete(
   "/action",
   authenticator,
