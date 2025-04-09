@@ -4,7 +4,7 @@
 
 This is the backend part of KeelCompass project built with Express.js.
 
-## Project Structure
+## Project Structure.
 
 ```
 .

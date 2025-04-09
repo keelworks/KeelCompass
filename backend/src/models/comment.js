@@ -3,7 +3,7 @@ const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize, User, Question) => {
   const Comment = sequelize.define(
-    "Comment",
+    "Comments",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -14,7 +14,7 @@ module.exports = (sequelize, User, Question) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: User,
+          model: User, // Reference the User model
           key: "id",
         },
       },
@@ -22,7 +22,7 @@ module.exports = (sequelize, User, Question) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: Question,
+          model: Question, // Reference the Question model
           key: "id",
         },
       },
@@ -35,13 +35,18 @@ module.exports = (sequelize, User, Question) => {
         defaultValue: DataTypes.NOW,
       },
     },
-    { tableName: "Comments" }
+    {
+      tableName: "Comments",
+    }
   );
 
+  // Define association
   Comment.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
   Comment.belongsTo(Question, { foreignKey: "question_id", as: "question" });
 
   User.hasMany(Comment, { foreignKey: "user_id", sourceKey: "id" });
+
   Question.hasMany(Comment, { foreignKey: "question_id", sourceKey: "id" });
 
   return Comment;

@@ -27,8 +27,9 @@ module.exports = (sequelize) => {
         field: "created_at",
       },
     },
-    { tableName: "Users" }
+    {
+      tableName: "Users",
+    }
   );
-
   return User;
 };

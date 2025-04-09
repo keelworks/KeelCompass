@@ -21,7 +21,10 @@ module.exports = (sequelize, Question, Category) => {
         },
       },
     },
-    { tableName: "QuestionCategories", timestamps: false }
+    {
+      tableName: "QuestionCategory",
+      timestamps: false,
+    }
   );
 
   Question.belongsToMany(Category, { through: QuestionCategory, foreignKey: "question_id" });

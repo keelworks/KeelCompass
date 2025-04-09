@@ -1,4 +1,4 @@
-import CategorySelector from "./CategorySelector";
+import CategorySelector from "../CategorySelector";
 
 function SearchBar() {
     // TODO on click or hit enter for search, call ResultCard Component to display results 

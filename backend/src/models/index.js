@@ -1,15 +1,19 @@
-const { Sequelize } = require("sequelize");
-const logger = require("../utils/logger.js");
-const dbConfig = require("../configs/dbConfig.js");
+//initializing sequelize to make db calls through sequelize
 
-// initialize sequelize
+const { Sequelize, DataTypes } = require("sequelize");
+const logger = require("../utils/logger");
+
+const dbConfig = require("../configs/dbConfig.js");
+const { error } = require("winston");
+
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
-  host: dbConfig.HOST,
+  host: dbConfig.HOST, // use the default port 3306 for mysql
   dialect: dbConfig.dialect,
   operatorsAliases: 0,
   define: {
-    timestamps: false
+    timestamps: false,
   },
+
   pool: {
     max: dbConfig.pool.max,
     min: dbConfig.pool.min,
@@ -17,11 +21,12 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     idle: dbConfig.pool.idle,
   },
 
-  logging: (msg) => logger.info(msg)
+  logging: (msg) => logger.info(msg), // redirect logs to Winston
 });
 
-// connect to mysql db
-sequelize.authenticate()
+//making a db connection using sequelize
+sequelize
+  .authenticate()
   .then(() => {
     logger.info("database connected");
   })
@@ -29,20 +34,26 @@ sequelize.authenticate()
     logger.error(`Error: database connection failed: ${error}`);
   });
 
-// initialize relational models
 const db = {};
+
 db.sequelize = sequelize;
 
-db.users = require("./User.js")(sequelize);
-db.questions = require("./Question.js")(sequelize, db.users);
-db.comments = require("./Comment.js")(sequelize, db.users, db.questions);
-db.userQuestionActions = require("./UserQuestionAction.js")(sequelize, db.users, db.questions);
-db.categories = require("./Category.js")(sequelize);
-db.questionCategories = require("./QuestionCategory.js")(sequelize, db.questions, db.categories);
-db.interests = require("./Interests.js")(sequelize, db.users, db.questions);
+//utilizing DB Schema with sequelize
+// db.users = require("./userModel")(sequelize, DataTypes);
+db.users = require("./userV2")(sequelize);
+// db.questions = require("./Questions")(sequelize, DataTypes, db.users); // Pass User model here
+db.questions = require("./questionV2")(sequelize, db.users);
+db.comments = require("./comment")(sequelize, db.users, db.questions);
+db.userQuestionActions = require("./userQuestionAction")(sequelize, db.users, db.questions);
+db.categories = require("./category")(sequelize);
+db.questionCategory = require("./questionCategory")(sequelize, db.questions, db.categories);
+// db.articles = require("./article")(sequelize, db.users);
+// db.tags = require("./Tag")(sequelize);
+// db.articleTags = require("./ArticleTag")(sequelize, db.articles, db.tags);
+db.interests = require("./Interests")(sequelize, db.users, db.questions);
 
-// sync database
-db.sequelize.sync({ alter: true })
+db.sequelize
+  .sync({ force: false })
   .then(() => {
     logger.info("Syncing DB...");
   })
