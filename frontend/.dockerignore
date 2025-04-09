@@ -1,5 +1,6 @@
 node_modules
-.DS_Store
 dist
 .git
+Dockerfile
+Dockerfile.dev
 .vscode

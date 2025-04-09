@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Navigation from "../components/navigation/Navigation";
+import Navigation from "../components/Navigation/Navigation";
 import CategoryFilter from "../components/qna/CategoryFilter";
 import QnACard2 from "../components/qna/QnACard";
 import FilterTab from "../components/qna/FilterTab";
-import SearchBar from "../components/searchBar";
+import SearchBar from "../components/SearchBar";
 
 const QnA = () => {
   const navigate = useNavigate();

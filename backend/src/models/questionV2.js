@@ -3,7 +3,7 @@ const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize, User) => {
   const Question = sequelize.define(
-    "Question",
+    "Questions",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -14,7 +14,7 @@ module.exports = (sequelize, User) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: User,
+          model: User, // Reference the User model
           key: "id",
         },
       },
@@ -38,10 +38,13 @@ module.exports = (sequelize, User) => {
         defaultValue: DataTypes.NOW,
       },
     },
-    { tableName: "Questions" }
+    {
+      tableName: "Questions",
+    }
   );
 
-  Question.belongsTo(User, { foreignKey: { name: 'user_id', allowNull: false, }, onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+  // Define association
+  Question.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
   User.hasMany(Question, { foreignKey: "user_id", sourceKey: "id" });
 

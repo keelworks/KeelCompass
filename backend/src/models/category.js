@@ -16,7 +16,10 @@ module.exports = (sequelize) => {
         unique: true,
       },
     },
-    { tableName: "Categories", timestamps: false }
+    {
+      tableName: "Categories",
+      timestamps: false,
+    }
   );
 
   return Category;

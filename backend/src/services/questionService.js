@@ -1,20 +1,19 @@
-const db = require("../models");
-const ActionTypes = require("../constants/actionTypes")
-const logger = require("../utils/logger");
 const { HttpError, HttpStatusCodes } = require("../utils/httpError");
-
+const logger = require("../utils/logger");
+const db = require("../models/index");
 const Sequelize = db.sequelize;
 const User = db.users;
 const Question = db.questions;
 const UserQuestionAction = db.userQuestionActions;
+const ActionTypes = require("../constants/actionTypes");
 
-// post question
 const createQuestion = async (title, description, loginUser, attachment) => {
   const user = await User.findByPk(loginUser.id);
   if (!user) {
     throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "user not found");
   }
 
+  // Create the question
   const newQuestion = await Question.create({
     title,
     description,
@@ -25,7 +24,6 @@ const createQuestion = async (title, description, loginUser, attachment) => {
   return newQuestion.id;
 };
 
-// get all questions
 const getQuestionList = async (count, offset) => {
   const query = `
   SELECT 
@@ -71,13 +69,47 @@ const getQuestionList = async (count, offset) => {
 
   var resOffset = offset + questions.length;
   if (resOffset >= totalCount) {
-    resOffset = -1;
+    resOffset = -1; // There's no more questions to return
   }
 
   return [questions, resOffset, totalCount];
 };
 
-// get question by id
+const deleteQuestionByID = async (questionID, loginUser) => {
+  const question = await Question.findByPk(questionID);
+  if (!question) {
+    logger.warn("Warning deleting question: question not found. ID = " + questionID);
+    throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
+  }
+
+  if (question.user_id != loginUser.id) {
+    logger.warn("Warning deleting question: no permission to delete");
+    throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
+  }
+
+  await Question.destroy({ where: { id: questionID } });
+
+  return;
+};
+
+const updateQuestion = async (questionID, title, description, loginUser) => {
+  const question = await Question.findByPk(questionID);
+  if (!question) {
+    logger.warn("Warning updating question: question not found. ID = " + questionID);
+    throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
+  }
+
+  if (question.user_id != loginUser.id) {
+    logger.warn("Warning updating question: no permission to delete");
+    throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
+  }
+
+  if (title) question.title = title;
+  if (description) question.description = description;
+
+  await question.save();
+};
+
 const getQuestionByID = async (questionID) => {
   const [question] = await Sequelize.query(
     `
@@ -127,44 +159,6 @@ const getQuestionByID = async (questionID) => {
   return question;
 };
 
-// update question by id
-const updateQuestion = async (questionID, title, description, loginUser) => {
-  const question = await Question.findByPk(questionID);
-  if (!question) {
-    logger.warn("Warning updating question: question not found. ID = " + questionID);
-    throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
-  }
-
-  if (question.user_id != loginUser.id) {
-    logger.warn("Warning updating question: no permission to delete");
-    throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
-  }
-
-  if (title) question.title = title;
-  if (description) question.description = description;
-
-  await question.save();
-};
-
-// delete question by id
-const deleteQuestionByID = async (questionID, loginUser) => {
-  const question = await Question.findByPk(questionID);
-  if (!question) {
-    logger.warn("Warning deleting question: question not found. ID = " + questionID);
-    throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
-  }
-
-  if (question.user_id != loginUser.id) {
-    logger.warn("Warning deleting question: no permission to delete");
-    throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
-  }
-
-  await Question.destroy({ where: { id: questionID } });
-
-  return;
-};
-
-// take action on question
 const takeAction = async (questionID, actionType, loginUser) => {
   const question = await Question.findByPk(questionID);
   if (!question) {
@@ -193,7 +187,6 @@ const takeAction = async (questionID, actionType, loginUser) => {
   return;
 };
 
-// remove action on question
 const removeAction = async (questionID, actionType, loginUser) => {
   const action = await UserQuestionAction.findOne({
     where: {
@@ -215,9 +208,9 @@ const removeAction = async (questionID, actionType, loginUser) => {
 module.exports = {
   createQuestion,
   getQuestionList,
-  getQuestionByID,
-  updateQuestion,
   deleteQuestionByID,
+  updateQuestion,
+  getQuestionByID,
   takeAction,
   removeAction,
 };

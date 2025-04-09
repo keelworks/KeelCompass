@@ -1,4 +1,4 @@
-// We might need to use this commented code in the future if we implement cookies;
+// We mighit need to use this commented code in the future if we implement cookies;
 
 // const { verifyToken } = require('../utils/jwtUtils');
 
