@@ -1,19 +1,17 @@
-// Question related routes
-
-const { body, param, query, validationResult } = require("express-validator");
-const { HttpStatusCodes } = require("../utils/httpError");
-
 const express = require("express");
-const router = express.Router();
+const { body, query, validationResult } = require("express-validator");
+const authenticator = require("../middlewares/authMiddleware");
 const {
   createComment,
-  deleteCommentByID,
-  updateComment,
   getCommentListByQuestionID,
+  updateComment,
+  deleteCommentByID,
 } = require("../controllers/commentController");
-const authenticator = require("../middlewares/authMiddleware");
+const { HttpStatusCodes } = require("../utils/httpError");
 
-// Create a comment
+const router = express.Router();
+
+// post comment
 router.post(
   "/",
   authenticator,
@@ -40,7 +38,7 @@ router.post(
   createComment
 );
 
-// Get comment list of a question
+// get all comments by question id
 router.get(
   "/",
   [
@@ -67,7 +65,7 @@ router.get(
   getCommentListByQuestionID
 );
 
-// Update a comment
+// update comment
 router.put(
   "/",
   authenticator,
@@ -94,7 +92,7 @@ router.put(
   updateComment
 );
 
-// Delete a comment by ID
+// delete comment by id
 router.delete(
   "/",
   authenticator,

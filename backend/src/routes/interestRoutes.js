@@ -1,15 +1,16 @@
 const express = require('express');
-const router = express.Router();
-const interestController = require('../controllers/interestController');
 const authenticator = require("../middlewares/authMiddleware");
+const interestController = require('../controllers/interestController');
 
-// Protected route to get user interests
-router.get('/', authenticator, interestController.getUserInterests);
+const router = express.Router();
 
-// Protected route to save a new interest
+// post interest (protected)
 router.post('/', authenticator, interestController.saveInterest);
 
-// Protected route to delete an interest by ID
+// get user interests (protected)
+router.get('/', authenticator, interestController.getUserInterests);
+
+// delete interest (protected)
 router.delete('/:id', authenticator, interestController.deleteInterest);
 
 module.exports = router;
