@@ -1,40 +1,33 @@
-// src/pages/Dashboard.tsx
-import React from "react";
+import { useNavigate } from "react-router-dom";
 import PostsSection from "../components/dashboard/sections/PostsSection";
 import MyInterestsSection from "../components/dashboard/sections/MyInterestsSection";
-import DashboardWrapper from "../components/dashboard/DashboardWrapper";
-import { useNavigate } from "react-router-dom";
-import SearchBar from "../components/searchBar";
+import MainLayout from "../components/wrappers/MainLayout";
+import SearchBar from "../components/searchBar/SearchBar";
 
-const Dashboard: React.FC = () => {
+const Dashboard = () => {
   const navigate = useNavigate();
+
   const handleAskQuestionClick = () => {
-    navigate("/post-question-dashboard"); // Navigate to PostQuestion page
+    navigate("/dashboard/post-question");
   };
+
   return (
-    <DashboardWrapper>
+    <MainLayout>
       {/* Left Column */}
       <div className="col-span-2 flex flex-col">
-        {/* Add heading and search bar */}
         <div
           className="flex items-center justify-between mb-6"
-          style={{
-            width: "676px",
-            height: "44px",
-          }}
+          style={{ width: "676px", height: "44px" }}
         >
-          {/* Search Bar */}
           <div className="w-full">
-            <SearchBar></SearchBar>
+            <SearchBar />
           </div>
         </div>
         <PostsSection />
-        {/* Wrap CommunityUpdatesSection in a container */}
       </div>
 
       {/* Right Column */}
       <div className="col-span-1 flex flex-col">
-        {/* Ask Question Button */}
         <div className="mb-8">
           <button
             onClick={handleAskQuestionClick}
@@ -43,13 +36,11 @@ const Dashboard: React.FC = () => {
             Ask Question
           </button>
         </div>
-
-        {/* Wrap MyInterestsSection in a container */}
         <div className="flex-grow">
           <MyInterestsSection />
         </div>
       </div>
-    </DashboardWrapper>
+    </MainLayout>
   );
 };
 

@@ -1,4 +1,3 @@
-// src/utils/store.ts
 import {create} from "zustand";
 import axiosInstance from "./api";
 

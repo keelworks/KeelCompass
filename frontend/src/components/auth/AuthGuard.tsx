@@ -1,4 +1,3 @@
-// src/components/auth/AuthGuard.tsx
 import { Navigate } from "react-router-dom";
 
 const isTokenValid = () => {

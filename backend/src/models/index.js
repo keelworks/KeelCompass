@@ -39,7 +39,7 @@ db.comments = require("./Comment.js")(sequelize, db.users, db.questions);
 db.userQuestionActions = require("./UserQuestionAction.js")(sequelize, db.users, db.questions);
 db.categories = require("./Category.js")(sequelize);
 db.questionCategories = require("./QuestionCategory.js")(sequelize, db.questions, db.categories);
-db.interests = require("./Interests.js")(sequelize, db.users, db.questions);
+db.interests = require("./Interest.js")(sequelize, db.users, db.questions);
 
 // sync database
 db.sequelize.sync({ alter: true })

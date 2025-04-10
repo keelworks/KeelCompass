@@ -15,7 +15,7 @@ const Navigation: React.FC = () => {
   const location = useLocation();
 
   const menuItems = [
-    { name: "Dashboard", icon: <BsHouseDoor />, path: "/" },
+    { name: "Dashboard", icon: <BsHouseDoor />, path: "/dashboard" },
     { name: "Q&A Discussion", icon: <RiQuestionnaireLine />, path: "/qna" }
 
   ];

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const PostQuestion: React.FC = () => {
+const PostQuestionQnA: React.FC = () => {
   const [questionTitle, setQuestionTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -210,4 +210,4 @@ const PostQuestion: React.FC = () => {
   );
 };
 
-export default PostQuestion;
+export default PostQuestionQnA;

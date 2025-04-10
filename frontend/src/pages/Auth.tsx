@@ -51,13 +51,11 @@ const AuthPage = () => {
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("lastActive", new Date().getTime().toString());
-      //      localStorage.setItem("userId", data.user.id.toString());
-      // localStorage.setItem("username", data.user.username);
+
       const decoded = jwtDecode<{ id: number; username: string }>(data.token);
       localStorage.setItem("userId", decoded.id.toString());
       localStorage.setItem("username", decoded.username);
       console.log("Decoded JWT:", decoded);
-
 
       navigate("/dashboard");
       console.log(data)
@@ -65,7 +63,6 @@ const AuthPage = () => {
       setError(err instanceof Error ? err.message : "An unknown error occurred");
     }
   };
-
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
