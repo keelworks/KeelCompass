@@ -37,7 +37,7 @@ useEffect(() => {
       alert("You must be logged in to post a question.");
       return;
     }
-
+    console.log(token)
     try {
       const response = await fetch("http://localhost:8080/api/questions", {
         method: "POST",
