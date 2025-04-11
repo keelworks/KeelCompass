@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
+
 
 const PostQuestionDashboard: React.FC = () => {
   const [questionTitle, setQuestionTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const availableTags = ["Career Development", "Job Search", "Education"];
   const navigate = useNavigate();
@@ -86,6 +89,11 @@ useEffect(() => {
     localStorage.setItem('questionDraft', JSON.stringify(draftData));
     alert('Your draft has been saved!');
   };
+
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    setDescription((prev) => prev + emojiData.emoji);
+  };
+  
   
 
   return (
@@ -167,6 +175,18 @@ useEffect(() => {
                 color: "#063E53",
               }}
             />
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker((val) => !val)}
+              className="text-sm text-blue-500 underline"
+            >
+              {showEmojiPicker ? "Hide Emojis" : "Add Emoji 😀"}
+            </button>
+            {showEmojiPicker && (
+              <div className="mt-2">
+                <EmojiPicker onEmojiClick={handleEmojiClick} />
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
