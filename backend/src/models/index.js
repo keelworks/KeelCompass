@@ -42,7 +42,7 @@ db.questionCategories = require("./QuestionCategory.js")(sequelize, db.questions
 db.interests = require("./Interest.js")(sequelize, db.users, db.questions);
 
 // sync database
-db.sequelize.sync({ alter: true })
+db.sequelize.sync({ force: false })
   .then(() => {
     logger.info("Syncing DB...");
   })
