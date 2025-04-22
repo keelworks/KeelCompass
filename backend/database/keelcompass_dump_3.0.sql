@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 9.2.0, for macos15.2 (arm64)
 --
--- Host: localhost    Database: KeelCompass_dev
+-- Host: localhost    Database: keelworks_keelcompass_db
 -- ------------------------------------------------------
 -- Server version	9.2.0
 
