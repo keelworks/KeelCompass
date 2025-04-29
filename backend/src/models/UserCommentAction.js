@@ -1,9 +1,8 @@
-// models/Question.js
 const { DataTypes } = require("sequelize");
 
-module.exports = (sequelize, User, Question) => {
-  const Comment = sequelize.define(
-    "Comment",
+module.exports = (sequelize, User, Comment) => {
+  const UserCommentAction = sequelize.define(
+    "UserCommentAction",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -18,16 +17,16 @@ module.exports = (sequelize, User, Question) => {
           key: "id",
         },
       },
-      question_id: {
+      comment_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: Question,
+          model: Comment,
           key: "id",
         },
       },
-      content: {
-        type: DataTypes.TEXT,
+      action_type: {
+        type: DataTypes.ENUM("like", "report"),
         allowNull: false,
       },
       created_at: {
@@ -35,14 +34,14 @@ module.exports = (sequelize, User, Question) => {
         defaultValue: DataTypes.NOW,
       },
     },
-    { tableName: "Comments" }
+    { tableName: "UserCommentActions", timestamps: false }
   );
 
-  Comment.belongsTo(User, { foreignKey: "user_id", as: "user" });
-  Comment.belongsTo(Question, { foreignKey: "question_id", as: "question" });
+  UserCommentAction.belongsTo(User, { foreignKey: "user_id" });
+  UserCommentAction.belongsTo(Comment, { foreignKey: "comment_id" });
 
-  User.hasMany(Comment, { foreignKey: "user_id", sourceKey: "id" });
-  Question.hasMany(Comment, { foreignKey: "question_id", sourceKey: "id" });
+  User.hasMany(UserCommentAction, { foreignKey: "user_id" });
+  Comment.hasMany(UserCommentAction, { foreignKey: "comment_id" });
 
-  return Comment;
+  return UserCommentAction;
 };

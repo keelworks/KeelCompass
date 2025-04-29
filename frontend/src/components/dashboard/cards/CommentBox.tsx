@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { IoSend } from "react-icons/io5";
+import api from "../../../utils/api";
 
 interface CommentBoxProps {
   questionID: number;
@@ -11,31 +12,31 @@ const CommentBox: React.FC<CommentBoxProps> = ({ questionID, onCommentAdded }) =
 
   const handleSend = async () => {
     const token = localStorage.getItem("token");
-
+  
     if (!token) {
       alert("You must be logged in to comment.");
       return;
     }
-
+  
     if (!comment.trim()) return;
-
+  
     try {
-      const response = await fetch("http://localhost:8080/api/comments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const response = await api.post(
+        "/comments",
+        {
           questionID,
           content: comment,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.message === "Comment created successfully") {
-
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      const data = response.data;
+  
+      if (response.status === 201 && data.message === "Comment created successfully") {
         setComment("");
         onCommentAdded();
       } else {

@@ -40,7 +40,9 @@ mysql -u root -p
 create database keelworks_keelcompass_db;
 ```
 
-5. Create a .env file in backend/. Copy and paste the contents in .env.example into the newly created .env. Replace DB_USER, DB_PASSWORD, and DB_DATABASE variables with your own.
+5. Set up backend environment variables.
+
+- For development mode, create a .env file in backend/. Copy and paste the contents in .env.example into the newly created .env. Replace DB_USER, DB_PASSWORD, and DB_DATABASE variables with your own local database configurations.
 
 ```env
 DB_USER=root
@@ -48,21 +50,37 @@ DB_PASS=yourpassword
 DB_DATABASE=keelworks_keelcompass_db
 ```
 
-6. On your terminal, cd back to the root of the project. Sync your local db using the latest keelcompass_dump_x.x.sql file in backend/database/. For example, if the latest version is keelcompass_dump_3.0.sql, the db name is keelworks_keelcompass_db, and your username is root, the command is:
+<!-- - For testing/production mode, create a .env.production file in backend/. Copy and paste the contents in .env.example into the newly created .env. Replace DB_USER, DB_PASSWORD, and DB_DATABASE variables with the current testing/production database configurations. -->
+
+6. Set up frontenv environment variables.
+
+- For development mode, create a .env file in frontend/. Copy and paste the contents in .env.example into the newly created .env.
+
+<!-- - For testing/production mode, create a .env.production in frontend/. Copy and paste the contents in .env.example into the newly created .env. Replace VITE_API_URL to the correct base url for this environment. -->
+
+7. On your terminal, cd into the backend and start the backend once to sync the database schema.
 
 ```bash
 cd KeelCompass
-mysql -u root -p keelworks_keelcompass_db < backend/database/keelcompass_dump_3.0.sql
+cd backend
+npm install
+npm run dev
 ```
 
-7. Build and activate the Dockerfiles for both backend/ and frontend/ using docker-compose.yml in the root. From the root, the command is:
+8. Once the backend logs "Databse synced", stop the server and seed using the latest seed file inside backend/database/. For example, if the latest version is seed_3.1.js, the db name is keelworks_keelcompass_db, and your username is root, the command from the backend/ directory is:
+
+```bash
+node database/seed_3.1.js
+```
+
+9. Build and activate the Dockerfiles for both backend/ and frontend/ using docker-compose.yml in the root. From the root, the command is:
 
 ```bash
 cd KeelCompass
 docker compose up --build
 ```
 
-8. (Optional) If developers want to run components independently (outside of `docker-compose`), they can do so using Docker or local Node.js. On your terminal, go to whichever component you want to run (cd backend or cd frontend) and run these commands:
+10. (Optional) If developers want to run components independently (outside of `docker-compose`), they can do so using Docker or local Node.js. On your terminal, go to whichever component you want to run (cd backend or cd frontend) and run these commands:
 
 For backend/Dockerfile
 

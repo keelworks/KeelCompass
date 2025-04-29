@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import api from "../utils/api";
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -26,39 +27,29 @@ const AuthPage = () => {
     setError("");
     const validationError = validateForm();
     if (validationError) return setError(validationError);
+  
     try {
-      const response = await fetch(`http://localhost:8080/api/auth/${isSignup ? "register" : "login"}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          isSignup
-            ? { username: formData.name, email: formData.email, password: formData.password }
-            : { email: formData.email, password: formData.password }
-        ),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Something went wrong");
-      }
-
-      const data = response.headers.get("content-type")?.includes("application/json")
-        ? await response.json()
-        : {};
-
+      const response = await api.post(
+        `/auth/${isSignup ? "register" : "login"}`,
+        isSignup
+          ? { username: formData.name, email: formData.email, password: formData.password }
+          : { email: formData.email, password: formData.password }
+      );
+  
+      const data = response.data;
+  
       if (!data.token) throw new Error("Invalid response from server");
-
-
+  
       localStorage.setItem("token", data.token);
       localStorage.setItem("lastActive", new Date().getTime().toString());
-
+  
       const decoded = jwtDecode<{ id: number; username: string }>(data.token);
       localStorage.setItem("userId", decoded.id.toString());
       localStorage.setItem("username", decoded.username);
       console.log("Decoded JWT:", decoded);
-
+  
       navigate("/dashboard");
-      console.log(data)
+      console.log(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unknown error occurred");
     }

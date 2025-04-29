@@ -3,12 +3,12 @@ const { body, param, query, validationResult } = require("express-validator");
 const authenticator = require("../middlewares/authMiddleware");
 const {
   createQuestion,
+  getQuestions,
   getQuestionByID,
-  getQuestionList,
-  updateQuestion,
+  updateQuestionByID,
   deleteQuestionByID,
-  takeAction,
-  removeAction,
+  takeActionByQuestionID,
+  removeActionByQuestionID,
 } = require("../controllers/questionController");
 const { HttpStatusCodes } = require("../utils/httpError");
 
@@ -73,7 +73,7 @@ router.get(
       next();
     },
   ],
-  getQuestionList
+  getQuestions
 );
 
 // update question by id
@@ -100,7 +100,7 @@ router.put(
       next();
     },
   ],
-  updateQuestion
+  updateQuestionByID
 );
 
 // delete question by id
@@ -143,10 +143,10 @@ router.post(
       next();
     },
   ],
-  takeAction
+  takeActionByQuestionID
 );
 
-// delete action on question
+// remove action on question
 router.delete(
   "/action",
   authenticator,
@@ -165,7 +165,7 @@ router.delete(
       next();
     },
   ],
-  removeAction
+  removeActionByQuestionID
 );
 
 module.exports = router;

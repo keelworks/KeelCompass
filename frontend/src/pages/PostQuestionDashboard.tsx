@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../utils/api";
 
 const PostQuestionDashboard: React.FC = () => {
   const [questionTitle, setQuestionTitle] = useState("");
@@ -31,32 +32,29 @@ useEffect(() => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    setError("");
+  
     const token = localStorage.getItem("token");
     if (!token) {
       alert("You must be logged in to post a question.");
       return;
     }
-    console.log(token)
+  
     try {
-      const response = await fetch("http://localhost:8080/api/questions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      await api.post(
+        "/questions",
+        {
           title: questionTitle,
           description,
           tags: selectedTags,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to post question");
-      }
-
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
       navigate("/");
     } catch (err: any) {
       setError(err.message || "Something went wrong");

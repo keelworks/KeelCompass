@@ -1,4 +1,3 @@
-// models/Question.js
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize, User) => {
@@ -12,7 +11,7 @@ module.exports = (sequelize, User) => {
       },
       user_id: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
         references: {
           model: User,
           key: "id",

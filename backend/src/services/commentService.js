@@ -5,6 +5,7 @@ const { HttpError, HttpStatusCodes } = require("../utils/httpError");
 const User = db.users;
 const Question = db.questions;
 const Comment = db.comments;
+const UserCommentAction = db.userCommentActions;
 
 // post comment
 const createComment = async (questionID, content, loginUser) => {
@@ -23,7 +24,7 @@ const createComment = async (questionID, content, loginUser) => {
 };
 
 // get all comments by question id
-const getCommentListByQuestionID = async (questionID, count, offset) => {
+const getCommentsByQuestionID = async (questionID, count, offset) => {
   const comments = await Comment.findAll({
     order: [["created_at"]],
     where: {
@@ -54,7 +55,7 @@ const getCommentListByQuestionID = async (questionID, count, offset) => {
 };
 
 // update comment by id
-const updateComment = async (commentID, content, loginUser) => {
+const updateCommentByID = async (commentID, content, loginUser) => {
   const comment = await Comment.findByPk(commentID);
   if (!comment) {
     logger.warn("Warning deleting comment: comment not found. ID = " + commentID);
@@ -89,9 +90,59 @@ const deleteCommentByID = async (commentID, loginUser) => {
   return;
 };
 
+// take action on comment
+const takeActionByCommentID = async (commentID, actionType, loginUser) => {
+  const comment = await Comment.findByPk(commentID);
+  if (!comment) {
+    logger.warn("Warning adding actions: comment not found. ID = " + commentID);
+    throw new HttpError(HttpStatusCodes.NOT_FOUND, "comment not found");
+  }
+
+  const [action, created] = await UserCommentAction.findOrCreate({
+    where: {
+      user_id: loginUser.id,
+      comment_id: commentID,
+      action_type: actionType,
+    },
+    defaults: {
+      user_id: loginUser.id,
+      comment_id: commentID,
+      action_type: actionType,
+    },
+  });
+
+  if (!created) {
+    logger.warn("Warning adding actions: action existed");
+    throw new HttpError(HttpStatusCodes.CONFLICT, "record existed");
+  }
+
+  return;
+};
+
+// remove action on comment
+const removeActionByCommentID = async (commentID, actionType, loginUser) => {
+  const action = await UserCommentAction.findOne({
+    where: {
+      user_id: loginUser.id,
+      comment_id: commentID,
+      action_type: actionType,
+    },
+  });
+
+  if (!action) {
+    throw new HttpError(HttpStatusCodes.NOT_FOUND, "record not found");
+  }
+
+  await action.destroy();
+
+  return;
+};
+
 module.exports = {
   createComment,
-  getCommentListByQuestionID,
-  updateComment,
+  getCommentsByQuestionID,
+  updateCommentByID,
   deleteCommentByID,
+  takeActionByCommentID,
+  removeActionByCommentID,
 };
