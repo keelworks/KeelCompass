@@ -54,6 +54,7 @@ const markNotificationRead = async (req, res) => {
     .markNotificationRead(notificationId, userId)
     .then(() => {
       // return success message
+      // console.log("sameer");
       return res.status(HttpStatusCodes.OK).json({ message: "notification marked as read" });
     })
     .catch((error) => ServiceErrorHandler(error, res, logger, "markNotificationRead"));
