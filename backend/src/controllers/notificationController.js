@@ -23,18 +23,40 @@ const createSystemNotifications = async (req, res) => {
 // get all notifications for a user
 const getNotificationsByUserID = async (req, res) => {
   // fetch notifications for the currently logged-in user
+
+  logger.debug(`get notifications by user ID request, loginUser = ${util.inspect(req.loginUser)}`);
+  
   // use req.loginUser.id to identify the user
+  const userId = req.loginUser.id;
+
   // call notificationService.getNotificationsByUserID(userId)
-  // return the list of notifications
+  notificationService
+    .getNotificationsByUserID(userId)
+    .then((notifications) => {
+      // return the list of notifications
+      return res.status(HttpStatusCodes.OK).json({ message: "success", notifications: notifications });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "getNotificationsByUserID"));
 };
 
 // mark a notification as read
 const markNotificationRead = async (req, res) => {
-  // mark a single notification as read
+  logger.debug(`mark notification as read request, params = ${util.inspect(req.params)}, loginUser = ${util.inspect(req.loginUser)}`);
+  
   // get notificationId from req.params.id
+  const notificationId = req.params.id;
+
   // use req.loginUser.id to ensure the user owns the notification
+  const userId = req.loginUser.id;
+
   // call notificationService.markNotificationRead(notificationId, userId)
-  // return success message
+  notificationService
+    .markNotificationRead(notificationId, userId)
+    .then(() => {
+      // return success message
+      return res.status(HttpStatusCodes.OK).json({ message: "notification marked as read" });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "markNotificationRead"));
 };
 
 module.exports = {
