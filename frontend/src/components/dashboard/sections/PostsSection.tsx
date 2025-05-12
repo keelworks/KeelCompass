@@ -10,7 +10,7 @@ const PostsSection: React.FC = () => {
 
   useEffect(() => {
     // For example, fetch 3 items starting from offset 0
-    fetchQuestions(6, 0);
+    fetchQuestions(10, 0);
   }, [fetchQuestions]);
 
   if (isLoading && questions.length === 0) {

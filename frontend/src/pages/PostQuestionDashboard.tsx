@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Snackbar from "../components/ui/Snackbar";
 
 const PostQuestionDashboard: React.FC = () => {
   const [questionTitle, setQuestionTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [showSnackbar, setShowSnackbar] = useState(false);
+
 
   const availableTags = ["Career Development", "Job Search", "Education"];
   const navigate = useNavigate();
@@ -31,14 +34,44 @@ useEffect(() => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     const token = localStorage.getItem("token");
     if (!token) {
       alert("You must be logged in to post a question.");
       return;
     }
-    console.log(token)
+  
     try {
+      const count = 100;
+      let offset = 0;
+      let isDuplicate = false;
+  
+      while (offset !== -1 && !isDuplicate) {
+        const res = await fetch(`http://localhost:8080/api/questions?count=${count}&offset=${offset}`);
+        if (!res.ok) {
+          throw new Error("Failed to check existing questions");
+        }
+  
+        const data = await res.json();
+        const questions = data.questions || [];
+  
+        isDuplicate = questions.some(
+          (q: { title: string }) =>
+            q.title.trim().toLowerCase() === questionTitle.trim().toLowerCase()
+        );
+  
+        offset = data.offset;
+      }
+  
+      if (isDuplicate) {
+        setError("A question with this title already exists.");
+        setShowSnackbar(true);
+        setTimeout(() => setShowSnackbar(false), 4000);
+        return;
+      }
+      
+  
+
       const response = await fetch("http://localhost:8080/api/questions", {
         method: "POST",
         headers: {
@@ -51,17 +84,20 @@ useEffect(() => {
           tags: selectedTags,
         }),
       });
-
+  
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || "Failed to post question");
       }
-
+  
       navigate("/");
     } catch (err: any) {
       setError(err.message || "Something went wrong");
+      setShowSnackbar(true);
+      setTimeout(() => setShowSnackbar(false), 4000);
     }
   };
+  
 
   const handleClearDraft = () => {
     localStorage.removeItem('questionDraft');
@@ -73,7 +109,7 @@ useEffect(() => {
   
 
   const handleCancel = () => {
-    navigate("/");
+    navigate("/dashboard");
   };
 
   const handleSaveDraft = () => {
@@ -118,10 +154,9 @@ useEffect(() => {
           >
             Post your question
           </h1>
-
-          {error && (
-            <p className="text-red-500 text-sm text-center -mt-2">{error}</p>
-          )}
+          {showSnackbar && error && (
+  <Snackbar message={error} onClose={() => setShowSnackbar(false)} />
+)}
 
           <div className="flex flex-col gap-2">
             <label style={{ fontWeight: 600, fontSize: "16px" }}>

@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import Snackbar from "../components/ui/Snackbar"; 
 
 const AuthPage = () => {
   const navigate = useNavigate();
   const [isSignup, setIsSignup] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
+  const [showSnackbar, setShowSnackbar] = useState(false);
+
+  
 
   const handleChange = (e: any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,7 +29,13 @@ const AuthPage = () => {
     e.preventDefault();
     setError("");
     const validationError = validateForm();
-    if (validationError) return setError(validationError);
+    if (validationError) {
+      setError(validationError);
+      setShowSnackbar(true);
+      setTimeout(() => setShowSnackbar(false), 4000);
+      return;
+    }
+  
     try {
       const response = await fetch(`http://localhost:8080/api/auth/${isSignup ? "register" : "login"}`, {
         method: "POST",
@@ -36,31 +46,34 @@ const AuthPage = () => {
             : { email: formData.email, password: formData.password }
         ),
       });
-
+  
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || "Something went wrong");
       }
-
+  
       const data = response.headers.get("content-type")?.includes("application/json")
         ? await response.json()
         : {};
-
+  
       if (!data.token) throw new Error("Invalid response from server");
 
-
+  
       localStorage.setItem("token", data.token);
       localStorage.setItem("lastActive", new Date().getTime().toString());
-
+  
       const decoded = jwtDecode<{ id: number; username: string }>(data.token);
       localStorage.setItem("userId", decoded.id.toString());
       localStorage.setItem("username", decoded.username);
       console.log("Decoded JWT:", decoded);
-
+  
       navigate("/dashboard");
-      console.log(data)
+      console.log(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      
+      setError("Invalid Email or Password. Please try again.");
+      setShowSnackbar(true);
+      setTimeout(() => setShowSnackbar(false), 4000);
     }
   };
 
@@ -68,7 +81,10 @@ const AuthPage = () => {
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-6 bg-white shadow-lg rounded-lg">
         <h2 className="text-2xl font-semibold text-center mb-6">{isSignup ? "Sign Up" : "Login"}</h2>
-        {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
+        {showSnackbar && error && (
+  <Snackbar message={error} onClose={() => setShowSnackbar(false)} />
+)}
+
         <form onSubmit={handleSubmit}>
           {isSignup && (
             <input
