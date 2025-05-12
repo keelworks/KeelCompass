@@ -106,10 +106,11 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
         {/* Top Section */}
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center mr-2 text-sm font-semibold">
-  {postData.user?.username?.charAt(0).toUpperCase() || "U"}
-</div>
-
+            <img
+              src="/default-avatar.png"
+              alt={postData.user?.username || "User"}
+              className="w-8 h-8 rounded-full mr-2"
+            />
             <div className="flex items-center">
               <p className="text-sm font-medium text-gray-800">
                 {postData.user?.username || "Anonymous"}
