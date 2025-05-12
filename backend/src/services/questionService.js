@@ -1,5 +1,5 @@
 const db = require("../models");
-const ActionTypes = require("../constants/actionTypes")
+const ActionTypes = require("../constants/actionTypes");
 const logger = require("../utils/logger");
 const { HttpError, HttpStatusCodes } = require("../utils/httpError");
 
@@ -26,7 +26,7 @@ const createQuestion = async (title, description, loginUser, attachment) => {
 };
 
 // get all questions
-const getQuestionList = async (count, offset) => {
+const getQuestions = async (count, offset) => {
   const query = `
   SELECT 
     Questions.id,
@@ -128,7 +128,7 @@ const getQuestionByID = async (questionID) => {
 };
 
 // update question by id
-const updateQuestion = async (questionID, title, description, loginUser) => {
+const updateQuestionByID = async (questionID, title, description, loginUser) => {
   const question = await Question.findByPk(questionID);
   if (!question) {
     logger.warn("Warning updating question: question not found. ID = " + questionID);
@@ -165,7 +165,7 @@ const deleteQuestionByID = async (questionID, loginUser) => {
 };
 
 // take action on question
-const takeAction = async (questionID, actionType, loginUser) => {
+const takeActionByQuestionID = async (questionID, actionType, loginUser) => {
   const question = await Question.findByPk(questionID);
   if (!question) {
     logger.warn("Warning adding actions: question not found. ID = " + questionID);
@@ -194,7 +194,7 @@ const takeAction = async (questionID, actionType, loginUser) => {
 };
 
 // remove action on question
-const removeAction = async (questionID, actionType, loginUser) => {
+const removeActionByQuestionID = async (questionID, actionType, loginUser) => {
   const action = await UserQuestionAction.findOne({
     where: {
       user_id: loginUser.id,
@@ -214,10 +214,10 @@ const removeAction = async (questionID, actionType, loginUser) => {
 
 module.exports = {
   createQuestion,
-  getQuestionList,
+  getQuestions,
   getQuestionByID,
-  updateQuestion,
+  updateQuestionByID,
   deleteQuestionByID,
-  takeAction,
-  removeAction,
+  takeActionByQuestionID,
+  removeActionByQuestionID,
 };

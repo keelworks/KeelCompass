@@ -4,6 +4,7 @@ import { FaRegThumbsUp, FaRegCommentDots, FaRegBookmark } from "react-icons/fa";
 import { MdOutlineRateReview } from "react-icons/md";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import ExplodedPostCard from "./ExplodedPostCard";
+import api from "../../../utils/api";
 
 interface PostCardProps {
   question: Question;
@@ -38,21 +39,21 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
     }
 
     try {
-      const res = await fetch("http://localhost:8080/api/questions/action", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const res = await api.post(
+        `/questions/action`,
+        {
           questionID: postData.id,
           actionType: "like",
-        }),
-      });
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = res.data;
 
-      const data = await res.json();
-
-      if (res.ok && data.message === "success") {
+      if (res.status === 200 && data.message === "success") {
         setPostData((prev) => ({
           ...prev,
           likeCount: prev.likeCount + 1,
@@ -67,18 +68,24 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
       alert("An error occurred while liking the question.");
     }
   };
+  
   // fetch the total number of comments 
   useEffect(() => {
     if (!postData.id) return;
 
     const fetchCommentCount = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:8080/api/comments?questionID=${postData.id}&count=1&offset=0`
-        );
-        const data = await res.json();
+        const res = await api.get(`/comments`, {
+          params: {
+            questionID: postData.id,
+            count: 1,
+            offset: 0,
+          },
+        });
+        const data = res.data;
         console.log("Fetched comment count:", data);
-        if (res.ok && data.message === "success") {
+
+        if (res.status === 200 && data.message === "success") {
           setComments(data.total);
           console.log("Set comments to", data.total);
         }

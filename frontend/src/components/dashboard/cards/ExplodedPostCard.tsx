@@ -3,6 +3,7 @@ import { Question, useStore } from "../../../utils/store";
 import { FaRegThumbsUp, FaRegCommentDots, FaFileAlt } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import CommentBox from "./CommentBox";
+import api from "../../../utils/api";
 
 interface Comment {
   id: number;
@@ -46,11 +47,16 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
 
   const fetchComments = async (limit = 2, offset = 0) => {
     try {
-      const res = await fetch(
-        `http://localhost:8080/api/comments?questionID=${question.id}&count=${limit}&offset=${offset}`
-      );
-      const data = await res.json();
-      if (res.ok && data.message === "success") {
+      const res = await api.get(`/comments`, {
+        params: {
+          questionID: question.id,
+          count: limit,
+          offset: offset,
+        },
+      });
+  
+      const data = res.data;
+      if (data.message === "success") {
         setCommentList(data.comments);
         setComments(data.total);
       }
@@ -88,18 +94,19 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   const handleLike = async () => {
     const token = localStorage.getItem("token");
     if (!token) return alert("You must be logged in to like a question.");
-
+  
     try {
-      const res = await fetch("http://localhost:8080/api/questions/action", {
-        method: "POST",
+      const res = await api.post(`/questions/action`, {
+        questionID: question.id,
+        actionType: "like",
+      }, {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ questionID: question.id, actionType: "like" }),
       });
-      const data = await res.json();
-      if (res.ok && data.message === "success") {
+  
+      const data = res.data;
+      if (data.message === "success") {
         setLikes(likes + 1);
         setLiked(true);
       }

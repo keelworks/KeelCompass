@@ -1,8 +1,8 @@
 const questionService = require("../services/questionService");
 const util = require("util");
-const { IsValidAction } = require("../utils/actionTypes");
 const logger = require("../utils/logger");
 const { HttpStatusCodes, ServiceErrorHandler } = require("../utils/httpError");
+const { IsValidAction } = require("../utils/actionTypes");
 
 // post question
 const createQuestion = async (req, res) => {
@@ -30,12 +30,12 @@ const createQuestion = async (req, res) => {
 };
 
 // get all questions
-const getQuestionList = async (req, res) => {
+const getQuestions = async (req, res) => {
   logger.debug(`get question request, query params = ${util.inspect(req.query)}`);
   const { count, offset } = req.query;
 
   questionService
-    .getQuestionList(Number(count), Number(offset))
+    .getQuestions(Number(count), Number(offset))
     .then(([questions, offset, total]) => {
       return res
         .status(HttpStatusCodes.OK)
@@ -57,29 +57,15 @@ const getQuestionByID = async (req, res) => {
     .catch((error) => ServiceErrorHandler(error, res, logger, "getQuestionByID"));
 };
 
-// check attachment
-// function checkAttachment(attachment) {
-//   console.log("check");
-//   if (!Array.isArray(attachment)) {
-//     return false;
-//   }
-
-//   attachment.forEach((item) => {
-//     console.log(typeof item);
-//   });
-
-//   return attachment.every((item) => typeof item === "object" && item !== null);
-// }
-
 // update question by id
-const updateQuestion = async (req, res) => {
+const updateQuestionByID = async (req, res) => {
   logger.debug(`update question request, body = ${util.inspect(req.body)}`);
   logger.debug(`update question request, loginUser = ${util.inspect(req.loginUser)}`);
   const loginUser = req.loginUser;
   const { title, description, questionID } = req.body;
 
   questionService
-    .updateQuestion(questionID, title, description, loginUser)
+    .updateQuestionByID(questionID, title, description, loginUser)
     .then(() => {
       return res.status(HttpStatusCodes.OK).json({ message: "success" });
     })
@@ -102,7 +88,7 @@ const deleteQuestionByID = async (req, res) => {
 };
 
 // take action on question
-const takeAction = async (req, res) => {
+const takeActionByQuestionID = async (req, res) => {
   logger.debug(`take action on question request, body = ${util.inspect(req.body)}`);
   logger.debug(`take action on question request, loginUser = ${util.inspect(req.loginUser)}`);
   const loginUser = req.loginUser;
@@ -113,7 +99,7 @@ const takeAction = async (req, res) => {
   }
 
   questionService
-    .takeAction(questionID, actionType, loginUser)
+    .takeActionByQuestionID(questionID, actionType, loginUser)
     .then(() => {
       return res.status(HttpStatusCodes.OK).json({ message: "success" });
     })
@@ -122,7 +108,7 @@ const takeAction = async (req, res) => {
 };
 
 // remove action on question
-const removeAction = async (req, res) => {
+const removeActionByQuestionID = async (req, res) => {
   logger.debug(`remove action on question request, body = ${util.inspect(req.body)}`);
   logger.debug(`remove action on question request, loginUser = ${util.inspect(req.loginUser)}`);
   const loginUser = req.loginUser;
@@ -133,7 +119,7 @@ const removeAction = async (req, res) => {
   }
 
   questionService
-    .removeAction(questionID, actionType, loginUser)
+    .removeActionByQuestionID(questionID, actionType, loginUser)
     .then(() => {
       return res.status(HttpStatusCodes.OK).json({ message: "success" });
     })
@@ -143,11 +129,10 @@ const removeAction = async (req, res) => {
 
 module.exports = {
   createQuestion,
-  getQuestionList,
+  getQuestions,
   getQuestionByID,
-  // checkAttachment,
-  updateQuestion,
+  updateQuestionByID,
   deleteQuestionByID,
-  takeAction,
-  removeAction,
+  takeActionByQuestionID,
+  removeActionByQuestionID,
 };

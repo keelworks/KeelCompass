@@ -2,6 +2,7 @@ const commentService = require("../services/commentService");
 const util = require("util");
 const logger = require("../utils/logger");
 const { HttpStatusCodes, ServiceErrorHandler } = require("../utils/httpError");
+const { IsValidAction } = require("../utils/actionTypes");
 
 // post comment
 const createComment = async (req, res) => {
@@ -24,14 +25,12 @@ const createComment = async (req, res) => {
 };
 
 // get all comments by question id
-const getCommentListByQuestionID = async (req, res) => {
+const getCommentsByQuestionID = async (req, res) => {
   logger.debug(`get comment list by question ID request, query params = ${util.inspect(req.query)}`);
-  // logger.debug(`update comment request, loginUser = ${util.inspect(req.loginUser)}`);
   const { questionID, count, offset } = req.query;
-  // const loginUser = req.loginUser;
 
   commentService
-    .getCommentListByQuestionID(questionID, Number(count), Number(offset))
+    .getCommentsByQuestionID(questionID, Number(count), Number(offset))
     .then(([comments, offset, total]) => {
       return res
         .status(HttpStatusCodes.OK)
@@ -41,14 +40,14 @@ const getCommentListByQuestionID = async (req, res) => {
 };
 
 // update comment by id
-const updateComment = async (req, res) => {
+const updateCommentByID = async (req, res) => {
   logger.debug(`update comment request, body = ${util.inspect(req.body)}`);
   logger.debug(`update comment request, loginUser = ${util.inspect(req.loginUser)}`);
   const { commentID, content } = req.body;
   const loginUser = req.loginUser;
 
   commentService
-    .updateComment(commentID, content, loginUser)
+    .updateCommentByID(commentID, content, loginUser)
     .then(() => {
       return res.status(HttpStatusCodes.OK).json({ message: "success" });
     })
@@ -70,9 +69,51 @@ const deleteCommentByID = async (req, res) => {
     .catch((error) => ServiceErrorHandler(error, res, logger, "deleteCommentByID"));
 };
 
+// take action on comment
+const takeActionByCommentID = async (req, res) => {
+  logger.debug(`take action on comment request, body = ${util.inspect(req.body)}`);
+  logger.debug(`take action on comment request, loginUser = ${util.inspect(req.loginUser)}`);
+  const loginUser = req.loginUser;
+  const { commentID, actionType } = req.body;
+
+  if (!IsValidAction(actionType)) {
+    return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: "invalid actionType" });
+  }
+
+  commentService
+    .takeActionByCommentID(commentID, actionType, loginUser)
+    .then(() => {
+      return res.status(HttpStatusCodes.OK).json({ message: "success" });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "takeAction"));
+  return;
+};
+
+// remove action on comment
+const removeActionByCommentID = async (req, res) => {
+  logger.debug(`remove action on comment request, body = ${util.inspect(req.body)}`);
+  logger.debug(`remove action on comment request, loginUser = ${util.inspect(req.loginUser)}`);
+  const loginUser = req.loginUser;
+  const { commentID, actionType } = req.body;
+
+  if (!IsValidAction(actionType)) {
+    return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: "invalid actionType" });
+  }
+
+  commentService
+    .removeActionByCommentID(commentID, actionType, loginUser)
+    .then(() => {
+      return res.status(HttpStatusCodes.OK).json({ message: "success" });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "removeAction"));
+  return;
+};
+
 module.exports = {
   createComment,
-  getCommentListByQuestionID,
-  updateComment,
+  getCommentsByQuestionID,
+  updateCommentByID,
   deleteCommentByID,
+  takeActionByCommentID,
+  removeActionByCommentID,
 };

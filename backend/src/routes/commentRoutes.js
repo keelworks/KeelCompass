@@ -3,9 +3,11 @@ const { body, query, validationResult } = require("express-validator");
 const authenticator = require("../middlewares/authMiddleware");
 const {
   createComment,
-  getCommentListByQuestionID,
-  updateComment,
+  getCommentsByQuestionID,
+  updateCommentByID,
   deleteCommentByID,
+  takeActionByCommentID,
+  removeActionByCommentID,
 } = require("../controllers/commentController");
 const { HttpStatusCodes } = require("../utils/httpError");
 
@@ -62,7 +64,7 @@ router.get(
       next();
     },
   ],
-  getCommentListByQuestionID
+  getCommentsByQuestionID
 );
 
 // update comment
@@ -89,7 +91,7 @@ router.put(
       next();
     },
   ],
-  updateComment
+  updateCommentByID
 );
 
 // delete comment by id
@@ -116,6 +118,44 @@ router.delete(
     },
   ],
   deleteCommentByID
+);
+
+// take action on comment
+router.post(
+  "/action",
+  authenticator,
+  [
+    body("commentID").isInt({ gt: 0 }).withMessage("invalid commentID").bail(),
+    body("actionType").notEmpty().withMessage("actionType is required").bail(),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        const errorMessages = errors.map((error) => error.msg).join(", ");
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
+      }
+      next();
+    },
+  ],
+  takeActionByCommentID
+);
+
+// remove action on comment
+router.delete(
+  "/action",
+  authenticator,
+  [
+    body("commentID").isInt({ gt: 0 }).withMessage("invalid commentID").bail(),
+    body("actionType").notEmpty().withMessage("actionType is required").bail(),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        const errorMessages = errors.map((error) => error.msg).join(", ");
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
+      }
+      next();
+    },
+  ],
+  removeActionByCommentID
 );
 
 module.exports = router;

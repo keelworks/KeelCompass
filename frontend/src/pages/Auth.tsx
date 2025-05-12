@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+
 import Snackbar from "../components/ui/Snackbar"; 
+
+import api from "../utils/api";
+
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -29,6 +33,7 @@ const AuthPage = () => {
     e.preventDefault();
     setError("");
     const validationError = validateForm();
+
     if (validationError) {
       setError(validationError);
       setShowSnackbar(true);
@@ -55,6 +60,20 @@ const AuthPage = () => {
       const data = response.headers.get("content-type")?.includes("application/json")
         ? await response.json()
         : {};
+  
+      if (!data.token) throw new Error("Invalid response from server");
+
+    if (validationError) return setError(validationError);
+  
+    try {
+      const response = await api.post(
+        `/auth/${isSignup ? "register" : "login"}`,
+        isSignup
+          ? { username: formData.name, email: formData.email, password: formData.password }
+          : { email: formData.email, password: formData.password }
+      );
+  
+      const data = response.data;
   
       if (!data.token) throw new Error("Invalid response from server");
 

@@ -3,7 +3,8 @@ const authRoutes = require("./authRoutes");
 const questionRoutes = require("./questionRoutes.js");
 const commentRoutes = require("./commentRoutes");
 const interestRoutes = require("./interestRoutes");
-// const uploadRoutes = require("./uploadRoutes");
+const searchRoutes = require("./searchRoutes.js");
+const notificationRoutes = require("./notificationRoutes");
 
 const router = express.Router();
 
@@ -12,7 +13,8 @@ router.use("/api/auth", authRoutes);
 router.use("/api/questions", questionRoutes);
 router.use("/api/comments", commentRoutes);
 router.use("/api/interests", interestRoutes);
-// router.use("/api/upload", uploadRoutes);
+router.use("/api/search", searchRoutes);
+router.use("/api/notifications", notificationRoutes);
 
 // static routes
 router.use("/static/career", express.static("src/career"));

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+
 import Snackbar from "../components/ui/Snackbar";
+
+import api from "../utils/api";
+
 
 const PostQuestionDashboard: React.FC = () => {
   const [questionTitle, setQuestionTitle] = useState("");
@@ -34,6 +38,10 @@ useEffect(() => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+
+    setError("");
+
   
     const token = localStorage.getItem("token");
     if (!token) {
@@ -42,6 +50,7 @@ useEffect(() => {
     }
   
     try {
+
       const count = 100;
       let offset = 0;
       let isDuplicate = false;
@@ -89,6 +98,21 @@ useEffect(() => {
         const errorText = await response.text();
         throw new Error(errorText || "Failed to post question");
       }
+
+      await api.post(
+        "/questions",
+        {
+          title: questionTitle,
+          description,
+          tags: selectedTags,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
   
       navigate("/");
     } catch (err: any) {
