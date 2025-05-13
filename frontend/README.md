@@ -1,4 +1,4 @@
-# KeelCompass Frontend
+# KeelCompass  Frontend
 
 This project is a frontend application built with **React**, **TypeScript**, **Vite**, and **Tailwind CSS**. It leverages modern tools for fast development and optimized production builds. The project comes with **ESLint** configuration for code quality and type safety, ensuring smooth development workflows.
 
