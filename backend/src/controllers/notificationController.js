@@ -22,8 +22,6 @@ const createSystemNotifications = async (req, res) => {
 
 // get all notifications for a user
 const getNotificationsByUserID = async (req, res) => {
-  // fetch notifications for the currently logged-in user
-
   logger.debug(`get notifications by user ID request, loginUser = ${util.inspect(req.loginUser)}`);
   
   // use req.loginUser.id to identify the user
@@ -33,7 +31,6 @@ const getNotificationsByUserID = async (req, res) => {
   notificationService
     .getNotificationsByUserID(userId)
     .then((notifications) => {
-      // return the list of notifications
       return res.status(HttpStatusCodes.OK).json({ message: "success", notifications: notifications });
     })
     .catch((error) => ServiceErrorHandler(error, res, logger, "getNotificationsByUserID"));
@@ -53,8 +50,6 @@ const markNotificationRead = async (req, res) => {
   notificationService
     .markNotificationRead(notificationId, userId)
     .then(() => {
-      // return success message
-      // console.log("sameer");
       return res.status(HttpStatusCodes.OK).json({ message: "notification marked as read" });
     })
     .catch((error) => ServiceErrorHandler(error, res, logger, "markNotificationRead"));
