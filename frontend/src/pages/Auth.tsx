@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-
-import Snackbar from "../components/ui/Snackbar";
-
+import Snackbar from "../components/ui/Snackbar"; 
 import api from "../utils/api";
 
 
@@ -14,7 +12,7 @@ const AuthPage = () => {
   const [error, setError] = useState("");
   const [showSnackbar, setShowSnackbar] = useState(false);
 
-
+  
 
   const handleChange = (e: any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -32,7 +30,6 @@ const AuthPage = () => {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     setError("");
-
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
