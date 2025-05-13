@@ -24,10 +24,8 @@ const createSystemNotifications = async (req, res) => {
 const getNotificationsByUserID = async (req, res) => {
   logger.debug(`get notifications by user ID request, loginUser = ${util.inspect(req.loginUser)}`);
   
-  // use req.loginUser.id to identify the user
   const userId = req.loginUser.id;
 
-  // call notificationService.getNotificationsByUserID(userId)
   notificationService
     .getNotificationsByUserID(userId)
     .then((notifications) => {
@@ -40,13 +38,9 @@ const getNotificationsByUserID = async (req, res) => {
 const markNotificationRead = async (req, res) => {
   logger.debug(`mark notification as read request, params = ${util.inspect(req.params)}, loginUser = ${util.inspect(req.loginUser)}`);
   
-  // get notificationId from req.params.id
   const notificationId = req.params.id;
-
-  // use req.loginUser.id to ensure the user owns the notification
   const userId = req.loginUser.id;
 
-  // call notificationService.markNotificationRead(notificationId, userId)
   notificationService
     .markNotificationRead(notificationId, userId)
     .then(() => {
