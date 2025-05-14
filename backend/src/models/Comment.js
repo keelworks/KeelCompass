@@ -25,6 +25,15 @@ module.exports = (sequelize, User, Question) => {
           key: "id",
         },
       },
+      parent_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "Comments",
+          key: "id",
+        },
+        onDelete: "CASCADE",
+      },
       content: {
         type: DataTypes.TEXT,
         allowNull: false,
@@ -42,10 +51,13 @@ module.exports = (sequelize, User, Question) => {
   );
 
   Comment.belongsTo(User, { foreignKey: "user_id", as: "user" });
-  Comment.belongsTo(Question, { foreignKey: "question_id", as: "question" });
-
   User.hasMany(Comment, { foreignKey: "user_id", sourceKey: "id" });
+
+  Comment.belongsTo(Question, { foreignKey: "question_id", as: "question" });
   Question.hasMany(Comment, { foreignKey: "question_id", sourceKey: "id" });
+
+  Comment.belongsTo(Comment, { foreignKey: "parent_id", as: "parent" });
+  Comment.hasMany(Comment, { foreignKey: "parent_id", as: "replies" });
 
   return Comment;
 };

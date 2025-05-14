@@ -8,16 +8,27 @@ const Comment = db.comments;
 const UserCommentAction = db.userCommentActions;
 
 // post comment
-const createComment = async (questionID, content, loginUser) => {
+const createComment = async (questionID, content, loginUser, parentID = null) => {
   const question = await Question.findByPk(questionID);
   if (!question) {
     throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
+  }
+
+  if (parentID !== null) {
+    const parentComment = await Comment.findByPk(parentID);
+    if (!parentComment) {
+      throw new HttpError(HttpStatusCodes.BAD_REQUEST, "parent comment not found");
+    }
+    if (parentComment.question_id !== questionID) {
+      throw new HttpError(HttpStatusCodes.BAD_REQUEST, "parent comment does not belong to the same question");
+    }
   }
 
   const newComment = await Comment.create({
     content: content,
     question_id: questionID,
     user_id: loginUser.id,
+    parent_id: parentID,
   });
 
   return newComment.id;

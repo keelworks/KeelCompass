@@ -39,8 +39,13 @@ module.exports = (sequelize, User, Question, Comment) => {
   );
 
   Interest.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+  User.hasMany(Interest, { foreignKey: 'user_id', as: 'interests' });
+
   Interest.belongsTo(Question, { foreignKey: 'question_id', as: 'question' });
+  Question.hasMany(Interest, { foreignKey: 'question_id', as: 'interests' });
+
   Interest.belongsTo(Comment, { foreignKey: 'comment_id', as: 'comment' });
+  Comment.hasMany(Interest, { foreignKey: 'comment_id', as: 'interests' });
 
   return Interest;
 };
