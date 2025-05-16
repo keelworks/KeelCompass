@@ -12,10 +12,11 @@ const PostQuestionDashboard: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [showSnackbar, setShowSnackbar] = useState(false);
+  const [showAllTags, setShowAllTags] = useState(false);
+  const [titleCharError, setTitleCharError] = useState("");
 
-
-  const availableTags = ["Career Development", "Job Search", "Education"];
-  const navigate = useNavigate();
+const availableTags = ["Career Development", "Job Search", "Education", "KeelWorks", "KCompass Help"];
+const navigate = useNavigate();
 
 useEffect(() => {
   const draft = localStorage.getItem('questionDraft');
@@ -78,26 +79,7 @@ useEffect(() => {
         setTimeout(() => setShowSnackbar(false), 4000);
         return;
       }
-      
-  
 
-      const response = await fetch("http://localhost:8080/api/questions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: questionTitle,
-          description,
-          tags: selectedTags,
-        }),
-      });
-  
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to post question");
-      }
 
       await api.post(
         "/questions",
@@ -182,29 +164,46 @@ useEffect(() => {
   <Snackbar message={error} onClose={() => setShowSnackbar(false)} />
 )}
 
-          <div className="flex flex-col gap-2">
+<div className="flex flex-col gap-2">
             <label style={{ fontWeight: 600, fontSize: "16px" }}>
               Question Title<span style={{ color: "red" }}>*</span>
             </label>
             <input
-              required
-              type="text"
-              id="questionTitle"
-              name="questionTitle"
-              value={questionTitle}
-              onChange={(e) => setQuestionTitle(e.target.value)}
-              className="px-3 py-2 focus:outline-none focus:ring-1"
-              style={{
-                width: "100%",
-                height: "36px",
-                fontSize: "16px",
-                borderRadius: "3px",
-                border: "1px solid #D1DBDD",
-                backgroundColor: "#FFFFFF",
-                color: "#063E53",
-              }}
-            />
-          </div>
+  required
+  type="text"
+  id="questionTitle"
+  name="questionTitle"
+  value={questionTitle}
+  onChange={(e) => {
+    const value = e.target.value;
+    if (value.length > 250) {
+      setTitleCharError("Title cannot exceed 250 characters.");
+    } else {
+      setTitleCharError("");
+    }
+    setQuestionTitle(value);
+  }}
+  maxLength={256}
+  className="px-3 py-2 focus:outline-none focus:ring-1"
+  style={{
+    width: "100%",
+    height: "36px",
+    fontSize: "16px",
+    borderRadius: "3px",
+    border: "1px solid #D1DBDD",
+    backgroundColor: "#FFFFFF",
+    color: "#063E53",
+  }}
+/>
+<div className="flex justify-between text-sm mt-1">
+  <span style={{ color: "#5E7A84" }}>{questionTitle.length} / 250</span>
+  {titleCharError && (
+    <span className="text-red-500">{titleCharError}</span>
+  )}
+</div>
+
+</div>
+
 
           <div className="flex flex-col gap-2">
             <label style={{ fontWeight: 600, fontSize: "16px" }}>
@@ -229,31 +228,45 @@ useEffect(() => {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label style={{ fontWeight: 600, fontSize: "16px" }}>
-              Categories & Tags
-            </label>
-            <div className="flex items-center gap-2 flex-wrap">
-              {availableTags.map((tag, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => handleTagClick(tag)}
-                  className="flex items-center px-3 py-1 font-medium border border-gray-300 rounded-full"
-                  style={{
-                    height: "36px",
-                    borderRadius: "18px",
-                    color: selectedTags.includes(tag) ? "#FFFFFF" : "#063E53",
-                    backgroundColor: selectedTags.includes(tag)
-                      ? "#116989"
-                      : "#064C651A",
-                  }}
-                >
-                  {selectedTags.includes(tag) ? "✓ " : "+ "}
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
+  <div className="flex items-center gap-2 flex-wrap">
+    {(showAllTags ? availableTags : availableTags.slice(0, 3)).map((tag, index) => (
+      <button
+        key={index}
+        type="button"
+        onClick={() => handleTagClick(tag)}
+        className="flex items-center px-3 py-1 font-medium border border-gray-300 rounded-full"
+        style={{
+          height: "36px",
+          borderRadius: "18px",
+          color: selectedTags.includes(tag) ? "#FFFFFF" : "#063E53",
+          backgroundColor: selectedTags.includes(tag)
+            ? "#116989"
+            : "#064C651A",
+        }}
+      >
+        {selectedTags.includes(tag) ? "✓ " : "+ "}
+        {tag}
+      </button>
+    ))}
+  </div>
+  {availableTags.length > 3 && (
+    <button
+  type="button"
+  onClick={() => setShowAllTags(!showAllTags)}
+  className="px-3 py-1 font-medium border border-gray-300 rounded-full transition hover:opacity-80"
+  style={{
+    height: "36px",
+    borderRadius: "18px",
+    color: "#116989",
+    backgroundColor: "#064C651A",
+  }}
+>
+  {showAllTags ? "− Show Less" : "+ More Tags"}
+</button>
+
+  )}
+</div>
+
 
           <div className="flex items-center gap-6">
             <button
