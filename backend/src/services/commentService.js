@@ -113,7 +113,7 @@ const takeActionByCommentID = async (commentID, actionType, loginUser) => {
 
   if (!created) {
     logger.warn("Warning adding actions: action existed");
-    throw new HttpError(HttpStatusCodes.CONFLICT, "record existed");
+    throw new HttpError(HttpStatusCodes.CONFLICT, "User has already submitted this comment action");
   }
 
   return;
