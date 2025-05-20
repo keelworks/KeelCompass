@@ -5,12 +5,12 @@ const logger = require("../src/utils/logger");
 const seed = async () => {
   try {
     await db.sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
-    await db.sequelize.sync({ force: true });
+    await db.sequelize.sync();
     logger.info("Database synced.");
     await db.sequelize.query("SET FOREIGN_KEY_CHECKS = 1");
 
     // Seed Categories
-    const categories = await db.categories.bulkCreate([
+    await db.categories.bulkCreate([
       { name: "Career Development" },
       { name: "Job Search" },
       { name: "Education" },

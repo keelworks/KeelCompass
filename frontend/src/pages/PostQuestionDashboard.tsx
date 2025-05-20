@@ -51,18 +51,13 @@ useEffect(() => {
     }
   
     try {
-
       const count = 100;
       let offset = 0;
       let isDuplicate = false;
   
       while (offset !== -1 && !isDuplicate) {
-        const res = await fetch(`http://localhost:8080/api/questions?count=${count}&offset=${offset}`);
-        if (!res.ok) {
-          throw new Error("Failed to check existing questions");
-        }
-  
-        const data = await res.json();
+        const res = await api.get(`/questions?count=${count}&offset=${offset}`);
+        const data = res.data;
         const questions = data.questions || [];
   
         isDuplicate = questions.some(

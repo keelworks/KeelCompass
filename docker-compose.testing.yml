@@ -1,0 +1,41 @@
+services:
+  database:
+    container_name: keelcompass-testing-database
+    image: mysql:8
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  backend:
+    container_name: keelcompass-testing-backend
+    build:
+      context: ./backend
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.env.testing
+    ports:
+      - "8080:8080"
+    command: sh ./scripts/wait-for-db.sh
+    depends_on:
+      - database
+
+  frontend:
+    container_name: keelcompass-testing-frontend
+    build:
+      context: ./frontend
+    env_file:
+      - ./frontend/.env
+    ports:
+      - "5173:5173"
+    command: npm run test -- --host
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
+  

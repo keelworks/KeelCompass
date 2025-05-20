@@ -12,7 +12,7 @@ KeelCompass is a Express.js + React.js full stack app. Each component has its ow
 - Node.js (optional for local dev, not needed for Docker)
 - MySQL
 
-### Instructions
+### Initial Setup
 
 1. Clone the repository.
 
@@ -20,85 +20,84 @@ KeelCompass is a Express.js + React.js full stack app. Each component has its ow
 git clone git@github.com:keelworks/KeelCompass.git
 ```
 
-2. Go into the repository and navigate to the backend. Install cross-env as a dev dependency.
+### Running in Development Environment
 
-```bash
-cd KeelCompass
-cd backend
-npm install --save-dev cross-env
-```
+In development mode, the app connects to the local MySQL database on your computer.
 
-3. On your terminal, activate the mysql server using your username and password. If your username is root, the command is:
+1. Open a new terminal and activate the mysql shell using your username and password. If your username is root, the command is:
 
 ```bash
 mysql -u root -p
 ```
 
-4. Create a mysql db for KeelCompass from the mysql server. Then exit the mysql server.
+2. Create a mysql db for KeelCompass from the mysql shell.
 
 ```mysql
 create database keelworks_keelcompass_db;
 ```
 
-5. Set up backend environment variables.
+Exit the mysql shell once database is created.
 
-- For development mode, create a .env file in backend/. Copy and paste the contents in .env.example into the newly created .env. Replace DB_USER, DB_PASSWORD, and DB_DATABASE variables with your own local database configurations.
+3. Create a .env file in backend/. Copy and paste the contents in .env.example into the newly created .env. Replace DB_USER, DB_PASSWORD, and DB_DATABASE variables with your own local database configurations.
 
-```env
-DB_USER=root
-DB_PASS=yourpassword
-DB_DATABASE=keelworks_keelcompass_db
-```
+4. Create a .env file in frontend/. Copy and paste the contents in .env.example into the newly created .env.
 
-<!-- - For testing/production mode, create a .env.production file in backend/. Copy and paste the contents in .env.example into the newly created .env. Replace DB_USER, DB_PASSWORD, and DB_DATABASE variables with the current testing/production database configurations. -->
-
-6. Set up frontenv environment variables.
-
-- For development mode, create a .env file in frontend/. Copy and paste the contents in .env.example into the newly created .env.
-
-<!-- - For testing/production mode, create a .env.production in frontend/. Copy and paste the contents in .env.example into the newly created .env. Replace VITE_API_URL to the correct base url for this environment. -->
-
-7. On your terminal, cd into the backend and start the backend once to sync the database schema.
+5. On the terminal, navigate to the backend and run the following commands to start the backend server.
 
 ```bash
-cd KeelCompass
-cd backend
+cd KeelCompass/backend
+npm install
+npm install --save-dev cross-env
+npm run dev
+```
+
+Backend should now be running successfully on one terminal.
+
+6. Open a new terminal, navigate to the backend and seed using the latest seed file inside backend/database/. For example, if the latest version is seed_3.1.js, the command is:
+
+```bash
+cd KeelCompass/backend
+node database/seed_3.1.js
+```
+
+7. On the terminal, navigate to the frontend and run the following commands to start the frontend server.
+
+```bash
+cd KeelCompass/frontend
 npm install
 npm run dev
 ```
 
-8. Once the backend logs "Databse synced", stop the server and seed using the latest seed file inside backend/database/. For example, if the latest version is seed_3.1.js, the db name is keelworks_keelcompass_db, and your username is root, the command from the backend/ directory is:
+App should be available on the browser at http://localhost:5173.
 
-```bash
-node database/seed_3.1.js
-```
-
-9. Build and activate the Dockerfiles for both backend/ and frontend/ using docker-compose.yml in the root. From the root, the command is:
+8. Alternatively, you can run the app using Docker Compose. Instead of running `npm run dev` for the backend and frontend seperately, navigate to the root directory and run docker-compose.yml.
 
 ```bash
 cd KeelCompass
 docker compose up --build
 ```
 
-10. (Optional) If developers want to run components independently (outside of `docker-compose`), they can do so using Docker or local Node.js. On your terminal, go to whichever component you want to run (cd backend or cd frontend) and run these commands:
+App should be available on the browser at http://localhost:5173.
 
-For backend/Dockerfile
+### Running in Testing Environment
 
-```bash
-docker build -t keelcompass-backend .
-docker run -p 8080:8080 --envfile .env keelcompass-backend
-```
+In testing mode, the app uses Dockerized MySQL (defined in docker-compose.testing.yml). This setup is fully containerized and does not use your local MySQL server.
 
-For frontend/Dockerfile
+1. Create a .env.testing file in backend/. Copy and paste the contents in .env.testing.example into the newly created .env.
 
-```bash
-docker build -t keelcompass-frontend .
-docker run -p 5173:5173 keelcompass-frontened
-```
+2. Create a .env file in frontend/. Copy and paste the contents in .env.example into the newly created .env.
 
-For either backend or frontend via local Node.js
+3. On the terminal, navigate to the root directory and run docker-compose.testing.yml.
 
 ```bash
-npm install
-npm run dev
+cd KeelCompass
+docker compose -f docker-compose.testing.yml up --build
 ```
+
+4. Open a new terminal and seed the Docker database using the latest seed file inside backend/database/. For example, if the latest version is seed_3.1.js, the command is:
+
+```bash
+docker compose -f docker-compose.testing.yml exec backend node database/seed_3.1.js
+```
+
+App should be available on the browser at http://localhost:5173.
