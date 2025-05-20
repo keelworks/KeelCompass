@@ -1,14 +1,18 @@
-//using dotenv for accessing environment variables
-require("dotenv").config();
+// Determine environment mode (set via npm script or Docker Compose)
+const env = process.env.NODE_ENV || "development";
+
+// Load environment variables only in development
+if (env === "development") {
+  require("dotenv").config({ path: ".env" });
+}
 
 const app = require("./src/app.js");
 const logger = require("./src/utils/logger");
-const PORT = process.env.PORT || 8080; // Add a default port if not provided
-const ENV = `${process.env.NODE_ENV}`;
+const port = process.env.PORT || 8080;
 
 // server listening on port <PORT> for incoming requests
-app.listen(PORT, () => {
+app.listen(port, () => {
   logger.info(
-    `Server is running on port ${PORT}, env = ${ENV}, logging level = ${logger.level}`
+    `Server is running on port ${port}, env = ${env}, logging level = ${logger.level}`
   );
 });
