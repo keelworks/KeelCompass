@@ -30,13 +30,12 @@ In development mode, the app connects to the local MySQL database on your comput
 mysql -u root -p
 ```
 
-2. Create a mysql db for KeelCompass from the mysql shell.
+2. Create a mysql db for KeelCompass from the mysql shell. Exit the mysql shell once database is created.
 
 ```mysql
 create database keelworks_keelcompass_db;
+exit;
 ```
-
-Exit the mysql shell once database is created.
 
 3. Create a .env file in backend/. Copy and paste the contents in .env.example into the newly created .env. Replace DB_USER, DB_PASSWORD, and DB_DATABASE variables with your own local database configurations.
 
