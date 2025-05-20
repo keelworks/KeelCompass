@@ -114,7 +114,7 @@ create database keelworks_keelcompass_db;
 exit;
 ```
 
-7. Seed the Docker database using the latest seed file inside backend/database/. For example, if the latest version is seed_3.1.js, the command is:
+7. If you haven't done so already, seed the Docker database using the latest seed file inside backend/database/. For example, if the latest version is seed_3.1.js, the command is:
 
 ```bash
 docker compose -f docker-compose.testing.yml exec backend node database/seed_3.1.js
