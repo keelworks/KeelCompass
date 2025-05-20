@@ -83,18 +83,38 @@ App should be available on the browser at http://localhost:5173.
 
 In testing mode, the app uses Dockerized MySQL (defined in docker-compose.testing.yml). This setup is fully containerized and does not use your local MySQL server.
 
-1. Create a .env.testing file in backend/. Copy and paste the contents in .env.testing.example into the newly created .env.
+1. Create a .env file in the ROOT directory. Copy and paste the contents in .env.example in the ROOT into the newly created .env. Replace the values with your own mysql password and database name. These values will be used to initialize the mysql container during startup.
 
-2. Create a .env file in frontend/. Copy and paste the contents in .env.example into the newly created .env.
+```bash
+MYSQL_PASSWORD=Password1
+MYSQL_DATABASE=keelworks_keelcompass_db
+```
 
-3. On the terminal, navigate to the root directory and run docker-compose.testing.yml.
+2. Create a .env.testing file in backend/. Copy and paste the contents in .env.testing.example into the newly created .env.
+
+3. If you haven't done so already, create a .env file in frontend/. Copy and paste the contents in .env.example into the newly created .env.
+
+4. On the terminal, navigate to the root directory and run docker-compose.testing.yml.
 
 ```bash
 cd KeelCompass
 docker compose -f docker-compose.testing.yml up --build
 ```
 
-4. Open a new terminal and seed the Docker database using the latest seed file inside backend/database/. For example, if the latest version is seed_3.1.js, the command is:
+5. Open a new terminal and start the mysql shell INSIDE the docker container by running this command and entering the password you set in step 1.
+
+```bash
+docker compose -f docker-compose.testing.yml exec database mysql -u root -p
+```
+
+6. From inside the mysql shell inside the docker container, create the database using the database name you set up in step 1. Then exit the shell.
+
+```mysql
+create database keelworks_keelcompass_db;
+exit;
+```
+
+7. Seed the Docker database using the latest seed file inside backend/database/. For example, if the latest version is seed_3.1.js, the command is:
 
 ```bash
 docker compose -f docker-compose.testing.yml exec backend node database/seed_3.1.js
