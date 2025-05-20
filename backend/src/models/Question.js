@@ -41,7 +41,6 @@ module.exports = (sequelize, User) => {
   );
 
   Question.belongsTo(User, { foreignKey: { name: 'user_id', allowNull: false, }, onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-
   User.hasMany(Question, { foreignKey: "user_id", sourceKey: "id" });
 
   return Question;

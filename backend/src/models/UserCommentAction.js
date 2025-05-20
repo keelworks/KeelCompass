@@ -38,9 +38,9 @@ module.exports = (sequelize, User, Comment) => {
   );
 
   UserCommentAction.belongsTo(User, { foreignKey: "user_id" });
-  UserCommentAction.belongsTo(Comment, { foreignKey: "comment_id" });
-
   User.hasMany(UserCommentAction, { foreignKey: "user_id" });
+
+  UserCommentAction.belongsTo(Comment, { foreignKey: "comment_id" });
   Comment.hasMany(UserCommentAction, { foreignKey: "comment_id" });
 
   return UserCommentAction;

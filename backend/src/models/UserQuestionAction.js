@@ -38,9 +38,9 @@ module.exports = (sequelize, User, Question) => {
   );
 
   UserQuestionAction.belongsTo(User, { foreignKey: "user_id" });
-  UserQuestionAction.belongsTo(Question, { foreignKey: "question_id" });
-
   User.hasMany(UserQuestionAction, { foreignKey: "user_id" });
+
+  UserQuestionAction.belongsTo(Question, { foreignKey: "question_id" });
   Question.hasMany(UserQuestionAction, { foreignKey: "question_id" });
 
   return UserQuestionAction;

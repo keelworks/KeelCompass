@@ -9,11 +9,11 @@ const createComment = async (req, res) => {
   logger.debug(`create comment request, body = ${util.inspect(req.body)}`);
   logger.debug(`create comment request, loginUser = ${util.inspect(req.loginUser)}`);
 
-  const { questionID, content } = req.body;
+  const { questionID, content, parentID } = req.body;
   const loginUser = req.loginUser;
 
   commentService
-    .createComment(questionID, content, loginUser)
+    .createComment(questionID, content, loginUser, parentID)
     .then((commentID) => {
       res.status(HttpStatusCodes.CREATED).json({
         message: "Comment created successfully",
