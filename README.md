@@ -46,20 +46,27 @@ exit;
 ```bash
 cd KeelCompass/backend
 npm install
-npm install --save-dev cross-env
 npm run dev
 ```
 
 Backend should now be running successfully on one terminal.
 
-6. Open a new terminal, navigate to the backend and seed using the latest seed file inside backend/database/. For example, if the latest version is seed_3.1.js, the command is:
+6. Open a new terminal and run database migrations.
 
 ```bash
 cd KeelCompass/backend
-node database/seed_3.1.js
+npx sequelize-cli db:migrate
 ```
 
-7. On the terminal, navigate to the frontend and run the following commands to start the frontend server.
+7. Seed the database from the backend directory.
+
+```bash
+cd KeelCompass/backend
+npx sequelize-cli db:seed:undo:all
+npx sequelize-cli db:seed:all
+```
+
+8. Navigate to the frontend and run the following commands to start the frontend server.
 
 ```bash
 cd KeelCompass/frontend
@@ -69,7 +76,7 @@ npm run dev
 
 App should be available on the browser at http://localhost:5173.
 
-8. Alternatively, you can run the app using Docker Compose. Instead of running `npm run dev` for the backend and frontend seperately, navigate to the root directory and run docker-compose.yml.
+9. Alternatively, you can run the app using Docker Compose. Instead of running `npm run dev` for the backend and frontend seperately, navigate to the root directory and run docker-compose.yml.
 
 ```bash
 cd KeelCompass
@@ -100,23 +107,17 @@ cd KeelCompass
 docker compose -f docker-compose.testing.yml up --build
 ```
 
-5. Open a new terminal and start the mysql shell INSIDE the docker container by running this command and entering the password you set in step 1.
+5. Open a new terminal and apply all migrations.
 
 ```bash
-docker compose -f docker-compose.testing.yml exec database mysql -u root -p
+docker compose -f docker-compose.testing.yml exec backend npx sequelize-cli db:migrate
 ```
 
-6. From inside the mysql shell inside the docker container, create the database using the database name you set up in step 1. Then exit the shell.
-
-```mysql
-create database keelworks_keelcompass_db;
-exit;
-```
-
-7. If you haven't done so already, seed the Docker database using the latest seed file inside backend/database/. For example, if the latest version is seed_3.1.js, the command is:
+6. Seed the testing database.
 
 ```bash
-docker compose -f docker-compose.testing.yml exec backend node database/seed_3.1.js
+docker compose -f docker-compose.testing.yml exec backend npx sequelize-cli db:seed:undo:all
+docker compose -f docker-compose.testing.yml exec backend npx sequelize-cli db:seed:all
 ```
 
 App should be available on the browser at http://localhost:5173.

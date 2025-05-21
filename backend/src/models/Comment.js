@@ -53,7 +53,7 @@ module.exports = (sequelize, User, Question) => {
   Comment.belongsTo(User, { foreignKey: "user_id", as: "user" });
   User.hasMany(Comment, { foreignKey: "user_id", sourceKey: "id" });
 
-  Comment.belongsTo(Question, { foreignKey: "question_id", as: "question" });
+  Comment.belongsTo(Question, { foreignKey: "question_id", as: "question", onDelete: "CASCADE" });
   Question.hasMany(Comment, { foreignKey: "question_id", sourceKey: "id" });
 
   Comment.belongsTo(Comment, { foreignKey: "parent_id", as: "parent" });

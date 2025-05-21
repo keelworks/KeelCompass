@@ -8,7 +8,7 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   dialect: dbConfig.dialect,
   operatorsAliases: 0,
   define: {
-    timestamps: false
+    timestamps: false,
   },
   pool: {
     max: dbConfig.pool.max,
@@ -16,17 +16,19 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     acquire: dbConfig.pool.acquire,
     idle: dbConfig.pool.idle,
   },
-
-  logging: (msg) => logger.info(msg)
+  logging: (msg) => logger.info(msg),
 });
 
 // connect to mysql db
 sequelize.authenticate()
   .then(() => {
-    logger.info("database connected");
+    logger.info("Syncing DB...");
+  })
+  .then(() => {
+    logger.info("Syncing DB completed");
   })
   .catch((error) => {
-    logger.error(`Error: database connection failed: ${error}`);
+    logger.error(`Error: syncing database failed: ${error}`);
   });
 
 // initialize relational models
@@ -43,16 +45,5 @@ db.userCommentActions = require("./UserCommentAction.js")(sequelize, db.users, d
 db.interests = require("./Interest.js")(sequelize, db.users, db.questions, db.comments);
 db.notifications = require("./Notification.js")(sequelize, db.users);
 
-// sync database
-db.sequelize.sync({ force: false })
-  .then(() => {
-    logger.info("Syncing DB...");
-  })
-  .then(() => {
-    logger.info("Syncing DB completed");
-  })
-  .catch((error) => {
-    logger.error(`Error: syncing database failed: ${error}`);
-  });
-
+// no more sync(); let migrations handle schema
 module.exports = db;

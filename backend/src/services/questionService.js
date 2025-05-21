@@ -158,7 +158,7 @@ const deleteQuestionByID = async (questionID, loginUser) => {
     logger.warn("Warning deleting question: no permission to delete");
     throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
   }
-
+  console.log('TRYING TO DELETE QUESTION', questionID, loginUser.id)
   await Question.destroy({ where: { id: questionID } });
 
   return;
