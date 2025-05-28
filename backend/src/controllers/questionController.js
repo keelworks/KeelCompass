@@ -3,6 +3,7 @@ const util = require("util");
 const logger = require("../utils/logger");
 const { HttpStatusCodes, ServiceErrorHandler } = require("../utils/httpError");
 const { IsValidAction } = require("../utils/actionTypes");
+const checkAttachment = require("../utils/checkAttachment");
 
 // post question
 const createQuestion = async (req, res) => {
@@ -11,11 +12,11 @@ const createQuestion = async (req, res) => {
   const loginUser = req.loginUser;
   const { title, description, attachment } = req.body;
 
-  if (attachment != undefined && !checkAttachment(attachment)) {
+  if (attachment !== undefined && !checkAttachment(attachment)) {
     return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: "invalid attachment format" });
   }
 
-  let attachmentData = attachment ?? [];
+  const attachmentData = attachment ?? [];
 
   questionService
     .createQuestion(title, description, loginUser, attachmentData)
@@ -29,19 +30,34 @@ const createQuestion = async (req, res) => {
   return;
 };
 
-// get all questions
-const getQuestions = async (req, res) => {
-  logger.debug(`get question request, query params = ${util.inspect(req.query)}`);
+// get recent questions
+const getRecentQuestions = async (req, res) => {
+  logger.debug(`get recent questions request, query params = ${util.inspect(req.query)}`);
   const { count, offset } = req.query;
 
   questionService
-    .getQuestions(Number(count), Number(offset))
+    .getRecentQuestions(Number(count), Number(offset))
     .then(([questions, offset, total]) => {
       return res
         .status(HttpStatusCodes.OK)
         .json({ message: "success", questions: questions, offset: offset, total: total });
     })
-    .catch((error) => ServiceErrorHandler(error, res, logger, "getQuestionList"));
+    .catch((error) => ServiceErrorHandler(error, res, logger, "getRecentQuestions"));
+};
+
+// get popular questions
+const getPopularQuestions = async (req, res) => {
+  logger.debug(`get popular questions request, query params = ${util.inspect(req.query)}`);
+  const { count, offset } = req.query;
+
+  questionService
+    .getPopularQuestions(Number(count), Number(offset))
+    .then(([questions, offset, total]) => {
+      return res
+        .status(HttpStatusCodes.OK)
+        .json({ message: "success", questions: questions, offset: offset, total: total });
+    })
+    .catch((error) => ServiceErrorHandler(error, res, logger, "getPopularQuestions"));
 };
 
 // get question by id
@@ -62,10 +78,16 @@ const updateQuestionByID = async (req, res) => {
   logger.debug(`update question request, body = ${util.inspect(req.body)}`);
   logger.debug(`update question request, loginUser = ${util.inspect(req.loginUser)}`);
   const loginUser = req.loginUser;
-  const { title, description, questionID } = req.body;
+  const { title, description, questionID, attachment } = req.body;
+
+  if (attachment !== undefined && !checkAttachment(attachment)) {
+    return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: "invalid attachment format" });
+  }
+
+  const attachmentData = attachment ?? [];
 
   questionService
-    .updateQuestionByID(questionID, title, description, loginUser)
+    .updateQuestionByID(questionID, title, description, loginUser, attachmentData)
     .then(() => {
       return res.status(HttpStatusCodes.OK).json({ message: "success" });
     })
@@ -129,7 +151,8 @@ const removeActionByQuestionID = async (req, res) => {
 
 module.exports = {
   createQuestion,
-  getQuestions,
+  getRecentQuestions,
+  getPopularQuestions,
   getQuestionByID,
   updateQuestionByID,
   deleteQuestionByID,

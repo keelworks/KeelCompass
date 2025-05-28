@@ -21,13 +21,11 @@ router.post(
     body("questionID").notEmpty().withMessage("question ID is required").bail().isInt({ gt: 0 }).withMessage("invalid question ID"),
     body("content").notEmpty().withMessage("content is required").bail().isString().withMessage("invalid content"),
     body("parentID").optional({ nullable: true }).isInt({ gt: 0 }).withMessage("invalid parent ID"),
+    body("attachment").optional().isArray().withMessage("attachment must be an array"),
     (req, res, next) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
+        const errorMessages = errors.array().map((error) => error.msg).join(", ");
         return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
       }
       next();
@@ -65,13 +63,11 @@ router.put(
   [
     body("commentID").notEmpty().withMessage("comment ID is required").bail().isInt({ gt: 0 }).withMessage("invalid comment ID"),
     body("content").notEmpty().withMessage("content is required").bail().isString().withMessage("invalid content"),
+    body("attachment").optional().isArray().withMessage("attachment must be an array"),
     (req, res, next) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
+        const errorMessages = errors.array().map((error) => error.msg).join(", ");
         return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
       }
       next();

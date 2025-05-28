@@ -8,7 +8,7 @@ const Comment = db.comments;
 const UserCommentAction = db.userCommentActions;
 
 // post comment
-const createComment = async (questionID, content, loginUser, parentID = null) => {
+const createComment = async (questionID, content, loginUser, parentID = null, attachment = []) => {
   const question = await Question.findByPk(questionID);
   if (!question) {
     throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
@@ -29,6 +29,7 @@ const createComment = async (questionID, content, loginUser, parentID = null) =>
     question_id: questionID,
     user_id: loginUser.id,
     parent_id: parentID,
+    attachment: attachment,
   });
 
   return newComment.id;
@@ -48,7 +49,7 @@ const getCommentsByQuestionID = async (questionID, count, offset) => {
       as: "user",
       attributes: ["id", "username"],
     },
-    attributes: ["id", "content", "created_at"],
+    attributes: ["id", "content", "attachment", "created_at"],
   });
 
   const totalCount = await Comment.count({
@@ -66,19 +67,20 @@ const getCommentsByQuestionID = async (questionID, count, offset) => {
 };
 
 // update comment by id
-const updateCommentByID = async (commentID, content, loginUser) => {
+const updateCommentByID = async (commentID, content, loginUser, attachment) => {
   const comment = await Comment.findByPk(commentID);
   if (!comment) {
-    logger.warn("Warning deleting comment: comment not found. ID = " + commentID);
+    logger.warn("Warning updating comment: comment not found. ID = " + commentID);
     throw new HttpError(HttpStatusCodes.NOT_FOUND, "comment not found");
   }
 
   if (comment.user_id != loginUser.id) {
-    logger.warn("Warning deleting comment: no permission to edit");
+    logger.warn("Warning updating comment: no permission to edit");
     throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
   }
 
   comment.content = content;
+  if (attachment !== undefined) comment.attachment = attachment;
 
   await comment.save();
 };

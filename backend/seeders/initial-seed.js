@@ -3,7 +3,7 @@
 const bcrypt = require("bcryptjs");
 
 module.exports = {
-  async up(queryInterface, Sequelize) {
+  async up(queryInterface, _) {
     // Seed Categories
     await queryInterface.bulkInsert("Categories", [
       { id: 1, name: "Career Development" },
@@ -13,75 +13,104 @@ module.exports = {
       { id: 5, name: "KCompass Help" },
     ]);
 
-    // Seed Users
+    // Seed Users (with roles)
     const passwordHash = bcrypt.hashSync("Password1", 10);
     await queryInterface.bulkInsert("Users", [
-      { id: 1, username: "john_doe", email: "john@example.com", password: passwordHash },
-      { id: 2, username: "jane_doe", email: "jane@example.com", password: passwordHash },
+      { id: 1, username: "john_doe", email: "john@example.com", password: passwordHash, role: "volunteer" },
+      { id: 2, username: "jane_doe", email: "jane@example.com", password: passwordHash, role: "volunteer" },
+      { id: 3, username: "thomas_garrod", email: "thomas@example.com", password: passwordHash, role: "facilitator" },
     ]);
 
-    // Seed Questions
+    // Seed Questions (with status)
     await queryInterface.bulkInsert("Questions", [
       {
         id: 1,
         user_id: 1,
         title: "What are the best programming languages for jobs?",
-        description: "I am looking to transition into a programming career. What languages should I focus on?"
+        description: "I am looking to transition into a programming career. What languages should I focus on?",
+        status: "approved"
       },
       {
         id: 2,
         user_id: 2,
         title: "How to improve resume for education roles?",
-        description: "What are the key points that make a resume stand out for roles in education?"
+        description: "What are the key points that make a resume stand out for roles in education?",
+        status: "approved"
       },
       {
         id: 3,
         user_id: 1,
         title: "Is a degree necessary for software jobs?",
-        description: "Can I land a good software development job without a formal degree?"
+        description: "Can I land a good software development job without a formal degree?",
+        status: "pending"
       },
       {
         id: 4,
         user_id: 2,
         title: "What are the best platforms for job preparation?",
-        description: "I want to prepare for job interviews. Are there any specific platforms you recommend?"
+        description: "I want to prepare for job interviews. Are there any specific platforms you recommend?",
+        status: "pending"
       },
       {
         id: 5,
         user_id: 1,
         title: "How to excel in teaching roles?",
-        description: "I am about to start my career as a teacher. Any tips to excel in this profession?"
+        description: "I am about to start my career as a teacher. Any tips to excel in this profession?",
+        status: "approved"
       },
       {
         id: 6,
         user_id: 2,
         title: "What certifications are helpful for education professionals?",
-        description: "Are there any certifications that add value to a career in education?"
+        description: "Are there any certifications that add value to a career in education?",
+        status: "pending"
       },
       {
         id: 7,
         user_id: 1,
         title: "How to switch from education to IT jobs?",
-        description: "What are the best steps to move from teaching to IT roles?"
+        description: "What are the best steps to move from teaching to IT roles?",
+        status: "approved"
       },
       {
         id: 8,
         user_id: 2,
         title: "What is the future of remote jobs?",
-        description: "Will remote work continue to grow, and how can I find the best opportunities?"
+        description: "Will remote work continue to grow, and how can I find the best opportunities?",
+        status: "pending"
       },
       {
         id: 9,
         user_id: 1,
         title: "How to gain experience in the education field?",
-        description: "I am new to the field of education. How can I gain practical experience?"
+        description: "I am new to the field of education. How can I gain practical experience?",
+        status: "approved"
       },
       {
         id: 10,
         user_id: 2,
         title: "What are the highest-paying IT jobs?",
-        description: "Can you provide a list of the highest-paying IT roles currently?"
+        description: "Can you provide a list of the highest-paying IT roles currently?",
+        status: "pending"
       },
+    ]);
+
+    // Seed QuestionCategories
+    await queryInterface.bulkInsert("QuestionCategories", [
+      { question_id: 1, category_id: 1 },
+      { question_id: 2, category_id: 3 },
+      { question_id: 3, category_id: 1 },
+      { question_id: 3, category_id: 2 },
+      { question_id: 4, category_id: 2 },
+      // Question 5 → No category
+      { question_id: 6, category_id: 1 },
+      { question_id: 6, category_id: 3 },
+      { question_id: 7, category_id: 4 },
+      { question_id: 8, category_id: 1 },
+      { question_id: 8, category_id: 2 },
+      { question_id: 8, category_id: 4 },
+      // Question 9 → No category
+      { question_id: 10, category_id: 5 },
     ]);
 
     // Seed Comments
@@ -98,25 +127,21 @@ module.exports = {
       { id: 10, user_id: 1, question_id: 10, content: "Becoming a Data Scientist often requires strong statistical and machine learning skills." },
     ]);
 
-    // UserQuestionActions
     await queryInterface.bulkInsert("UserQuestionActions", [
       { user_id: 2, question_id: 1, action_type: "like" },
       { user_id: 1, question_id: 2, action_type: "report" },
     ]);
 
-    // UserCommentActions
     await queryInterface.bulkInsert("UserCommentActions", [
       { user_id: 1, comment_id: 1, action_type: "like" },
       { user_id: 2, comment_id: 2, action_type: "report" },
     ]);
 
-    // Interests
     await queryInterface.bulkInsert("Interests", [
       { user_id: 1, comment_id: 1 },
       { user_id: 2, question_id: 1 },
     ]);
 
-    // Notifications
     const makeNotifications = (user_id) => [
       { user_id, type: "question_approved", message: "Your question has been approved.", read: false },
       { user_id, type: "question_rejected", message: "Your question was rejected.", read: false },
@@ -134,7 +159,7 @@ module.exports = {
     ]);
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface, _) {
     await queryInterface.bulkDelete("Notifications", null, {});
     await queryInterface.bulkDelete("Interests", null, {});
     await queryInterface.bulkDelete("UserCommentActions", null, {});

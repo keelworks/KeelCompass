@@ -25,8 +25,9 @@ module.exports = (sequelize, User) => {
         type: DataTypes.TEXT,
       },
       status: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: "pending",
       },
       attachment: {
         type: DataTypes.JSON,
