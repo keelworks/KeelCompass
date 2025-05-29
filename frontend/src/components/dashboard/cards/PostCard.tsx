@@ -8,13 +8,15 @@ import api from "../../../utils/api";
 
 interface PostCardProps {
   question: Question;
+   refreshInterests: () => void; // Add this prop
 }
 
-const PostCard: React.FC<PostCardProps> = ({ question }) => {
+const PostCard: React.FC<PostCardProps> = ({ question,refreshInterests }) => {
   const [elongated, setElongated] = useState(false);
   const [comments, setComments] = useState(0); // Still static
   const [showModal, setShowModal] = useState(false);
   const [postData, setPostData] = useState(question);
+  console.log("function check PostCard",typeof refreshInterests);
 
   const shouldTruncate = postData.description.length > 150;
   const displayText = elongated
@@ -189,6 +191,7 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
             handleClose={() => setShowModal(false)}
             handleEdit={handleEdit}
             setComments={setComments}
+            refreshInterests={refreshInterests}
           />
         </div>
       )}

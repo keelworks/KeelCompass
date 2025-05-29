@@ -4,9 +4,14 @@ import { useStore } from "../../../utils/store";
 import PostCard from "../cards/PostCard";
 import Backdrop from "../modals/BackkDrop";
 import ToggleButton from "../buttons/ToggleButton";
+// Add props interface
+interface PostsSectionProps {
+  refreshInterests: () => void;
+}
 
-const PostsSection: React.FC = () => {
+const PostsSection: React.FC = ({ refreshInterests }) => {
   const { questions, offset, isLoading, error, fetchQuestions } = useStore();
+  console.log("function check PostsSection",typeof refreshInterests);
 
   useEffect(() => {
     // For example, fetch 3 items starting from offset 0
@@ -44,7 +49,7 @@ const handleToggle = (selected: string) => {
       ) : (
         <div className="space-y-4 overflow-y-scroll max-h-[80vh]">
           {questions.map((q) => (
-            <PostCard key={q.id} question={q} />
+            <PostCard key={q.id} question={q} refreshInterests={refreshInterests} />
           ))}
         </div>
       )}
