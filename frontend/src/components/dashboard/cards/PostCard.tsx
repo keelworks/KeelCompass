@@ -16,6 +16,7 @@ const PostCard: React.FC<PostCardProps> = ({ question,refreshInterests }) => {
   const [comments, setComments] = useState(0); // Still static
   const [showModal, setShowModal] = useState(false);
   const [postData, setPostData] = useState(question);
+  const [bookmarked, setBookmarked] = useState(false);
   console.log("function check PostCard",typeof refreshInterests);
 
   const shouldTruncate = postData.description.length > 150;
@@ -70,6 +71,43 @@ const PostCard: React.FC<PostCardProps> = ({ question,refreshInterests }) => {
       alert("An error occurred while liking the question.");
     }
   };
+
+  const handleBookmark = async (e: React.MouseEvent) => {
+  e.stopPropagation();
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    alert("You must be logged in to bookmark.");
+    return;
+  }
+
+  try {
+    const res = await api.post(
+      `/questions/action`,
+      {
+        questionID: postData.id,
+        actionType: "bookmark",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    const data = res.data;
+
+    if (res.status === 200 && data.message === "success") {
+      setBookmarked(true); // update the UI
+    } else if (data.message === "record existed") {
+      alert("Already bookmarked.");
+    } else {
+      alert(data.message || "Failed to bookmark.");
+    }
+  } catch (error) {
+    console.error("Error bookmarking:", error);
+    alert("An error occurred while bookmarking.");
+  }
+};
   
   // fetch the total number of comments 
   useEffect(() => {
@@ -109,8 +147,8 @@ const PostCard: React.FC<PostCardProps> = ({ question,refreshInterests }) => {
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
           <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center mr-2 text-sm font-semibold">
-  {postData.user?.username?.charAt(0).toUpperCase() || "U"}
-</div>
+            {postData.user?.username?.charAt(0).toUpperCase() || "U"}
+          </div>
 
             <div className="flex items-center">
               <p className="text-sm font-medium text-gray-800">
@@ -127,11 +165,17 @@ const PostCard: React.FC<PostCardProps> = ({ question,refreshInterests }) => {
             </div>
           </div>
 
-          <div className="flex items-center text-gray-500 text-sm">
-            <MdOutlineRateReview className="mr-1" />
-            <span className="mr-4">In Review</span>
-            <FaRegBookmark />
-          </div>
+<div className="flex items-center text-gray-500 text-sm">
+  <MdOutlineRateReview className="mr-1" />
+  <span className="mr-4">In Review</span>
+  <FaRegBookmark
+    className={`cursor-pointer ${bookmarked ? "text-blue-500" : "text-gray-500"}`}
+    onClick={(e) => {
+      e.stopPropagation();
+      setBookmarked((prev) => !prev);
+    }}
+  />
+</div>
         </div>
 
         {/* Title */}

@@ -5,6 +5,7 @@ import { BsThreeDotsVertical } from 'react-icons/bs';
 import CommentBox from './CommentBox';
 // NEW: Import the new CommentItem component
 import CommentItem from './CommentItem';
+import { FaRegBookmark, FaBookmark } from "react-icons/fa";
 import api from '../../../utils/api';
 import Snackbar from '../../../components/ui/Snackbar';
 import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io';
@@ -42,6 +43,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
 }) => {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(question.title);
@@ -520,6 +522,17 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
               <FaRegCommentDots className="mr-1" /> {commentList.length}{' '}
               Comments
             </div>
+            <div
+              className="flex items-center cursor-pointer ml-4"
+              onClick={() => setBookmarked((prev) => !prev)}
+            >
+              {bookmarked ? (
+                <FaBookmark className="text-blue-500" />
+              ) : (
+                <FaRegBookmark className="text-gray-500" />
+              )}
+            </div>
+
           </div>
         </div>
       </div>
