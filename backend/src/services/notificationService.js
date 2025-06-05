@@ -33,9 +33,9 @@ const createNotificationsForUsers = async (userIds, type, message, targetUrl) =>
   // create a notification for all users who liked a question/comment whenever that question/comment gets updated
   // create a notification for all users whenever we need to send out system notifications
   // these can be determined based on type
-  try{
-    const notifications= userIds.map((userIds) => ({
-      userIds,
+  try {
+    const notifications = userIds.map((user_id) => ({
+      user_id,
       type,
       message,
       targetUrl,
@@ -44,15 +44,26 @@ const createNotificationsForUsers = async (userIds, type, message, targetUrl) =>
       updatedAt: new Date(),
     }));
 
-    const result= await Notification.bulkCreate(notifications);
+    const result = await Notification.bulkCreate(notifications);
     return result.length;
+  } catch (error) {
+    logger.error(`Error creating notifications for users: ${error.message}`);
+    throw new HttpError(500, "Failed to create notifications");
   }
-    catch(error){
-      logger.error('Error creating notifications for users: ${error.message}');
-      throw new HttpError(500,"Failed to create notifications");
-    }
 };
 
+// create notificaiton for all users
+const createSystemNotifications = async (type, message, targetUrl) => {
+  try {
+    const users = await User.findAll({ attributes: ["id"] });
+    const userIds = users.map((user) => user.id);
+
+    return await createNotificationsForUsers(userIds, type, message, targetUrl);
+  } catch (error) {
+    logger.error(`Error creating system notifications: ${error.message}`);
+    throw new HttpError(500, "Failed to create system notifications");
+  }
+};
 // get all notifications for a user
 const getNotificationsByUserID = async (userId) => {
   // get all notifications for a user based on userId
@@ -67,6 +78,7 @@ const markNotificationRead = async (notificationId, userId) => {
 module.exports = {
   createNotification,
   createNotificationsForUsers,
+  createSystemNotifications,
   getNotificationsByUserID,
   markNotificationRead,
 };
