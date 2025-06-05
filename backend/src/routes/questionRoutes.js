@@ -3,7 +3,8 @@ const { body, param, query, validationResult } = require("express-validator");
 const authenticator = require("../middlewares/authMiddleware");
 const {
   createQuestion,
-  getQuestions,
+  getRecentQuestions,
+  getPopularQuestions,
   getQuestionByID,
   updateQuestionByID,
   deleteQuestionByID,
@@ -20,6 +21,25 @@ router.post(
   authenticator,
   [
     body("title").notEmpty().withMessage("title is required").bail().isString().withMessage("invalid title"),
+    body("attachment").optional().isArray().withMessage("attachment must be an array"),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        const errorMessages = errors.array().map((error) => error.msg).join(", ");
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
+      }
+      next();
+    },
+  ],
+  createQuestion
+);
+
+// get recent questions
+router.get(
+  "/",
+  [
+    query("count").isInt({ gt: 0 }).withMessage("invalid count").bail(),
+    query("offset").isInt({ min: 0 }).withMessage("invalid offset").bail(),
     (req, res, next) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -32,7 +52,28 @@ router.post(
       next();
     },
   ],
-  createQuestion
+  getRecentQuestions
+);
+
+// get popular questions
+router.get(
+  "/popular",
+  [
+    query("count").isInt({ gt: 0 }).withMessage("invalid count").bail(),
+    query("offset").isInt({ min: 0 }).withMessage("invalid offset").bail(),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        const errorMessages = errors
+          .array()
+          .map((error) => error.msg)
+          .join(", ");
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
+      }
+      next();
+    },
+  ],
+  getPopularQuestions
 );
 
 // get question by id
@@ -55,46 +96,18 @@ router.get(
   getQuestionByID
 );
 
-// get recent questions
-router.get(
-  "/",
-  [
-    query("count").isInt({ gt: 0 }).withMessage("invalid count").bail(),
-    query("offset").isInt({ min: 0 }).withMessage("invalid offset").bail(),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  getQuestions
-);
-
 // update question by id
 router.put(
   "/",
   authenticator,
   [
-    body("questionID")
-      .notEmpty()
-      .withMessage("question ID is required")
-      .bail()
-      .isInt({ gt: 0 })
-      .withMessage("invalid question ID"),
+    body("questionID").notEmpty().withMessage("question ID is required").bail().isInt({ gt: 0 }).withMessage("invalid question ID"),
     body("title").notEmpty().withMessage("title is required").bail().isString().withMessage("invalid title"),
+    body("attachment").optional().isArray().withMessage("attachment must be an array"),
     (req, res, next) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
+        const errorMessages = errors.array().map((error) => error.msg).join(", ");
         return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
       }
       next();

@@ -3,17 +3,24 @@ const util = require("util");
 const logger = require("../utils/logger");
 const { HttpStatusCodes, ServiceErrorHandler } = require("../utils/httpError");
 const { IsValidAction } = require("../utils/actionTypes");
+const checkAttachment = require("../utils/checkAttachment");
 
 // post comment
 const createComment = async (req, res) => {
   logger.debug(`create comment request, body = ${util.inspect(req.body)}`);
   logger.debug(`create comment request, loginUser = ${util.inspect(req.loginUser)}`);
 
-  const { questionID, content, parentID } = req.body;
+  const { questionID, content, parentID, attachment } = req.body;
   const loginUser = req.loginUser;
 
+  if (attachment !== undefined && !checkAttachment(attachment)) {
+    return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: "invalid attachment format" });
+  }
+
+  const attachmentData = attachment ?? [];
+
   commentService
-    .createComment(questionID, content, loginUser, parentID)
+    .createComment(questionID, content, loginUser, parentID, attachmentData)
     .then((commentID) => {
       res.status(HttpStatusCodes.CREATED).json({
         message: "Comment created successfully",
@@ -43,11 +50,17 @@ const getCommentsByQuestionID = async (req, res) => {
 const updateCommentByID = async (req, res) => {
   logger.debug(`update comment request, body = ${util.inspect(req.body)}`);
   logger.debug(`update comment request, loginUser = ${util.inspect(req.loginUser)}`);
-  const { commentID, content } = req.body;
+  const { commentID, content, attachment } = req.body;
   const loginUser = req.loginUser;
 
+  if (attachment !== undefined && !checkAttachment(attachment)) {
+    return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: "invalid attachment format" });
+  }
+
+  const attachmentData = attachment ?? [];
+
   commentService
-    .updateCommentByID(commentID, content, loginUser)
+    .updateCommentByID(commentID, content, loginUser, attachmentData)
     .then(() => {
       return res.status(HttpStatusCodes.OK).json({ message: "success" });
     })
