@@ -64,6 +64,7 @@ const createSystemNotifications = async (type, message, targetUrl) => {
     throw new HttpError(500, "Failed to create system notifications");
   }
 };
+
 // get all notifications for a user
 const getNotificationsByUserID = async (userId) => {
   // get all notifications for a user based on userId

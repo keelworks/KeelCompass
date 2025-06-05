@@ -107,13 +107,13 @@ cd KeelCompass
 docker compose -f docker-compose.testing.yml up --build
 ```
 
-5. Open a new terminal and apply all migrations.
+5. Open a new terminal and apply all migrations, if needed.
 
 ```bash
 docker compose -f docker-compose.testing.yml exec backend npx sequelize-cli db:migrate
 ```
 
-6. Seed the testing database.
+6. Seed the testing database, if needed.
 
 ```bash
 docker compose -f docker-compose.testing.yml exec backend npx sequelize-cli db:seed:undo:all
