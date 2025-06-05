@@ -12,6 +12,6 @@ module.exports = {
     password: process.env.DB_PASS,
     database: process.env.DB_DATABASE,
     host: dbHost,
-    dialect: process.env.DB_DIALECT,
+    dialect: process.env.DB_DIALECT
   }
 };

@@ -1,16 +1,31 @@
 const db = require("../models");
 const logger = require("../utils/logger");
 const { HttpError, HttpStatusCodes } = require("../utils/httpError");
-
 const User = db.users;
 const Notification = db.notifications;
 
 // create notification for a single user
-const createNotification = async (userId, type, message, targetUrl) => {
+const createNotification = async (user_id, type, message, targetUrl) => {
   // create a notification for one user whenever their question gets approved/rejected
   // create a notification for one user whenever their question/comment gets liked/shared
   // these can be determined based on type
   // we do not need a controller/route for this service because we call it internally whenever admin updates a question's status or whenever a user likes/shares another user's question/comment
+  try{
+    const notification=await Notification.create({
+      user_id,
+      type,
+      message,
+      targetUrl,
+      isRead: false,
+    });
+
+    return notification;
+  }
+  catch(error){
+    console.log("error is:", error);
+    logger.error('Error creating notification for user ${userId}: ${error.message}');
+    throw new HttpError(500,"Failed to create notification.");
+  }
 };
 
 // create notification for multiple users
@@ -18,6 +33,24 @@ const createNotificationsForUsers = async (userIds, type, message, targetUrl) =>
   // create a notification for all users who liked a question/comment whenever that question/comment gets updated
   // create a notification for all users whenever we need to send out system notifications
   // these can be determined based on type
+  try{
+    const notifications= userIds.map((userIds) => ({
+      userIds,
+      type,
+      message,
+      targetUrl,
+      isRead: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
+
+    const result= await Notification.bulkCreate(notifications);
+    return result.length;
+  }
+    catch(error){
+      logger.error('Error creating notifications for users: ${error.message}');
+      throw new HttpError(500,"Failed to create notifications");
+    }
 };
 
 // get all notifications for a user

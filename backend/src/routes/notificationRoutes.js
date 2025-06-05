@@ -16,7 +16,7 @@ router.post(
   "/updates",
   authenticator,
   [
-    body("userIds").isArray({ min: 1 }).withMessage("userIds must be a non-empty array"),
+    body("userId").isArray({ min: 1 }).withMessage("userIds must be a non-empty array"),
     body("type").notEmpty().withMessage("type is required"),
     body("message").notEmpty().withMessage("message is required"),
     (req, res, next) => {

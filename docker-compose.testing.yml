@@ -20,7 +20,7 @@ services:
       - ./backend/.env.testing
     ports:
       - "8080:8080"
-    command: sh ./scripts/wait-for-db.sh
+    command: bash ./scripts/wait-for-db.sh
     depends_on:
       - database
 

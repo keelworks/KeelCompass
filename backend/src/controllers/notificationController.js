@@ -7,16 +7,16 @@ const { User } = require("../models/User");
 // create notifications for specific users (question/comment update)
 const createUpdateNotifications = async (req, res) => {
   try {
-    const { userIds, type, message, targetUrl } = req.body;
+    const { userId, type, message, targetUrl } = req.body;
 
-    if (!Array.isArray(userIds) || userIds.length === 0 || !type || !message) {
+    if (!Array.isArray(userId) || userId.length === 0 || !type || !message) {
       return res.status(HttpStatusCodes.BAD_REQUEST).json({
-        message: "Invalid Request. 'userIds', 'type', and 'message' are required.",
+        message: "Invalid Request. 'userId', 'type', and 'message' are required.",
       });
     }
 
-    const count = await notificationService.createNotificationsForUsers(
-      userIds,
+    const count = await notificationService.createNotification(
+      userId,
       type,
       message,
       targetUrl
