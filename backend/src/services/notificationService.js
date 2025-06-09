@@ -68,6 +68,19 @@ const createSystemNotifications = async (type, message, targetUrl) => {
 // get all notifications for a user
 const getNotificationsByUserID = async (userId) => {
   // get all notifications for a user based on userId
+  try {
+    
+    const notifications = await Notification.findAll({
+      where: { user_id: userId },
+      order: [['created_at', 'DESC']],
+      raw: true                                 // retrieve plain objects instead of sequelizing instances
+    });
+
+    return notifications;
+  } catch (error) {
+    logger.error(`Failed to fetch the notifications: ${error.message}`);
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Failed to fetch the notifications");
+  }
 };
 
 // mark a notification as read
