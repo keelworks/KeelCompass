@@ -87,6 +87,38 @@ const getNotificationsByUserID = async (userId) => {
 const markNotificationRead = async (notificationId, userId) => {
   // verify notification.userId is the same as userId (make sure that the notification we are updating is owned by the user)
   // update (patch) a notification to change the read attribute from false to true
+  try {
+    // Finding the notification and verifying its ownership by checking the user Id
+    const notification = await Notification.findOne({
+      where: {
+        id: notificationId,
+        user_id: userId
+      }
+    });
+
+    // If the notification doesn't exist or doesn't belong to the user
+    if (!notification) {
+      logger.warn(`Notification ${notificationId} not found or does not belong to user ${userId}`);
+      throw new HttpError(
+        HttpStatusCodes.NOT_FOUND,
+        "Notification not found or you don't have permission to update it"
+      );
+    }
+
+    // Update the read status
+    await notification.update({ read: true });
+    
+    logger.debug(`Marked notification ${notificationId} as read for user ${userId}`);
+    return notification;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    
+    logger.error(`Error marking notification ${notificationId} as read: ${error.message}`);
+    throw new HttpError(
+      HttpStatusCodes.INTERNAL_SERVER_ERROR,
+      "Failed to update notification status"
+    );
+  }
 };
 
 module.exports = {
