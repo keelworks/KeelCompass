@@ -14,8 +14,8 @@ interface Comment {
   id: number;
   content: string;
   created_at: string;
-  user: { id: number; username: string }; // 🔥 UPDATED: Added user.id
-  likeCount?: number; // 🔥 NEW: Added like count
+  user: { id: number; username: string }; // UPDATED: Added user.id
+  likeCount?: number; // NEW: Added like count
 }
 
 interface ExplodedPostCardProps {
@@ -45,7 +45,9 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(question.title);
-  const [editedDescription, setEditedDescription] = useState(question.description);
+  const [editedDescription, setEditedDescription] = useState(
+    question.description
+  );
   const [commentList, setCommentList] = useState<Comment[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [elongated, setElongated] = useState(false);
@@ -82,9 +84,9 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
         // NEW: Initialize like counts for comments
         const commentsWithLikes = data.comments.map((comment: Comment) => ({
           ...comment,
-          likeCount: comment.likeCount || 0
+          likeCount: comment.likeCount || 0,
         }));
-        
+
         setCommentList(commentsWithLikes);
         setComments(data.total);
       }
@@ -107,8 +109,10 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
       });
 
       if (res.status === 200) {
-        setCommentList(prev => prev.filter(comment => comment.id !== commentId));
-        setComments(prev => prev - 1);
+        setCommentList((prev) =>
+          prev.filter((comment) => comment.id !== commentId)
+        );
+        setComments((prev) => prev - 1);
         setDeletingComment(null);
         showSnackbarMessage('Comment deleted successfully');
       }
@@ -120,11 +124,9 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
 
   // NEW: Comment update handler
   const handleCommentUpdate = (commentId: number, newContent: string) => {
-    setCommentList(prev => 
-      prev.map(comment => 
-        comment.id === commentId 
-          ? { ...comment, content: newContent }
-          : comment
+    setCommentList((prev) =>
+      prev.map((comment) =>
+        comment.id === commentId ? { ...comment, content: newContent } : comment
       )
     );
   };
@@ -271,6 +273,8 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
       const data = await res.json();
       if (res.ok && data.message === 'Interest created successfully') {
         setIsBookmarked(true);
+        refreshInterests();
+        handleClose();
       }
     } catch (err) {
       console.error('Error bookmarking post:', err);
