@@ -5,9 +5,9 @@ function SearchBar() {
 
     return (
         <>
-            <form className="max-w-4xl mx-auto">
+            <form className="max-w-7x1 mx-auto w-full">  {/* Changed max-width */}
                 <div className="flex w-full">
-                    <div className="relative items-center w-full bg-white flex px-1 py-1 rounded-lg border mx-auto">
+                    <div className="relative items-center w-full bg-white flex px-1 py-1 rounded-lg border mx-">
                         <CategorySelector />
                         <svg
                             xmlns="http://www.w3.org/2000/svg"

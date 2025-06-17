@@ -13,13 +13,6 @@ const Card1: React.FC<CardProps> = ({ date, children, className = "", style = {}
       className={`bg-white shadow-md rounded-lg p-4 ${className}`}
       style={{ ...style }}>
 
-    <div className="absolute top-4 right-4">
-        <img
-          src="/images/bookmark.svg" // Replace with your bookmark icon path
-          alt="Bookmark"
-          className="w-4 h-4 cursor-pointer"
-        />
-    </div>
     <div className="card-content">
       {children}
     </div>

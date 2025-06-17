@@ -4,16 +4,19 @@ import { FaRegThumbsUp, FaRegCommentDots, FaRegBookmark } from "react-icons/fa";
 import { MdOutlineRateReview } from "react-icons/md";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import ExplodedPostCard from "./ExplodedPostCard";
+import api from "../../../utils/api";
 
 interface PostCardProps {
   question: Question;
+   refreshInterests: () => void; // Add this prop
 }
 
-const PostCard: React.FC<PostCardProps> = ({ question }) => {
+const PostCard: React.FC<PostCardProps> = ({ question,refreshInterests }) => {
   const [elongated, setElongated] = useState(false);
   const [comments, setComments] = useState(0); // Still static
   const [showModal, setShowModal] = useState(false);
   const [postData, setPostData] = useState(question);
+  console.log("function check PostCard",typeof refreshInterests);
 
   const shouldTruncate = postData.description.length > 150;
   const displayText = elongated
@@ -38,21 +41,21 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
     }
 
     try {
-      const res = await fetch("http://localhost:8080/api/questions/action", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const res = await api.post(
+        `/questions/action`,
+        {
           questionID: postData.id,
           actionType: "like",
-        }),
-      });
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = res.data;
 
-      const data = await res.json();
-
-      if (res.ok && data.message === "success") {
+      if (res.status === 200 && data.message === "success") {
         setPostData((prev) => ({
           ...prev,
           likeCount: prev.likeCount + 1,
@@ -67,18 +70,24 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
       alert("An error occurred while liking the question.");
     }
   };
+  
   // fetch the total number of comments 
   useEffect(() => {
     if (!postData.id) return;
 
     const fetchCommentCount = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:8080/api/comments?questionID=${postData.id}&count=1&offset=0`
-        );
-        const data = await res.json();
+        const res = await api.get(`/comments`, {
+          params: {
+            questionID: postData.id,
+            count: 1,
+            offset: 0,
+          },
+        });
+        const data = res.data;
         console.log("Fetched comment count:", data);
-        if (res.ok && data.message === "success") {
+
+        if (res.status === 200 && data.message === "success") {
           setComments(data.total);
           console.log("Set comments to", data.total);
         }
@@ -99,11 +108,10 @@ const PostCard: React.FC<PostCardProps> = ({ question }) => {
         {/* Top Section */}
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
-            <img
-              src="/default-avatar.png"
-              alt={postData.user?.username || "User"}
-              className="w-8 h-8 rounded-full mr-2"
-            />
+          <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center mr-2 text-sm font-semibold">
+  {postData.user?.username?.charAt(0).toUpperCase() || "U"}
+</div>
+
             <div className="flex items-center">
               <p className="text-sm font-medium text-gray-800">
                 {postData.user?.username || "Anonymous"}
