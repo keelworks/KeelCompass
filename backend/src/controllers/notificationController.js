@@ -62,19 +62,19 @@ const createSystemNotifications = async (req, res) => {
 };
 
 // get all notifications for a user
-const getNotificationsByUserID = async (req, res) => {
+const getNotificationsByUserId = async (req, res) => {
   try {
     logger.debug(`get notifications by user ID request, loginUser = ${util.inspect(req.loginUser)}`);
 
     const userId = req.loginUser.id;
-    const notifications = await notificationService.getNotificationsByUserID(userId);
+    const notifications = await notificationService.getNotificationsByUserId(userId);
 
     return res.status(HttpStatusCodes.OK).json({
       message: "success",
       notifications,
     });
   } catch (error) {
-    ServiceErrorHandler(error, res, logger, "getNotificationsByUserID");
+    ServiceErrorHandler(error, res, logger, "getNotificationsByUserId");
   }
 };
 
@@ -99,6 +99,6 @@ const markNotificationRead = async (req, res) => {
 module.exports = {
   createUpdateNotifications,
   createSystemNotifications,
-  getNotificationsByUserID,
+  getNotificationsByUserId,
   markNotificationRead,
 };

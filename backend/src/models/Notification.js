@@ -1,6 +1,4 @@
-const { DataTypes } = require('sequelize');
-
-module.exports = (sequelize, User) => {
+module.exports = (sequelize, DataTypes) => {
   const Notification = sequelize.define(
     'Notification',
     {
@@ -12,10 +10,6 @@ module.exports = (sequelize, User) => {
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: User,
-          key: 'id',
-        },
       },
       type: {
         type: DataTypes.STRING(50),
@@ -33,19 +27,18 @@ module.exports = (sequelize, User) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
     },
     {
       tableName: 'Notifications',
-      timestamps: false,
+      timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: false,
     }
   );
 
-  Notification.belongsTo(User, { foreignKey: 'user_id' });
-  User.hasMany(Notification, { foreignKey: 'user_id', sourceKey: 'id' });
+  Notification.associate = (models) => {
+    Notification.belongsTo(models.users, { foreignKey: 'user_id' });
+  };
 
   return Notification;
 };

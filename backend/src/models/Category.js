@@ -1,6 +1,4 @@
-const { DataTypes } = require("sequelize");
-
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
   const Category = sequelize.define(
     "Category",
     {
@@ -16,8 +14,19 @@ module.exports = (sequelize) => {
         unique: true,
       },
     },
-    { tableName: "Categories", timestamps: false }
+    { 
+      tableName: "Categories", 
+      timestamps: false 
+    }
   );
+
+  Category.associate = (models) => {
+    Category.belongsToMany(models.questions, {
+      through: models.questionCategories,
+      foreignKey: 'category_id',
+      otherKey: 'question_id',
+    });
+  };
 
   return Category;
 };

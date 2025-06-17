@@ -1,8 +1,6 @@
-const { DataTypes } = require('sequelize');
-
-module.exports = (sequelize, User, Question, Comment) => {
+module.exports = (sequelize, DataTypes) => {
   const Interest = sequelize.define(
-    'Interests',
+    'Interest',
     {
       id: {
         type: DataTypes.INTEGER,
@@ -12,40 +10,29 @@ module.exports = (sequelize, User, Question, Comment) => {
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: User,
-          key: 'id'
-        }
       },
       question_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
-        references: {
-          model: Question,
-          key: 'id'
-        }
       },
       comment_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
-        references: { model: Comment, key: 'id' },
       },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
-      }
     },
-    { tableName: 'Interests', timestamps: false }
+    {
+      tableName: 'Interests',
+      timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: false,
+    }
   );
 
-  Interest.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
-  User.hasMany(Interest, { foreignKey: 'user_id', as: 'interests' });
-
-  Interest.belongsTo(Question, { foreignKey: 'question_id', as: 'question' });
-  Question.hasMany(Interest, { foreignKey: 'question_id', as: 'interests' });
-
-  Interest.belongsTo(Comment, { foreignKey: 'comment_id', as: 'comment' });
-  Comment.hasMany(Interest, { foreignKey: 'comment_id', as: 'interests' });
+  Interest.associate = (models) => {
+    Interest.belongsTo(models.users, { foreignKey: 'user_id', as: 'user' });
+    Interest.belongsTo(models.questions, { foreignKey: 'question_id', as: 'question' });
+    Interest.belongsTo(models.comments, { foreignKey: 'comment_id', as: 'comment' });
+  };
 
   return Interest;
 };

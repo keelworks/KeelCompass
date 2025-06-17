@@ -71,7 +71,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
     try {
       const res = await api.get(`/comments`, {
         params: {
-          questionID: question.id,
+          questionId: question.id,
           count: limit,
           offset: offset,
         },
@@ -100,7 +100,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
 
     try {
       const res = await api.delete(`/comments`, {
-        params: { commentID: commentId },
+        params: { commentId: commentId },
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -167,42 +167,25 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   };
 
   const deleteInterestsByQuestionId = async (questionId: number) => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const getRes = await fetch(`${import.meta.env.VITE_API_URL}/interests`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await api.get(`/interests`);
+      const data = res.data;
 
-      const data = await getRes.json();
-
-      if (getRes.ok && data.message === 'success' && data.interests) {
+      if (res.status === 200 && data.message === 'success' && data.interests) {
         const interestsToDelete = data.interests.filter(
           (interest: any) => interest.question_id === questionId
         );
 
         for (const interest of interestsToDelete) {
-          await fetch(
-            `${import.meta.env.VITE_API_URL}/interests/${interest.id}`,
-            {
-              method: 'DELETE',
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          await api.delete(`/interests/${interest.id}`);
         }
 
         console.log(
-          `Deleted ${interestsToDelete.length} interests for question ${questionId}`
+          'Successfully deleted interests associated with the question.'
         );
       }
-    } catch (error) {
-      console.error('Error deleting interests:', error);
+    } catch (err) {
+      console.error('Error deleting interests:', err);
     }
   };
 
@@ -234,7 +217,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
       const res = await api.post(
         `/questions/action`,
         {
-          questionID: question.id,
+          questionId: question.id,
           actionType: 'like',
         },
         {

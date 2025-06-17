@@ -5,14 +5,14 @@ const User = db.users;
 const Notification = db.notifications;
 
 // create notification for a single user
-const createNotification = async (user_id, type, message, targetUrl) => {
+const createNotification = async (userId, type, message, targetUrl) => {
   // create a notification for one user whenever their question gets approved/rejected
   // create a notification for one user whenever their question/comment gets liked/shared
   // these can be determined based on type
   // we do not need a controller/route for this service because we call it internally whenever admin updates a question's status or whenever a user likes/shares another user's question/comment
   try{
     const notification=await Notification.create({
-      user_id,
+      user_id: userId,
       type,
       message,
       targetUrl,
@@ -34,8 +34,8 @@ const createNotificationsForUsers = async (userIds, type, message, targetUrl) =>
   // create a notification for all users whenever we need to send out system notifications
   // these can be determined based on type
   try {
-    const notifications = userIds.map((user_id) => ({
-      user_id,
+    const notifications = userIds.map((userId) => ({
+      user_id: userId,
       type,
       message,
       targetUrl,
@@ -66,7 +66,7 @@ const createSystemNotifications = async (type, message, targetUrl) => {
 };
 
 // get all notifications for a user
-const getNotificationsByUserID = async (userId) => {
+const getNotificationsByUserId = async (userId) => {
   // get all notifications for a user based on userId
 };
 
@@ -80,6 +80,6 @@ module.exports = {
   createNotification,
   createNotificationsForUsers,
   createSystemNotifications,
-  getNotificationsByUserID,
+  getNotificationsByUserId,
   markNotificationRead,
 };

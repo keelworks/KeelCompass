@@ -1,6 +1,4 @@
-const { DataTypes } = require("sequelize");
-
-module.exports = (sequelize, User, Question) => {
+module.exports = (sequelize, DataTypes) => {
   const UserQuestionAction = sequelize.define(
     "UserQuestionAction",
     {
@@ -12,36 +10,28 @@ module.exports = (sequelize, User, Question) => {
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: User,
-          key: "id",
-        },
       },
       question_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: Question,
-          key: "id",
-        },
       },
       action_type: {
         type: DataTypes.ENUM("like", "report"),
         allowNull: false,
       },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
     },
-    { tableName: "UserQuestionActions", timestamps: false }
+    {
+      tableName: "UserQuestionActions",
+      timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: false,
+    }
   );
 
-  UserQuestionAction.belongsTo(User, { foreignKey: "user_id" });
-  User.hasMany(UserQuestionAction, { foreignKey: "user_id" });
-
-  UserQuestionAction.belongsTo(Question, { foreignKey: "question_id" });
-  Question.hasMany(UserQuestionAction, { foreignKey: "question_id" });
+  UserQuestionAction.associate = (models) => {
+    UserQuestionAction.belongsTo(models.users, { foreignKey: "user_id" });
+    UserQuestionAction.belongsTo(models.questions, { foreignKey: "question_id" });
+  };
 
   return UserQuestionAction;
 };
