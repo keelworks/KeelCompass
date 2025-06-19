@@ -98,9 +98,9 @@ MYSQL_DATABASE=keelworks_keelcompass_db
 
 2. Create a .env.testing file in backend/. Copy and paste the contents in .env.testing.example into the newly created .env.
 
-3. If you haven't done so already, create a .env file in frontend/. Copy and paste the contents in .env.example into the newly created .env.
+3. Create a .env.testing file in frontend/. Copy and paste the contents in .env.testing.example into the newly created .env.
 
-4. On the terminal, navigate to the root directory and run docker-compose.testing.yml.
+4. On the terminal, navigate to the root directory and run docker-compose.testing.yml. This step will automatically create the database inside the docker container. If one already exists but is out of sync, follow the troubleshooting steps below.
 
 ```bash
 cd KeelCompass
@@ -121,3 +121,23 @@ docker compose -f docker-compose.testing.yml exec backend npx sequelize-cli db:s
 ```
 
 App should be available on the browser at http://localhost:5173.
+
+#### Troubleshooting
+
+- If the database schema inside the docker container is out of sync or you are running into migration errors, stop and remove all containers, networks, and volumes related to this project and start again from step 4.
+
+```bash
+docker compose -f docker-compose.testing.yml down --volumes --remove-orphans
+```
+
+- To check docker database logs, run the following command.
+
+```bash
+docker compose -f docker-compose.testing.yml logs database
+```
+
+- To check docker backend logs, run the following command.
+
+```bash
+docker compose -f docker-compose.testing.yml logs backend
+```

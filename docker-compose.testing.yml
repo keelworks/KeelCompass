@@ -8,7 +8,7 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     ports:
-      - "3306:3306"
+      - "3310:3306"
 
   backend:
     container_name: keelcompass-testing-backend
@@ -19,7 +19,7 @@ services:
     env_file:
       - ./backend/.env.testing
     ports:
-      - "8080:8080"
+      - "8081:8080"
     command: bash ./scripts/wait-for-db.sh
     depends_on:
       - database
@@ -29,7 +29,7 @@ services:
     build:
       context: ./frontend
     env_file:
-      - ./frontend/.env
+      - ./frontend/.env.testing
     ports:
       - "5173:5173"
     command: npm run test -- --host
