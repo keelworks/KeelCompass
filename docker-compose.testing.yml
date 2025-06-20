@@ -20,7 +20,7 @@ services:
       - ./backend/.env.testing
     ports:
       - "8081:8080"
-    command: bash ./scripts/wait-for-db.sh
+    command: sh -c "npm install && bash ./scripts/wait-for-db.sh"
     depends_on:
       - database
 
