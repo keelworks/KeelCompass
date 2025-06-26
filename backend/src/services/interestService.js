@@ -57,7 +57,36 @@ const saveInterest = async (loginUser, questionId, commentId) => {
       } catch (err) {
         console.error(`Failed to create question bookmark notification: ${err.message}`);
       }
+<<<<<<< Updated upstream
     }
+=======
+    }
+    return newInterest.id;
+  } else {
+    const comment = await Comment.findByPk(commentId);
+    if (!comment) {
+      throw new HttpError(HttpStatusCodes.NOT_FOUND, 'comment not found');
+    }
+    const existingInterest = await Interest.findOne({ where: { user_id: loginUser.id, comment_id: commentId } });
+    if (existingInterest) {
+      throw new HttpError(HttpStatusCodes.CONFLICT, "interest already exists");
+    }
+    const newInterest = await Interest.create({ user_id: loginUser.id, comment_id: commentId });
+    // Notification for comment bookmark
+    if (comment.user_id !== loginUser.id) {
+      try {
+        const notificationService = require("./notificationService");
+        await notificationService.createNotification(
+          comment.user_id,
+          "bookmarked",
+          "Your comment was bookmarked!",
+          `/questions/${comment.question_id}#comment-${commentId}`
+        );
+      } catch (err) {
+        console.error(`Failed to create comment bookmark notification: ${err.message}`);
+      }
+    }
+>>>>>>> Stashed changes
     return newInterest.id;
   } catch (error) {
     logger.error(`Error saving interest for user ${loginUser.id}: ${error.message}`);

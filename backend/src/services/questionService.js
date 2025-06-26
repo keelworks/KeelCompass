@@ -213,6 +213,44 @@ const updateQuestionById = async (questionId, title, description, loginUser) => 
     }
     throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Error updating question.");
   }
+<<<<<<< Updated upstream
+=======
+
+  if (question.user_id != loginUser.id) {
+    logger.warn("Warning updating question: no permission to update");
+    throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
+  }
+
+  if (title) question.title = title;
+  if (description) question.description = description;
+  if (attachment !== undefined) question.attachment = attachment;
+
+  await question.save();
+
+  // Notify all users who bookmarked/interested this question (except the updater)
+  try {
+    const Interest = require("../models").interests;
+    const notificationService = require("./notificationService");
+    const interests = await Interest.findAll({
+      where: { question_id: questionID },
+      attributes: ["user_id"],
+      raw: true,
+    });
+    const userIds = interests
+      .map(i => i.user_id)
+      .filter(uid => uid !== loginUser.id);
+    if (userIds.length > 0) {
+      await notificationService.createNotificationsForUsers(
+        userIds,
+        "update",
+        "A question you bookmarked was updated.",
+        `/questions/${questionID}`
+      );
+    }
+  } catch (err) {
+    logger.error(`Failed to notify bookmarked users on question update: ${err.message}`);
+  }
+>>>>>>> Stashed changes
 };
 
 // delete question by id
@@ -307,6 +345,65 @@ const takeActionByQuestionId = async (questionId, actionType, loginUser) => {
     }
     throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Error taking action on question.");
   }
+<<<<<<< Updated upstream
+=======
+
+  const [action, created] = await UserQuestionAction.findOrCreate({
+    where: {
+      user_id: loginUser.id,
+      question_id: questionID,
+      action_type: actionType,
+    },
+    defaults: {
+      user_id: loginUser.id,
+      question_id: questionID,
+      action_type: actionType,
+    },
+  });
+
+  if (!created) {
+    logger.warn("Warning adding actions: action existed");
+    throw new HttpError(HttpStatusCodes.CONFLICT, "record existed");
+  }
+
+  // Notification for like action (only if actionType is 'like')
+  if (actionType === ActionTypes.LIKE) {
+    if (question.user_id !== loginUser.id) {
+      // Notify the question owner, but not if user likes their own question
+      try {
+        const notificationService = require("./notificationService");
+        await notificationService.createNotification(
+          question.user_id,
+          "liked",
+          "Your question was liked!",
+          `/questions/${questionID}`
+        );
+      } catch (err) {
+        logger.error(`Failed to create question like notification: ${err.message}`);
+      }
+    }
+  }
+
+  // Notification for report action (only if actionType is 'report')
+  if (actionType === ActionTypes.REPORT) {
+    if (question.user_id !== loginUser.id) {
+      // Notify the question owner, but not if user reports their own question
+      try {
+        const notificationService = require("./notificationService");
+        await notificationService.createNotification(
+          question.user_id,
+          "reported",
+          "Your question was reported.",
+          `/questions/${questionID}`
+        );
+      } catch (err) {
+        logger.error(`Failed to create question report notification: ${err.message}`);
+      }
+    }
+  }
+
+  return;
+>>>>>>> Stashed changes
 };
 
 // remove action on question

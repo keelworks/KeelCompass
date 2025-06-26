@@ -20,11 +20,18 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
     },
+<<<<<<< Updated upstream
     {
       tableName: "UserQuestionActions",
       timestamps: true,
       createdAt: 'created_at',
       updatedAt: false,
+=======
+    { 
+      tableName: "UserQuestionActions", 
+      timestamps: true, 
+      createdAt: 'created_at', 
+>>>>>>> Stashed changes
     }
   );
 

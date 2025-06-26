@@ -23,8 +23,12 @@ module.exports = (sequelize, DataTypes) => {
     { 
       tableName: "UserCommentActions", 
       timestamps: true, 
+<<<<<<< Updated upstream
       createdAt: 'created_at',
       updatedAt: false
+=======
+      createdAt: 'created_at', 
+>>>>>>> Stashed changes
     }
   );
 

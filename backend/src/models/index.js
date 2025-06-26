@@ -35,6 +35,7 @@ const db = {};
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
+<<<<<<< Updated upstream
 // load models
 db.users = require("./User.js")(sequelize, DataTypes);
 db.categories = require("./Category.js")(sequelize, DataTypes);
@@ -53,5 +54,16 @@ Object.keys(db).forEach(modelName => {
     db[modelName].associate(db);
   }
 });
+=======
+db.users = require("./User.js")(sequelize);
+db.categories = require("./Category.js")(sequelize);
+db.questions = require("./Question.js")(sequelize, db.users);
+db.questionCategories = require("./QuestionCategory.js")(sequelize, db.questions, db.categories);
+db.userQuestionActions = require("./UserQuestionAction.js")(sequelize, db.users, db.questions);
+db.comments = require("./Comment.js")(sequelize, db.users, db.questions);
+db.userCommentActions = require("./UserCommentAction.js")(sequelize, db.users, db.comments);
+db.interests = require("./Interest.js")(sequelize, db.users, db.questions, db.comments);
+db.notifications = require("./Notification.js")(sequelize, db.users);
+>>>>>>> Stashed changes
 
 module.exports = db;
