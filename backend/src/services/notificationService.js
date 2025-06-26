@@ -1,85 +1,98 @@
 const db = require("../models");
 const logger = require("../utils/logger");
 const { HttpError, HttpStatusCodes } = require("../utils/httpError");
+
 const User = db.users;
 const Notification = db.notifications;
 
-// create notification for a single user
-const createNotification = async (user_id, type, message, targetUrl) => {
-  // create a notification for one user whenever their question gets approved/rejected
-  // create a notification for one user whenever their question/comment gets liked/shared
-  // these can be determined based on type
-  // we do not need a controller/route for this service because we call it internally whenever admin updates a question's status or whenever a user likes/shares another user's question/comment
-  try{
-    const notification=await Notification.create({
+// create a notification for a single user
+const createNotification = async (user_id, type, message, target_url) => {
+  try {
+    const notification = await Notification.create({
       user_id,
       type,
       message,
-      targetUrl,
-      isRead: false,
+      target_url,
+      read: false,
     });
-
     return notification;
-  }
-  catch(error){
-    console.log("error is:", error);
-    logger.error('Error creating notification for user ${userId}: ${error.message}');
-    throw new HttpError(500,"Failed to create notification.");
+  } catch (error) {
+    logger.error(`Error creating notification for user ${user_id}: ${error.message}`);
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, 'Failed to create notification');
   }
 };
 
-// create notification for multiple users
-const createNotificationsForUsers = async (userIds, type, message, targetUrl) => {
-  // create a notification for all users who liked a question/comment whenever that question/comment gets updated
-  // create a notification for all users whenever we need to send out system notifications
-  // these can be determined based on type
+// create notifications for multiple users
+const createNotificationsForUsers = async (userIds, type, message, target_url) => {
   try {
     const notifications = userIds.map((user_id) => ({
       user_id,
       type,
       message,
-      targetUrl,
-      isRead: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      target_url,
+      read: false,
     }));
-
     const result = await Notification.bulkCreate(notifications);
-    return result.length;
+    return result;
   } catch (error) {
     logger.error(`Error creating notifications for users: ${error.message}`);
-    throw new HttpError(500, "Failed to create notifications");
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, 'Failed to create notifications for users');
   }
 };
 
-// create notificaiton for all users
-const createSystemNotifications = async (type, message, targetUrl) => {
+// create system notification for all users
+const createSystemNotifications = async (type, message, target_url) => {
   try {
-    const users = await User.findAll({ attributes: ["id"] });
+    const users = await User.findAll({ attributes: ['id'], raw: true });
     const userIds = users.map((user) => user.id);
-
-    return await createNotificationsForUsers(userIds, type, message, targetUrl);
+    return await createNotificationsForUsers(userIds, type, message, target_url);
   } catch (error) {
     logger.error(`Error creating system notifications: ${error.message}`);
-    throw new HttpError(500, "Failed to create system notifications");
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, 'Failed to create system notifications');
   }
 };
 
 // get all notifications for a user
-const getNotificationsByUserID = async (userId) => {
-  // get all notifications for a user based on userId
+const getNotificationsByUserId = async (userId) => {
+  try {
+    const notifications = await Notification.findAll({
+      where: { user_id: userId },
+      order: [['created_at', 'DESC']],
+      raw: true,
+    });
+    return notifications;
+  } catch (error) {
+    logger.error(`Error fetching notifications: ${error.message}`);
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, 'Failed to fetch notifications');
+  }
 };
 
 // mark a notification as read
 const markNotificationRead = async (notificationId, userId) => {
-  // verify notification.userId is the same as userId (make sure that the notification we are updating is owned by the user)
-  // update (patch) a notification to change the read attribute from false to true
+  try {
+    const notification = await Notification.findOne({
+      where: {
+        id: notificationId,
+        user_id: userId,
+      },
+    });
+    if (!notification) {
+      logger.warn(`Notification ${notificationId} not found or does not belong to user ${userId}`);
+      throw new HttpError(HttpStatusCodes.BAD_REQUEST, "Notification not found or you don't have permission to update it");
+    }
+    notification.read = true;
+    await notification.save();
+    return notification;
+  } catch (error) {
+    logger.error(`Error marking notification as read: ${error.message}`);
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, 'Failed to mark notification as read');
+  }
 };
 
 module.exports = {
   createNotification,
   createNotificationsForUsers,
   createSystemNotifications,
-  getNotificationsByUserID,
+  getNotificationsByUserId,
   markNotificationRead,
 };

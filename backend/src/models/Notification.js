@@ -11,14 +11,22 @@ module.exports = (sequelize, User) => {
       },
       user_id: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
           model: User,
           key: 'id',
         },
       },
       type: {
-        type: DataTypes.STRING(50),
+        type: DataTypes.ENUM(
+          'approved',
+          'rejected',
+          'liked',
+          'commented',
+          'bookmarked',
+          'updated',
+          'announcement'
+        ),
         allowNull: false,
       },
       message: {
@@ -33,14 +41,12 @@ module.exports = (sequelize, User) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
+
     },
     {
       tableName: 'Notifications',
-      timestamps: false,
+      timestamps: true,
+      createdAt: 'created_at',
     }
   );
 
