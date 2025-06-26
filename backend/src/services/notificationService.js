@@ -25,8 +25,8 @@ const createNotification = async (user_id, type, message, target_url) => {
 // create notifications for multiple users
 const createNotificationsForUsers = async (userIds, type, message, target_url) => {
   try {
-    const notifications = userIds.map((user_id) => ({
-      user_id,
+    const notifications = userIds.map((userId) => ({
+      user_id: userId,
       type,
       message,
       target_url,

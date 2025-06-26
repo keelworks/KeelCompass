@@ -1,42 +1,17 @@
-// We might need to use this commented code in the future if we implement cookies;
-
-// const { verifyToken } = require('../utils/jwtUtils');
-
-// const authenticate = (req, res, next) => {
-//     const token = req.cookies.jwtToken || req.header('Authorization')?.replace('Bearer ', ''); // Checking for token in cookies or Authorization header
-
-//     if (!token) {
-//         return res.status(401).json({ error: "Unauthorized access." });
-//     }
-
-//     try {
-//         const decoded = verifyToken(token);
-//         if (!decoded) {
-//             return res.status(401).json({ error: "Invalid or expired token." });
-//         }
-
-//         req.user = decoded.user; // Attach user info to the request object
-//         next(); // Proceed to the next middleware/route handler
-//     } catch (error) {
-//         return res.status(401).json({ error: "Invalid or expired token." });
-//     }
-// };
-
-// module.exports = authenticate;
 const { verifyToken } = require("../utils/jwtUtils");
 
 const authenticate = (req, res, next) => {
   // Extract the token from the Authorization header
   const token = req.header("Authorization")?.replace("Bearer ", "");
-  console.log("Token:", token);
 
   if (!token) {
     return res.status(401).json({ error: "Unauthorized access." });
   }
 
   try {
-    // Verify the token
     const decoded = verifyToken(token);
+
+    // If the token is invalid, verifyToken returns null. Handle this case gracefully.
     if (!decoded) {
       return res.status(401).json({ error: "Invalid or expired token." });
     }
@@ -48,7 +23,9 @@ const authenticate = (req, res, next) => {
     };
     next();
   } catch (error) {
-    return res.status(401).json({ error: "Invalid or expired token." });
+    // This block will now only catch unexpected errors, not token validation failures.
+    console.error("Unexpected error in authentication middleware:", error);
+    return res.status(500).json({ error: "An unexpected server error occurred during authentication." });
   }
 };
 

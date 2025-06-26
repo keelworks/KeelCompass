@@ -1,6 +1,4 @@
-const { DataTypes } = require('sequelize');
-
-module.exports = (sequelize, User) => {
+module.exports = (sequelize, DataTypes) => {
   const Notification = sequelize.define(
     'Notification',
     {
@@ -22,6 +20,7 @@ module.exports = (sequelize, User) => {
           'approved',
           'rejected',
           'liked',
+          'reported',
           'commented',
           'bookmarked',
           'updated',
@@ -41,7 +40,6 @@ module.exports = (sequelize, User) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-
     },
     {
       tableName: 'Notifications',
@@ -50,8 +48,9 @@ module.exports = (sequelize, User) => {
     }
   );
 
-  Notification.belongsTo(User, { foreignKey: 'user_id' });
-  User.hasMany(Notification, { foreignKey: 'user_id', sourceKey: 'id' });
+  Notification.associate = (models) => {
+    Notification.belongsTo(models.users, { foreignKey: 'user_id' });
+  };
 
   return Notification;
 };

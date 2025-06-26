@@ -9,286 +9,278 @@ const Question = db.questions;
 const UserQuestionAction = db.userQuestionActions;
 
 // post question
-const createQuestion = async (title, description, loginUser, attachment) => {
-  const user = await User.findByPk(loginUser.id);
-  if (!user) {
-    throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "user not found");
+const createQuestion = async (title, description, categoryIds, loginUser) => {
+  const t = await Sequelize.transaction();
+  try {
+    logger.info(`User ${loginUser.id} creating question with categories: ${categoryIds}`);
+    const user = await User.findByPk(loginUser.id);
+    if (!user) {
+      throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "user not found");
+    }
+
+    const newQuestion = await Question.create(
+      {
+        title,
+        description,
+        user_id: user.id,
+      },
+      { transaction: t }
+    );
+
+    if (categoryIds && categoryIds.length > 0) {
+      await newQuestion.setCategories(categoryIds, { transaction: t });
+    }
+
+    await t.commit();
+    return newQuestion.id;
+  } catch (error) {
+    await t.rollback();
+    logger.error(`Error creating question: ${error.message}`);
+    if (error instanceof HttpError) {
+      throw error;
+    }
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Error creating question.");
   }
-
-  const newQuestion = await Question.create({
-    title,
-    description,
-    user_id: user.id,
-    attachment: attachment,
-  });
-
-  return newQuestion.id;
 };
 
 // get recent questions
 const getRecentQuestions = async (count, offset) => {
-  const query = `
-  SELECT 
-    Questions.id,
-    Questions.title,
-    Questions.description,
-    Questions.attachment,
-    Questions.created_at,
-    (
-      SELECT JSON_OBJECT('id', Users.id, 'username', Users.username)
-      FROM Users
-      WHERE Users.id = Questions.user_id
-      LIMIT 1
-    ) AS user,
-    (
-      SELECT COUNT(*)
-      FROM UserQuestionActions
-      WHERE UserQuestionActions.question_id = Questions.id AND UserQuestionActions.action_type = :likeAction
-    ) AS likeCount,
-    (
-      SELECT COUNT(*)
-      FROM UserQuestionActions
-      WHERE UserQuestionActions.question_id = Questions.id AND UserQuestionActions.action_type = :reportAction
-    ) AS reportCount
-  FROM Questions
-  ORDER BY Questions.created_at DESC
-  LIMIT :limit OFFSET :offset
-`;
+  try {
+    logger.info(`Fetching recent questions with count ${count} and offset ${offset}`);
+    const { count: totalCount, rows: questions } = await Question.findAndCountAll({
+      attributes: {
+        include: [
+          [Sequelize.literal(`(SELECT COUNT(*) FROM UserQuestionActions WHERE UserQuestionActions.question_id = Question.id AND UserQuestionActions.action_type = '${ActionTypes.LIKE}')`), 'likeCount'],
+          [Sequelize.literal(`(SELECT COUNT(*) FROM UserQuestionActions WHERE UserQuestionActions.question_id = Question.id AND UserQuestionActions.action_type = '${ActionTypes.REPORT}')`), 'reportCount'],
+        ],
+      },
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "username"],
+        },
+        {
+          model: db.attachments,
+          as: "attachment",
+          attributes: ["id", "file_name", "mime_type"],
+        },
+      ],
+      order: [["created_at", "DESC"]],
+      limit: count,
+      offset: offset,
+    });
 
-  const replacements = {
-    likeAction: ActionTypes.LIKE,
-    reportAction: ActionTypes.REPORT,
-    limit: count,
-    offset: offset,
-  };
+    const nextOffset = offset + questions.length;
+    const resOffset = nextOffset >= totalCount ? -1 : nextOffset;
 
-  const questions = await Sequelize.query(query, { replacements, type: Sequelize.QueryTypes.SELECT });
-  questions.forEach((row) => {
-    row.attachment = row.attachment ?? [];
-  });
-
-  const totalCount = await Question.count();
-
-  var resOffset = offset + questions.length;
-  if (resOffset >= totalCount) {
-    resOffset = -1;
+    return [questions, resOffset, totalCount];
+  } catch (error) {
+    logger.error(`Error fetching recent questions: ${error.message}`);
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Error fetching recent questions.");
   }
-
-  return [questions, resOffset, totalCount];
 };
 
 // get popular questions
 const getPopularQuestions = async (count, offset) => {
-  const query = `
-    SELECT 
-      Questions.id,
-      Questions.title,
-      Questions.description,
-      Questions.attachment,
-      Questions.created_at,
-      (
-        SELECT JSON_OBJECT('id', Users.id, 'username', Users.username)
-        FROM Users
-        WHERE Users.id = Questions.user_id
-        LIMIT 1
-      ) AS user,
-      (
-        SELECT COUNT(*)
-        FROM UserQuestionActions
-        WHERE UserQuestionActions.question_id = Questions.id
-          AND UserQuestionActions.action_type = :likeAction
-      ) AS likeCount,
-      (
-        SELECT COUNT(*)
-        FROM Comments
-        WHERE Comments.question_id = Questions.id
-      ) AS commentCount,
-      (
-        (
-          SELECT COUNT(*)
-          FROM UserQuestionActions
-          WHERE UserQuestionActions.question_id = Questions.id
-            AND UserQuestionActions.action_type = :likeAction
-        ) +
-        (
-          SELECT COUNT(*)
-          FROM Comments
-          WHERE Comments.question_id = Questions.id
-        )
-      ) AS popularityScore
-    FROM Questions
-    ORDER BY popularityScore DESC
-    LIMIT :limit OFFSET :offset;
-  `;
+  try {
+    logger.info(`Fetching popular questions with count ${count} and offset ${offset}`);
+    const popularityScore = Sequelize.literal(`(
+      (SELECT COUNT(*) FROM UserQuestionActions WHERE UserQuestionActions.question_id = Question.id AND UserQuestionActions.action_type = '${ActionTypes.LIKE}') +
+      (SELECT COUNT(*) FROM Comments WHERE Comments.question_id = Question.id)
+    )`);
 
-  const replacements = {
-    likeAction: ActionTypes.LIKE,
-    limit: count,
-    offset: offset,
-  };
+    const { count: totalCount, rows: questions } = await Question.findAndCountAll({
+      attributes: {
+        include: [
+          [Sequelize.literal(`(SELECT COUNT(*) FROM UserQuestionActions WHERE UserQuestionActions.question_id = Question.id AND UserQuestionActions.action_type = '${ActionTypes.LIKE}')`), 'likeCount'],
+          [Sequelize.literal(`(SELECT COUNT(*) FROM Comments WHERE Comments.question_id = Question.id)`), 'commentCount'],
+          [popularityScore, 'popularityScore'],
+        ],
+      },
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "username"],
+        },
+        {
+          model: db.attachments,
+          as: "attachment",
+          attributes: ["id", "file_name", "mime_type"],
+        },
+      ],
+      order: [[popularityScore, "DESC"]],
+      limit: count,
+      offset: offset,
+    });
 
-  const questions = await Sequelize.query(query, {
-    replacements,
-    type: Sequelize.QueryTypes.SELECT,
-  });
+    const nextOffset = offset + questions.length;
+    const resOffset = nextOffset >= totalCount ? -1 : nextOffset;
 
-  questions.forEach((row) => {
-    row.attachment = row.attachment ?? [];
-  });
-
-  const totalCount = await Question.count();
-
-  let resOffset = offset + questions.length;
-  if (resOffset >= totalCount) {
-    resOffset = -1;
+    return [questions, resOffset, totalCount];
+  } catch (error) {
+    logger.error(`Error fetching popular questions: ${error.message}`);
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Error fetching popular questions.");
   }
-
-  return [questions, resOffset, totalCount];
 };
 
 // get question by id
-const getQuestionByID = async (questionID) => {
-  const [question] = await Sequelize.query(
-    `
-    SELECT 
-      Questions.id,
-      Questions.title,
-      Questions.description,
-      Questions.attachment,
-      Questions.created_at,
-      (
-        SELECT JSON_OBJECT('id', Users.id, 'username', Users.username)
-        FROM Users
-        WHERE Users.id = Questions.user_id
-        LIMIT 1
-      ) AS user,
-      (
-        SELECT COUNT(*)
-        FROM UserQuestionActions
-        WHERE UserQuestionActions.question_id = Questions.id AND UserQuestionActions.action_type = :likeAction
-      ) AS likeCount,
-      (
-        SELECT COUNT(*)
-        FROM UserQuestionActions
-        WHERE UserQuestionActions.question_id = Questions.id AND UserQuestionActions.action_type = :reportAction
-      ) AS reportCount
-    FROM Questions
-    WHERE Questions.id = :questionID
-    `,
-    {
-      type: Sequelize.QueryTypes.SELECT,
-      replacements: {
-        likeAction: ActionTypes.LIKE,
-        reportAction: ActionTypes.REPORT,
-        questionID: questionID,
+const getQuestionById = async (questionId) => {
+  try {
+    logger.info(`Fetching question with ID ${questionId}`);
+    const question = await Question.findOne({
+      where: { id: questionId },
+      attributes: {
+        include: [
+          [Sequelize.literal(`(SELECT COUNT(*) FROM UserQuestionActions WHERE UserQuestionActions.question_id = Question.id AND UserQuestionActions.action_type = '${ActionTypes.LIKE}')`), 'likeCount'],
+          [Sequelize.literal(`(SELECT COUNT(*) FROM UserQuestionActions WHERE UserQuestionActions.question_id = Question.id AND UserQuestionActions.action_type = '${ActionTypes.REPORT}')`), 'reportCount'],
+        ],
       },
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "username"],
+        },
+        {
+          model: db.attachments,
+          as: "attachment",
+          attributes: ["id", "file_name", "mime_type"],
+        },
+      ],
+    });
+
+    if (!question) {
+      logger.warn(`Warning get question by ID: question not found. ID = ${questionId}`);
+      throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
     }
-  );
 
-  logger.debug(question);
-  if (!question) {
-    logger.warn("Warning get question by ID: question not found. ID = " + questionID);
-    throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
+    return question;
+  } catch (error) {
+    logger.error(`Error fetching question ${questionId}: ${error.message}`);
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Error fetching question.");
   }
-
-  question.attachment = question.attachment ?? [];
-
-  return question;
 };
 
 // update question by id
-const updateQuestionByID = async (questionID, title, description, loginUser, attachment) => {
-  const question = await Question.findByPk(questionID);
-  if (!question) {
-    logger.warn("Warning updating question: question not found. ID = " + questionID);
-    throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
+const updateQuestionById = async (questionId, title, description, loginUser) => {
+  try {
+    logger.info(`User ${loginUser.id} updating question ${questionId}`);
+    const question = await Question.findByPk(questionId);
+    if (!question) {
+      logger.warn(`Warning updating question: question not found. ID = ${questionId}`);
+      throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
+    }
+
+    if (question.user_id != loginUser.id) {
+      logger.warn("Warning updating question: no permission to update");
+      throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
+    }
+
+    if (title) question.title = title;
+    if (description) question.description = description;
+
+
+    await question.save();
+  } catch (error) {
+    logger.error(`Error updating question ${questionId}: ${error.message}`);
+    if (error instanceof HttpError) {
+      throw error;
+    }
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Error updating question.");
   }
-
-  if (question.user_id != loginUser.id) {
-    logger.warn("Warning updating question: no permission to update");
-    throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
-  }
-
-  if (title) question.title = title;
-  if (description) question.description = description;
-  if (attachment !== undefined) question.attachment = attachment;
-
-  await question.save();
 };
 
 // delete question by id
-const deleteQuestionByID = async (questionID, loginUser) => {
-  const question = await Question.findByPk(questionID);
-  if (!question) {
-    logger.warn("Warning deleting question: question not found. ID = " + questionID);
-    throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
-  }
+const deleteQuestionById = async (questionId, loginUser) => {
+  try {
+    logger.info(`User ${loginUser.id} deleting question ${questionId}`);
+    const question = await Question.findByPk(questionId);
+    if (!question) {
+      logger.warn(`Warning deleting question: question not found. ID = ${questionId}`);
+      throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
+    }
 
-  if (question.user_id != loginUser.id) {
-    logger.warn("Warning deleting question: no permission to delete");
-    throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
-  }
-  console.log('TRYING TO DELETE QUESTION', questionID, loginUser.id)
-  await Question.destroy({ where: { id: questionID } });
+    if (question.user_id != loginUser.id) {
+      logger.warn("Warning deleting question: no permission to delete");
+      throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
+    }
 
-  return;
+    await Question.destroy({ where: { id: questionId } });
+  } catch (error) {
+    logger.error(`Error deleting question ${questionId}: ${error.message}`);
+    if (error instanceof HttpError) {
+      throw error;
+    }
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Error deleting question.");
+  }
 };
 
 // take action on question
-const takeActionByQuestionID = async (questionID, actionType, loginUser) => {
-  const question = await Question.findByPk(questionID);
-  if (!question) {
-    logger.warn("Warning adding actions: question not found. ID = " + questionID);
-    throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
+const takeActionByQuestionId = async (questionId, actionType, loginUser) => {
+  try {
+    logger.info(`User ${loginUser.id} taking action ${actionType} on question ${questionId}`);
+    const question = await Question.findByPk(questionId);
+    if (!question) {
+      logger.warn(`Warning adding actions: question not found. ID = ${questionId}`);
+      throw new HttpError(HttpStatusCodes.NOT_FOUND, "question not found");
+    }
+
+    const [action, created] = await UserQuestionAction.findOrCreate({
+      where: {
+        user_id: loginUser.id,
+        question_id: questionId,
+        action_type: actionType,
+      },
+    });
+
+    if (!created) {
+      logger.warn("Warning adding actions: action existed");
+      throw new HttpError(HttpStatusCodes.CONFLICT, "record existed");
+    }
+  } catch (error) {
+    logger.error(`Error taking action on question ${questionId}: ${error.message}`);
+    if (error instanceof HttpError) {
+      throw error;
+    }
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Error taking action on question.");
   }
-
-  const [action, created] = await UserQuestionAction.findOrCreate({
-    where: {
-      user_id: loginUser.id,
-      question_id: questionID,
-      action_type: actionType,
-    },
-    defaults: {
-      user_id: loginUser.id,
-      question_id: questionID,
-      action_type: actionType,
-    },
-  });
-
-  if (!created) {
-    logger.warn("Warning adding actions: action existed");
-    throw new HttpError(HttpStatusCodes.CONFLICT, "record existed");
-  }
-
-  return;
 };
 
 // remove action on question
-const removeActionByQuestionID = async (questionID, actionType, loginUser) => {
-  const action = await UserQuestionAction.findOne({
-    where: {
-      user_id: loginUser.id,
-      question_id: questionID,
-      action_type: actionType,
-    },
-  });
+const removeActionByQuestionId = async (questionId, actionType, loginUser) => {
+  try {
+    logger.info(`User ${loginUser.id} removing action ${actionType} on question ${questionId}`);
+    const action = await UserQuestionAction.findOne({
+      where: {
+        user_id: loginUser.id,
+        question_id: questionId,
+        action_type: actionType,
+      },
+    });
 
-  if (!action) {
-    throw new HttpError(HttpStatusCodes.NOT_FOUND, "record not found");
+    if (!action) {
+      throw new HttpError(HttpStatusCodes.NOT_FOUND, "record not found");
+    }
+
+    await action.destroy();
+  } catch (error) {
+    logger.error(`Error removing action on question ${questionId}: ${error.message}`);
+    if (error instanceof HttpError) {
+      throw error;
+    }
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Error removing action on question.");
   }
-
-  await action.destroy();
-
-  return;
 };
 
 module.exports = {
   createQuestion,
   getRecentQuestions,
   getPopularQuestions,
-  getQuestionByID,
-  updateQuestionByID,
-  deleteQuestionByID,
-  takeActionByQuestionID,
-  removeActionByQuestionID,
+  getQuestionById,
+  updateQuestionById,
+  deleteQuestionById,
+  takeActionByQuestionId,
+  removeActionByQuestionId,
 };

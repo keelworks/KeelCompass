@@ -1,184 +1,76 @@
 const express = require("express");
-const { body, param, query, validationResult } = require("express-validator");
+const { body, param, query } = require("express-validator");
 const authenticator = require("../middlewares/authMiddleware");
 const {
   createQuestion,
   getRecentQuestions,
   getPopularQuestions,
-  getQuestionByID,
-  updateQuestionByID,
-  deleteQuestionByID,
-  takeActionByQuestionID,
-  removeActionByQuestionID,
+  getQuestionById,
+  updateQuestionById,
+  deleteQuestionById,
+  takeActionByQuestionId,
+  removeActionByQuestionId,
 } = require("../controllers/questionController");
-const { HttpStatusCodes } = require("../utils/httpError");
+const { handleValidationErrors } = require("../utils/validationUtils");
+const upload = require("../utils/multerConfig");
 
 const router = express.Router();
 
+const createQuestionValidation = [
+  body("title").notEmpty().withMessage("title is required").bail().isString().withMessage("invalid title"),
+  handleValidationErrors,
+];
+
+const getQuestionsValidation = [
+  query("count").isInt({ gt: 0 }).withMessage("invalid count").bail(),
+  query("offset").isInt({ min: 0 }).withMessage("invalid offset").bail(),
+  handleValidationErrors,
+];
+
+const getQuestionByIdValidation = [
+  param("questionId").isInt({ gt: 0 }).withMessage("invalid questionId"),
+  handleValidationErrors,
+];
+
+const updateQuestionValidation = [
+  body("questionId").notEmpty().withMessage("question ID is required").bail().isInt({ gt: 0 }).withMessage("invalid question ID"),
+  body("title").notEmpty().withMessage("title is required").bail().isString().withMessage("invalid title"),
+  handleValidationErrors,
+];
+
+const deleteQuestionValidation = [
+  query("questionId").isInt({ gt: 0 }).withMessage("invalid questionId").bail(),
+  handleValidationErrors,
+];
+
+const questionActionValidation = [
+  body("questionId").isInt({ gt: 0 }).withMessage("invalid questionId").bail(),
+  body("actionType").notEmpty().withMessage("actionType is required").bail(),
+  handleValidationErrors,
+];
+
 // post question
-router.post(
-  "/",
-  authenticator,
-  [
-    body("title").notEmpty().withMessage("title is required").bail().isString().withMessage("invalid title"),
-    body("attachment").optional().isArray().withMessage("attachment must be an array"),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors.array().map((error) => error.msg).join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  createQuestion
-);
+router.post("/", authenticator, upload.single("attachment"), createQuestionValidation, createQuestion);
 
 // get recent questions
-router.get(
-  "/",
-  [
-    query("count").isInt({ gt: 0 }).withMessage("invalid count").bail(),
-    query("offset").isInt({ min: 0 }).withMessage("invalid offset").bail(),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  getRecentQuestions
-);
+router.get("/", getQuestionsValidation, getRecentQuestions);
 
 // get popular questions
-router.get(
-  "/popular",
-  [
-    query("count").isInt({ gt: 0 }).withMessage("invalid count").bail(),
-    query("offset").isInt({ min: 0 }).withMessage("invalid offset").bail(),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  getPopularQuestions
-);
+router.get("/popular", getQuestionsValidation, getPopularQuestions);
 
 // get question by id
-router.get(
-  "/:questionID",
-  [
-    param("questionID").isInt({ gt: 0 }).withMessage("questionID"),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  getQuestionByID
-);
+router.get("/:questionId", getQuestionByIdValidation, getQuestionById);
 
 // update question by id
-router.put(
-  "/",
-  authenticator,
-  [
-    body("questionID").notEmpty().withMessage("question ID is required").bail().isInt({ gt: 0 }).withMessage("invalid question ID"),
-    body("title").notEmpty().withMessage("title is required").bail().isString().withMessage("invalid title"),
-    body("attachment").optional().isArray().withMessage("attachment must be an array"),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors.array().map((error) => error.msg).join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  updateQuestionByID
-);
+router.put("/", authenticator, upload.single("attachment"), updateQuestionValidation, updateQuestionById);
 
 // delete question by id
-router.delete(
-  "/",
-  authenticator,
-  [
-    query("questionID").isInt({ gt: 0 }).withMessage("invalid questionID").bail(),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  deleteQuestionByID
-);
+router.delete("/", authenticator, deleteQuestionValidation, deleteQuestionById);
 
 // take action on question
-router.post(
-  "/action",
-  authenticator,
-  [
-    body("questionID").isInt({ gt: 0 }).withMessage("invalid questionID").bail(),
-    body("actionType").notEmpty().withMessage("actionType is required").bail(),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  takeActionByQuestionID
-);
+router.post("/action", authenticator, questionActionValidation, takeActionByQuestionId);
 
 // remove action on question
-router.delete(
-  "/action",
-  authenticator,
-  [
-    body("questionID").isInt({ gt: 0 }).withMessage("invalid questionID").bail(),
-    body("actionType").notEmpty().withMessage("actionType is required").bail(),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  removeActionByQuestionID
-);
+router.delete("/action", authenticator, questionActionValidation, removeActionByQuestionId);
 
 module.exports = router;

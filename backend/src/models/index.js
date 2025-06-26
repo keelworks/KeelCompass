@@ -1,4 +1,4 @@
-const { Sequelize } = require("sequelize");
+const { Sequelize, DataTypes } = require("sequelize");
 const logger = require("../utils/logger.js");
 const dbConfig = require("../configs/dbConfig.js");
 
@@ -31,19 +31,27 @@ sequelize.authenticate()
     logger.error(`Error: syncing database failed: ${error}`);
   });
 
-// initialize relational models
 const db = {};
 db.sequelize = sequelize;
+db.Sequelize = Sequelize;
 
-db.users = require("./User.js")(sequelize);
-db.categories = require("./Category.js")(sequelize);
-db.questions = require("./Question.js")(sequelize, db.users);
-db.comments = require("./Comment.js")(sequelize, db.users, db.questions);
-db.questionCategories = require("./QuestionCategory.js")(sequelize, db.questions, db.categories);
-db.userQuestionActions = require("./UserQuestionAction.js")(sequelize, db.users, db.questions);
-db.userCommentActions = require("./UserCommentAction.js")(sequelize, db.users, db.comments);
-db.interests = require("./Interest.js")(sequelize, db.users, db.questions, db.comments);
-db.notifications = require("./Notification.js")(sequelize, db.users);
+// load models
+db.users = require("./User.js")(sequelize, DataTypes);
+db.categories = require("./Category.js")(sequelize, DataTypes);
+db.attachments = require("./Attachment.js")(sequelize, DataTypes);
+db.questions = require("./Question.js")(sequelize, DataTypes);
+db.comments = require("./Comment.js")(sequelize, DataTypes);
+db.questionCategories = require("./QuestionCategory.js")(sequelize, DataTypes);
+db.userQuestionActions = require("./UserQuestionAction.js")(sequelize, DataTypes);
+db.userCommentActions = require("./UserCommentAction.js")(sequelize, DataTypes);
+db.interests = require("./Interest.js")(sequelize, DataTypes);
+db.notifications = require("./Notification.js")(sequelize, DataTypes);
 
-// no more sync(); let migrations handle schema
+// Establish associations
+Object.keys(db).forEach(modelName => {
+  if (db[modelName].associate) {
+    db[modelName].associate(db);
+  }
+});
+
 module.exports = db;

@@ -1,6 +1,4 @@
-const { DataTypes } = require("sequelize");
-
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define(
     "User",
     {
@@ -28,13 +26,19 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(255),
         allowNull: false,
       },
-      created_at: {
-        type: DataTypes.DATE,
-        field: "created_at",
-      },
     },
-    { tableName: "Users" }
+    { 
+      tableName: "Users",
+      timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: false,
+    }
   );
+
+  User.associate = (models) => {
+    User.hasMany(models.questions, { foreignKey: 'user_id', as: 'questions' });
+    User.hasMany(models.comments, { foreignKey: 'user_id', as: 'comments' });
+  };
 
   return User;
 };

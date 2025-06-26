@@ -1,6 +1,4 @@
-const { DataTypes } = require("sequelize");
-
-module.exports = (sequelize, User, Question) => {
+module.exports = (sequelize, DataTypes) => {
   const Comment = sequelize.define(
     "Comment",
     {
@@ -12,52 +10,35 @@ module.exports = (sequelize, User, Question) => {
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: User,
-          key: "id",
-        },
       },
       question_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: Question,
-          key: "id",
-        },
       },
       parent_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
-        references: {
-          model: "Comments",
-          key: "id",
-        },
-        onDelete: "CASCADE",
       },
       content: {
         type: DataTypes.TEXT,
         allowNull: false,
       },
-      attachment: {
-        type: DataTypes.JSON,
-        allowNull: true,
-      },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
     },
-    { tableName: "Comments" }
+    {
+      tableName: "Comments",
+      timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: false,
+    }
   );
 
-  Comment.belongsTo(User, { foreignKey: "user_id", as: "user" });
-  User.hasMany(Comment, { foreignKey: "user_id", sourceKey: "id" });
-
-  Comment.belongsTo(Question, { foreignKey: "question_id", as: "question", onDelete: "CASCADE" });
-  Question.hasMany(Comment, { foreignKey: "question_id", sourceKey: "id" });
-
-  Comment.belongsTo(Comment, { foreignKey: "parent_id", as: "parent" });
-  Comment.hasMany(Comment, { foreignKey: "parent_id", as: "replies" });
+  Comment.associate = (models) => {
+    Comment.belongsTo(models.users, { foreignKey: "user_id", as: "user" });
+    Comment.belongsTo(models.questions, { foreignKey: "question_id", as: "question" });
+    Comment.hasOne(models.attachments, { foreignKey: "comment_id", as: "attachment" });
+    Comment.belongsTo(Comment, { foreignKey: "parent_id", as: "parent" });
+    Comment.hasMany(Comment, { foreignKey: "parent_id", as: "replies" });
+  };
 
   return Comment;
 };

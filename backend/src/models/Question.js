@@ -1,6 +1,4 @@
-const { DataTypes } = require("sequelize");
-
-module.exports = (sequelize, User) => {
+module.exports = (sequelize, DataTypes) => {
   const Question = sequelize.define(
     "Question",
     {
@@ -12,10 +10,6 @@ module.exports = (sequelize, User) => {
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: User,
-          key: "id",
-        },
       },
       title: {
         type: DataTypes.STRING(255),
@@ -29,20 +23,25 @@ module.exports = (sequelize, User) => {
         allowNull: false,
         defaultValue: "pending",
       },
-      attachment: {
-        type: DataTypes.JSON,
-        allowNull: true,
-      },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
     },
-    { tableName: "Questions" }
+    {
+      tableName: "Questions",
+      timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: false,
+    }
   );
 
-  Question.belongsTo(User, { foreignKey: { name: 'user_id', allowNull: false, }, onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-  User.hasMany(Question, { foreignKey: "user_id", sourceKey: "id" });
+  Question.associate = (models) => {
+    Question.belongsTo(models.users, { foreignKey: 'user_id', as: 'user' });
+    Question.hasOne(models.attachments, { foreignKey: 'question_id', as: 'attachment' });
+    Question.belongsToMany(models.categories, {
+      through: models.questionCategories,
+      foreignKey: 'question_id',
+      otherKey: 'category_id',
+      as: 'Categories',
+    });
+  };
 
   return Question;
 };

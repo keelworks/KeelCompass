@@ -1,138 +1,66 @@
 const express = require("express");
-const { body, query, validationResult } = require("express-validator");
+const { body, query } = require("express-validator");
 const authenticator = require("../middlewares/authMiddleware");
 const {
   createComment,
-  getCommentsByQuestionID,
-  updateCommentByID,
-  deleteCommentByID,
-  takeActionByCommentID,
-  removeActionByCommentID,
+  getCommentsByQuestionId,
+  updateCommentById,
+  deleteCommentById,
+  takeActionByCommentId,
+  removeActionByCommentId,
 } = require("../controllers/commentController");
-const { HttpStatusCodes } = require("../utils/httpError");
+const { handleValidationErrors } = require("../utils/validationUtils");
+const upload = require("../utils/multerConfig");
 
 const router = express.Router();
 
-// post comment
-router.post(
-  "/",
-  authenticator,
-  [
-    body("questionID").notEmpty().withMessage("question ID is required").bail().isInt({ gt: 0 }).withMessage("invalid question ID"),
-    body("content").notEmpty().withMessage("content is required").bail().isString().withMessage("invalid content"),
-    body("parentID").optional({ nullable: true }).isInt({ gt: 0 }).withMessage("invalid parent ID"),
-    body("attachment").optional().isArray().withMessage("attachment must be an array"),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors.array().map((error) => error.msg).join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  createComment
-);
+const createCommentValidation = [
+  body("questionId").notEmpty().withMessage("question ID is required").bail().isInt({ gt: 0 }).withMessage("invalid question ID"),
+  body("content").notEmpty().withMessage("content is required").bail().isString().withMessage("invalid content"),
+  body("parentId").optional({ nullable: true }).isInt({ gt: 0 }).withMessage("invalid parent ID"),
+  handleValidationErrors,
+];
 
-// get all comments by question id
-router.get(
-  "/",
-  [
-    query("questionID").notEmpty().withMessage("question ID is required").bail().isInt({ gt: 0 }).withMessage("invalid question ID"),
-    query("count").isInt({ gt: 0 }).withMessage("invalid count").bail(),
-    query("offset").isInt({ min: 0 }).withMessage("invalid offset").bail(),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  getCommentsByQuestionID
-);
+const getCommentsValidation = [
+  query("questionId").notEmpty().withMessage("question ID is required").bail().isInt({ gt: 0 }).withMessage("invalid question ID"),
+  query("count").isInt({ gt: 0 }).withMessage("invalid count").bail(),
+  query("offset").isInt({ min: 0 }).withMessage("invalid offset").bail(),
+  handleValidationErrors,
+];
+
+const updateCommentValidation = [
+  body("commentId").notEmpty().withMessage("comment ID is required").bail().isInt({ gt: 0 }).withMessage("invalid comment ID"),
+  body("content").notEmpty().withMessage("content is required").bail().isString().withMessage("invalid content"),
+  handleValidationErrors,
+];
+
+const deleteCommentValidation = [
+  query("commentId").notEmpty().withMessage("comment ID is required").isInt({ gt: 0 }).withMessage("invalid comment ID").bail(),
+  handleValidationErrors,
+];
+
+const commentActionValidation = [
+  body("commentId").isInt({ gt: 0 }).withMessage("invalid commentId").bail(),
+  body("actionType").notEmpty().withMessage("actionType is required").bail(),
+  handleValidationErrors,
+];
+
+// post comment
+router.post("/", authenticator, upload.single("attachment"), createCommentValidation, createComment);
+
+// get comments by question id
+router.get("/", getCommentsValidation, getCommentsByQuestionId);
 
 // update comment
-router.put(
-  "/",
-  authenticator,
-  [
-    body("commentID").notEmpty().withMessage("comment ID is required").bail().isInt({ gt: 0 }).withMessage("invalid comment ID"),
-    body("content").notEmpty().withMessage("content is required").bail().isString().withMessage("invalid content"),
-    body("attachment").optional().isArray().withMessage("attachment must be an array"),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors.array().map((error) => error.msg).join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  updateCommentByID
-);
+router.put("/", authenticator, upload.single("attachment"), updateCommentValidation, updateCommentById);
 
 // delete comment by id
-router.delete(
-  "/",
-  authenticator,
-  [
-    query("commentID").notEmpty().withMessage("comment ID is required").isInt({ gt: 0 }).withMessage("invalid comment ID").bail(),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  deleteCommentByID
-);
+router.delete("/", authenticator, deleteCommentValidation, deleteCommentById);
 
 // take action on comment
-router.post(
-  "/action",
-  authenticator,
-  [
-    body("commentID").isInt({ gt: 0 }).withMessage("invalid commentID").bail(),
-    body("actionType").notEmpty().withMessage("actionType is required").bail(),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors.map((error) => error.msg).join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  takeActionByCommentID
-);
+router.post("/action", authenticator, commentActionValidation, takeActionByCommentId);
 
 // remove action on comment
-router.delete(
-  "/action",
-  authenticator,
-  [
-    body("commentID").isInt({ gt: 0 }).withMessage("invalid commentID").bail(),
-    body("actionType").notEmpty().withMessage("actionType is required").bail(),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors.map((error) => error.msg).join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    },
-  ],
-  removeActionByCommentID
-);
+router.delete("/action", authenticator, commentActionValidation, removeActionByCommentId);
 
 module.exports = router;
