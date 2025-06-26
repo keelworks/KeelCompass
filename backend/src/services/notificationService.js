@@ -5,6 +5,21 @@ const { HttpError, HttpStatusCodes } = require("../utils/httpError");
 const User = db.users;
 const Notification = db.notifications;
 
+// get all notifications for a user
+const getNotificationsByUserId = async (userId) => {
+  try {
+    const notifications = await Notification.findAll({
+      where: { user_id: userId },
+      order: [['created_at', 'DESC']],
+      raw: true,
+    });
+    return notifications;
+  } catch (error) {
+    logger.error(`Error fetching notifications: ${error.message}`);
+    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, 'Failed to fetch notifications');
+  }
+};
+
 // create a notification for a single user
 const createNotification = async (user_id, type, message, target_url) => {
   try {
@@ -52,21 +67,6 @@ const createSystemNotifications = async (type, message, target_url) => {
   }
 };
 
-// get all notifications for a user
-const getNotificationsByUserId = async (userId) => {
-  try {
-    const notifications = await Notification.findAll({
-      where: { user_id: userId },
-      order: [['created_at', 'DESC']],
-      raw: true,
-    });
-    return notifications;
-  } catch (error) {
-    logger.error(`Error fetching notifications: ${error.message}`);
-    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, 'Failed to fetch notifications');
-  }
-};
-
 // mark a notification as read
 const markNotificationRead = async (notificationId, userId) => {
   try {
@@ -90,9 +90,9 @@ const markNotificationRead = async (notificationId, userId) => {
 };
 
 module.exports = {
+  getNotificationsByUserId,
   createNotification,
   createNotificationsForUsers,
   createSystemNotifications,
-  getNotificationsByUserId,
   markNotificationRead,
 };

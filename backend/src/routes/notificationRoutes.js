@@ -11,7 +11,24 @@ const router = express.Router();
 // get all notifications by user id
 router.get("/", authenticator, getNotificationsByUserId);
 
-// mark a specific notification as read = true
+// create notifications for all users (system announcement)
+router.post(
+  "/system",
+  authenticator,
+  [
+    body("message").notEmpty().withMessage("message is required"),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ message: errors.array().map(e => e.msg).join(", ") });
+      }
+      next();
+    }
+  ],
+  createSystemNotifications
+);
+
+// mark a notification as read
 router.patch(
   "/:id/mark-read",
   authenticator,

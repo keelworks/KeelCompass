@@ -1,7 +1,7 @@
 const notificationService = require("../services/notificationService");
 const { HttpStatusCodes, ServiceErrorHandler } = require("../utils/httpError");
 
-// get all notifications for a user
+// get all notifications by user id
 const getNotificationsByUserId = async (req, res) => {
   try {
     const userId = req.loginUser.id;
@@ -9,6 +9,26 @@ const getNotificationsByUserId = async (req, res) => {
     return res.status(HttpStatusCodes.OK).json({ message: "success", notifications });
   } catch (error) {
     ServiceErrorHandler(error, res, "getNotificationsByUserId");
+  }
+};
+
+// create notifications for all users (system announcement)
+const createSystemNotifications = async (req, res) => {
+  try {
+    const { message, targetUrl } = req.body;
+    if (!message) {
+      return res.status(HttpStatusCodes.BAD_REQUEST).json({
+        message: "Invalid Request. 'message' is required."
+      });
+    }
+    const type = 'announcement';
+    const result = await notificationService.createSystemNotifications(type, message, targetUrl);
+    return res.status(HttpStatusCodes.CREATED).json({
+      message: "All users notified successfully",
+      count: Array.isArray(result) ? result.length : undefined
+    });
+  } catch (error) {
+    ServiceErrorHandler(error, res, "createSystemNotifications");
   }
 };
 
@@ -26,5 +46,6 @@ const markNotificationRead = async (req, res) => {
 
 module.exports = {
   getNotificationsByUserId,
+  createSystemNotifications,
   markNotificationRead,
 };

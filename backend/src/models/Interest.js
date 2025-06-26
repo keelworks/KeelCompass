@@ -18,21 +18,28 @@ module.exports = (sequelize, DataTypes) => {
       comment_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
+        references: {
+          model: Comment,
+          key: 'id'
+        },
       },
     },
     {
       tableName: 'Interests',
       timestamps: true,
       createdAt: 'created_at',
-      updatedAt: false,
+      updatedAt: false
     }
   );
 
-  Interest.associate = (models) => {
-    Interest.belongsTo(models.users, { foreignKey: 'user_id', as: 'user' });
-    Interest.belongsTo(models.questions, { foreignKey: 'question_id', as: 'question' });
-    Interest.belongsTo(models.comments, { foreignKey: 'comment_id', as: 'comment' });
-  };
+  Interest.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+  User.hasMany(Interest, { foreignKey: 'user_id', as: 'interests' });
+
+  Interest.belongsTo(Question, { foreignKey: 'question_id', as: 'question' });
+  Question.hasMany(Interest, { foreignKey: 'question_id', as: 'interests' });
+
+  Interest.belongsTo(Comment, { foreignKey: 'comment_id', as: 'comment' });
+  Comment.hasMany(Interest, { foreignKey: 'comment_id', as: 'interests' });
 
   return Interest;
 };

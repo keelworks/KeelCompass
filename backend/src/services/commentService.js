@@ -8,7 +8,7 @@ const Comment = db.comments;
 const UserCommentAction = db.userCommentActions;
 
 // post comment
-const createComment = async (questionId, content, loginUser, parentId = null) => {
+const createComment = async (questionId, content, loginUser, parentId = null, attachment = null) => {
   try {
     const question = await Question.findByPk(questionId);
     if (!question) {
@@ -25,14 +25,42 @@ const createComment = async (questionId, content, loginUser, parentId = null) =>
       }
     }
 
-    logger.info(`Creating comment for question ${questionId} by user ${loginUser.id}`);
     const newComment = await Comment.create({
       content: content,
       question_id: questionId,
       user_id: loginUser.id,
       parent_id: parentId,
-
+      attachment: attachment,
     });
+
+    // Notification logic for comment creation
+    try {
+      const notificationService = require("./notificationService");
+      if (parentId !== null) {
+        // Notify parent comment owner (if not self)
+        const parentComment = await Comment.findByPk(parentId);
+        if (parentComment && parentComment.user_id !== loginUser.id) {
+          await notificationService.createNotification(
+            parentComment.user_id,
+            "commented",
+            "Someone replied to your comment!",
+            `/questions/${questionId}#comment-${newComment.id}`
+          );
+        }
+      } else {
+        // Notify question owner (if not self)
+        if (question && question.user_id !== loginUser.id) {
+          await notificationService.createNotification(
+            question.user_id,
+            "commented",
+            "Someone commented on your question!",
+            `/questions/${questionId}#comment-${newComment.id}`
+          );
+        }
+      }
+    } catch (err) {
+      logger.error(`Failed to create comment notification: ${err.message}`);
+    }
 
     return newComment.id;
   } catch (error) {
@@ -96,9 +124,31 @@ const updateCommentById = async (commentId, content, loginUser) => {
 
     logger.info(`Updating comment ${commentId}`);
     comment.content = content;
-
-
     await comment.save();
+
+    // Notify all users who bookmarked/interested this comment (except the updater)
+    try {
+      const Interest = require("../models").interests;
+      const notificationService = require("./notificationService");
+      const interests = await Interest.findAll({
+        where: { comment_id: commentId },
+        attributes: ["user_id"],
+        raw: true,
+      });
+      const userIds = interests
+        .map(i => i.user_id)
+        .filter(uid => uid !== loginUser.id);
+      if (userIds.length > 0) {
+        await notificationService.createNotificationsForUsers(
+          userIds,
+          "update",
+          "A comment you bookmarked was updated.",
+          `/questions/${comment.question_id}#comment-${commentId}`
+        );
+      }
+    } catch (err) {
+      logger.error(`Failed to notify bookmarked users on comment update: ${err.message}`);
+    }
   } catch (error) {
     logger.error(`Error updating comment ${commentId}: ${error.message}`);
     if (error instanceof HttpError) {
@@ -155,6 +205,44 @@ const takeActionByCommentId = async (commentId, actionType, loginUser) => {
       logger.warn("Warning adding actions: action existed");
       throw new HttpError(HttpStatusCodes.CONFLICT, "User has already submitted this comment action");
     }
+
+    // Notification for like action (only if actionType is 'like')
+    if (actionType === 'like') {
+      if (comment.user_id !== loginUser.id) {
+        // Notify the comment owner, but not if user likes their own comment
+        try {
+          const notificationService = require("./notificationService");
+          await notificationService.createNotification(
+            comment.user_id,
+            "liked",
+            "Your comment was liked!",
+            `/questions/${comment.question_id}#comment-${commentId}`
+          );
+        } catch (err) {
+          logger.error(`Failed to create comment like notification: ${err.message}`);
+        }
+      }
+    }
+
+    // Notification for report action (only if actionType is 'report')
+    if (actionType === 'report') {
+      if (comment.user_id !== loginUser.id) {
+        // Notify the comment owner, but not if user reports their own comment
+        try {
+          const notificationService = require("./notificationService");
+          await notificationService.createNotification(
+            comment.user_id,
+            "reported",
+            "Your comment was reported.",
+            `/questions/${comment.question_id}#comment-${commentId}`
+          );
+        } catch (err) {
+          logger.error(`Failed to create comment report notification: ${err.message}`);
+        }
+      }
+    }
+
+    return;
   } catch (error) {
     logger.error(`Error taking action on comment ${commentId}: ${error.message}`);
     if (error instanceof HttpError) {

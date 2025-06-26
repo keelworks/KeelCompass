@@ -20,11 +20,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
     },
-    {
-      tableName: "UserCommentActions",
-      timestamps: true,
+    { 
+      tableName: "UserCommentActions", 
+      timestamps: true, 
       createdAt: 'created_at',
-      updatedAt: false,
+      updatedAt: false
     }
   );
 

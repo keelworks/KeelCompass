@@ -23,25 +23,21 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: "pending",
       },
+      attachment: {
+        type: DataTypes.JSON,
+        allowNull: true,
+      },
     },
-    {
-      tableName: "Questions",
-      timestamps: true,
-      createdAt: 'created_at',
-      updatedAt: false,
+    { 
+      tableName: "Questions", 
+      timestamps: true, 
+      createdAt: 'created_at', 
+      updatedAt: 'updated_at' 
     }
   );
 
-  Question.associate = (models) => {
-    Question.belongsTo(models.users, { foreignKey: 'user_id', as: 'user' });
-    Question.hasOne(models.attachments, { foreignKey: 'question_id', as: 'attachment' });
-    Question.belongsToMany(models.categories, {
-      through: models.questionCategories,
-      foreignKey: 'question_id',
-      otherKey: 'category_id',
-      as: 'Categories',
-    });
-  };
+  Question.belongsTo(User, { foreignKey: { name: 'user_id', allowNull: false, }, onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+  User.hasMany(Question, { foreignKey: "user_id", sourceKey: "id" });
 
   return Question;
 };

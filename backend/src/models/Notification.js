@@ -45,6 +45,7 @@ module.exports = (sequelize, DataTypes) => {
       tableName: 'Notifications',
       timestamps: true,
       createdAt: 'created_at',
+      updatedAt: false
     }
   );
 
