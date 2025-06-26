@@ -250,7 +250,6 @@ const updateQuestionById = async (questionId, title, description, loginUser) => 
   } catch (err) {
     logger.error(`Failed to notify bookmarked users on question update: ${err.message}`);
   }
->>>>>>> Stashed changes
 };
 
 // delete question by id

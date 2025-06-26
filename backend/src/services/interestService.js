@@ -57,9 +57,6 @@ const saveInterest = async (loginUser, questionId, commentId) => {
       } catch (err) {
         console.error(`Failed to create question bookmark notification: ${err.message}`);
       }
-<<<<<<< Updated upstream
-    }
-=======
     }
     return newInterest.id;
   } else {
@@ -86,7 +83,6 @@ const saveInterest = async (loginUser, questionId, commentId) => {
         console.error(`Failed to create comment bookmark notification: ${err.message}`);
       }
     }
->>>>>>> Stashed changes
     return newInterest.id;
   } catch (error) {
     logger.error(`Error saving interest for user ${loginUser.id}: ${error.message}`);

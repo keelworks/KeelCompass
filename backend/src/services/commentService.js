@@ -235,6 +235,30 @@ const updateCommentById = async (commentId, content, loginUser) => {
   } catch (err) {
     logger.error(`Failed to notify bookmarked users on comment update: ${err.message}`);
   }
+
+  // Notify all users who bookmarked/interested this comment (except the updater)
+  try {
+    const Interest = require("../models").interests;
+    const notificationService = require("./notificationService");
+    const interests = await Interest.findAll({
+      where: { comment_id: commentID },
+      attributes: ["user_id"],
+      raw: true,
+    });
+    const userIds = interests
+      .map(i => i.user_id)
+      .filter(uid => uid !== loginUser.id);
+    if (userIds.length > 0) {
+      await notificationService.createNotificationsForUsers(
+        userIds,
+        "update",
+        "A comment you bookmarked was updated.",
+        `/questions/${comment.question_id}#comment-${commentID}`
+      );
+    }
+  } catch (err) {
+    logger.error(`Failed to notify bookmarked users on comment update: ${err.message}`);
+  }
 >>>>>>> Stashed changes
 };
 
