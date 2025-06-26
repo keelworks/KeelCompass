@@ -46,4 +46,13 @@ app.use("*", (_, res) => {
   res.status(HttpStatusCodes.NOT_FOUND).send("Invalid route");
 });
 
+// global error handler (must be last)
+app.use((err, _req, res, _next) => {
+  logger.error("Unhandled error:", err);
+  res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+    message: "Internal server error",
+    error: process.env.NODE_ENV === "development" ? err.message : undefined,
+  });
+});
+
 module.exports = app;
