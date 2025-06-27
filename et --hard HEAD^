@@ -1,0 +1,131 @@
+* [33m90cb708[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mManojVarma[m[33m)[m Save my current work before updating from main
+* [33md5c056a[m[33m ([m[1;31morigin/ManojVarma[m[33m)[m  Worked on dashboard sizes and icons and mostpopular tab
+* [33mec8b1b4[m[33m ([m[1;32munified-docker[m[33m)[m Rename back to correct
+* [33m3abbddb[m Temp rename folders
+* [33m4ce3b80[m[33m ([m[1;31morigin/unified-docker[m[33m)[m Change sequelize.sync parameter to force: false over alter: true
+* [33m9fc6c90[m Fix post question endpoints and liking/commenting questions
+* [33mfd5b16a[m Frontend cleanup, fix minor bugs
+* [33m2b25050[m Update AuthGuard to not use expired jwt tokens on app start
+* [33mb372058[m Add .gitignore
+* [33m83d28f6[m Delete .DS_Store
+* [33mdf829ee[m Add AuthGuard and fix App.tsx
+* [33m064e530[m Dockerize backend and frontend for unified dev setup
+* [33m5287853[m Test push (remove . after Project Structure in README.md)
+*   [33m21937be[m Merge pull request #67 from keelworks/feature/be-upload
+[32m|[m[33m\[m  
+[32m|[m * [33mf1527e3[m[33m ([m[1;31morigin/feature/be-upload[m[33m)[m feat: add upload file api
+[32m|[m[32m/[m  
+* [33m8f8d579[m update doc api
+* [33ma7c6a5a[m Feature/be attachment (#65)
+* [33me3fcaf5[m github repo testing
+*   [33m4c3a3f6[m Merge pull request #73 from keelworks/Somil
+[34m|[m[35m\[m  
+[34m|[m *   [33m7d85a7f[m Merge branch 'main' into Somil
+[34m|[m [36m|[m[1;31m\[m  
+[34m|[m * [1;31m|[m [33mebadf2b[m Save draft, Cancel post, and Clear draft
+* [1;31m|[m [1;31m|[m   [33me779144[m Merge pull request #72 from keelworks/feature/reply-edit-delete
+[1;31m|[m[1;33m\[m [1;31m\[m [1;31m\[m  
+[1;31m|[m [1;33m|[m[1;31m_[m[1;31m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[1;33m|[m [1;31m|[m   
+[1;31m|[m * [1;31m|[m [33md0482be[m[33m ([m[1;31morigin/feature/reply-edit-delete[m[33m)[m modifying exploded view
+[1;31m|[m * [1;31m|[m [33m46ea939[m delete and edit post
+[1;31m|[m * [1;31m|[m [33mef11998[m adding reply feature
+* [1;33m|[m [1;31m|[m [33m06acf9f[m update API doc
+* [1;33m|[m [1;31m|[m   [33maa1524d[m Merge pull request #69 from rishabhrajkw/be/feature/reset-password
+[1;33m|[m[1;35m\[m [1;33m\[m [1;31m\[m  
+[1;33m|[m [1;35m|[m[1;33m/[m [1;31m/[m  
+[1;33m|[m[1;33m/[m[1;35m|[m [1;31m|[m   
+[1;33m|[m * [1;31m|[m [33mc3f8ebb[m Formatting
+[1;33m|[m * [1;31m|[m [33mc935ba2[m Implementation of Reset password
+[1;33m|[m * [1;31m|[m [33m21f7454[m Checking push
+* [1;35m|[m [1;31m|[m   [33m70d8e80[m Merge pull request #71 from keelworks/feature/view-post-details
+[1;36m|[m[31m\[m [1;35m\[m [1;31m\[m  
+[1;36m|[m * [1;35m|[m [1;31m|[m [33ma0744e9[m[33m ([m[1;31morigin/feature/view-post-details[m[33m)[m dynamic like functionality
+[1;36m|[m * [1;35m|[m [1;31m|[m [33mfce13b1[m integrating user with his question
+[1;36m|[m * [1;35m|[m [1;31m|[m   [33m4815225[m Merge remote-tracking branch 'origin/main' into feature/view-post-details To make merge latest changes on main to my branch
+[1;36m|[m [32m|[m[1;36m\[m [1;35m\[m [1;31m\[m  
+[1;36m|[m [32m|[m[1;36m/[m [1;35m/[m [1;31m/[m  
+[1;36m|[m[1;36m/[m[32m|[m [1;35m|[m [1;31m|[m   
+* [32m|[m [1;35m|[m [1;31m|[m   [33m6c82ba9[m Merge pull request #70 from keelworks/Somil
+[1;35m|[m[1;31m\[m [32m\[m [1;35m\[m [1;31m\[m  
+[1;35m|[m [1;31m|[m[1;35m_[m[32m|[m[1;35m/[m [1;31m/[m  
+[1;35m|[m[1;35m/[m[1;31m|[m [32m|[m [1;31m/[m   
+[1;35m|[m [1;31m|[m [32m|[m[1;31m/[m    
+[1;35m|[m [1;31m|[m[1;31m/[m[32m|[m     
+[1;35m|[m * [32m|[m [33ma99ede8[m User Authentication
+[1;35m|[m[1;35m/[m [32m/[m  
+* [32m|[m   [33m949e37a[m Merge pull request #68 from keelworks/Somil
+[36m|[m[1;31m\[m [32m\[m  
+[36m|[m * [32m|[m [33m0cd11b5[m Cross-Platform Update
+[36m|[m[36m/[m [32m/[m  
+[36m|[m * [33m7aae5fd[m updated exploded card
+[36m|[m * [33mb2075d4[m css adjustments
+[36m|[m * [33mcc8641a[m detailing the post card
+[36m|[m[36m/[m  
+*   [33m6d6d4ce[m Merge pull request #61 from keelworks/feature/zustand-setup
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33ma98c9e2[m[33m ([m[1;31morigin/feature/zustand-setup[m[33m)[m initial features
+[1;32m|[m * [33m4f88d94[m modifying state
+[1;32m|[m * [33m11e7852[m state management
+[1;32m|[m * [33m8369ed0[m cleaned the code
+[1;32m|[m * [33mae988c5[m cleaning the code
+[1;32m|[m * [33m74e64fe[m completed redesign of qna page
+[1;32m|[m * [33m9aa380f[m aligned the components
+[1;32m|[m * [33mebf7629[m redesign
+[1;32m|[m * [33m1523a2c[m adding zustand
+* [1;33m|[m   [33m886b230[m Merge pull request #66 from keelworks/feature/auth-api-readme
+[1;34m|[m[1;35m\[m [1;33m\[m  
+[1;34m|[m * [1;33m|[m [33ma9583fd[m[33m ([m[1;31morigin/feature/auth-api-readme[m[33m)[m Change name of doc
+[1;34m|[m * [1;33m|[m [33m8c0d43d[m auth-apis : login and register readme
+[1;34m|[m[1;34m/[m [1;33m/[m  
+* [1;33m|[m   [33mdb1c8e2[m Merge pull request #64 from rishabhrajkw/feature/be-emojis-db
+[1;36m|[m[31m\[m [1;33m\[m  
+[1;36m|[m * [1;33m|[m [33m974bb26[m DB dump changes for Question-description - Emojis inclusion
+[1;36m|[m[1;36m/[m [1;33m/[m  
+* [1;33m/[m [33m56b9794[m added route for career and education sections (#63)
+[1;33m|[m[1;33m/[m  
+* [33m7d83c30[m Create Interests.md (#54)
+* [33m7d6bca7[m Updated
+* [33m2f9982b[m Revert "Merge branch 'main' into feature/frontend-dashboard"
+* [33mf6ca181[m Revert "Merge pull request #56 from keelworks/feature/frontend-dashboard"
+* [33mf140f7a[m Revert "Merge pull request #58 from keelworks/shivang"
+*   [33me1e6fab[m Merge pull request #58 from keelworks/shivang
+[32m|[m[33m\[m  
+[32m|[m * [33m3f35e80[m Backend Frontend Integration Setup
+* [33m|[m   [33mf44d4e3[m Merge pull request #56 from keelworks/feature/frontend-dashboard
+[34m|[m[35m\[m [33m\[m  
+[34m|[m * [33m\[m   [33mb92e7b2[m Merge branch 'main' into feature/frontend-dashboard
+[34m|[m [36m|[m[34m\[m [33m\[m  
+[34m|[m [36m|[m[34m/[m [33m/[m  
+[34m|[m[34m/[m[36m|[m [33m|[m   
+* [36m|[m [33m|[m [33m384fcb0[m Update README.md
+[33m|[m [36m|[m[33m/[m  
+[33m|[m[33m/[m[36m|[m   
+* [36m|[m [33m2d50163[m Update README.md
+[1;31m|[m * [33m3ac72ec[m added gitignore
+[1;31m|[m * [33m61803fd[m Create .gitignore
+[1;31m|[m * [33m2a1fce7[m nav bar integrated
+[1;31m|[m *   [33m369b03e[m Merge remote-tracking branch 'origin/main' into feature/frontend-dashboard
+[1;31m|[m [1;32m|[m[1;31m\[m  
+[1;31m|[m [1;32m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[1;32m|[m   
+* [1;32m|[m [33m1523d90[m feat: update readme file (#57)
+* [1;32m|[m [33med97678[m small fixes
+[1;33m|[m * [33mb64e685[m lock.json modified
+[1;33m|[m * [33mbfe2d58[m conflicst resolved
+[1;33m|[m * [33m7e19452[m updated UI
+[1;33m|[m *   [33m2b53551[m Merge branch 'main' into feature/frontend-dashboard
+[1;33m|[m [1;34m|[m[1;33m\[m  
+[1;33m|[m [1;34m|[m[1;33m/[m  
+[1;33m|[m[1;33m/[m[1;34m|[m   
+* [1;34m|[m   [33mf599e2b[m Merge pull request #53 from keelworks/feature/be-add-dockerfile
+[1;36m|[m[31m\[m [1;34m\[m  
+[1;36m|[m * [1;34m|[m [33m376c103[m[33m ([m[1;31morigin/feature/be-add-dockerfile[m[33m)[m feat: add dockerfile and scripts
+* [31m|[m [1;34m|[m   [33mc275e2f[m Merge pull request #45 from keelworks/feature/frontend-dashboard
+[32m|[m[33m\[m [31m\[m [1;34m\[m  
+* [33m\[m [31m\[m [1;34m\[m   [33md5ff10b[m Merge pull request #44 from keelworks/feature/qnadiscussion
+[34m|[m[35m\[m [33m\[m [31m\[m [1;34m\[m  
+[34m|[m * [33m\[m [31m\[m [1;34m\[m   [33mcb22a45[m[33m ([m[1;31morigin/feature/qnadiscussion[m[33m)[m Merge branch 'main' into feature/qnadiscussion
+[34m|[m [36m|[m[34m\[m [33m\[m [31m\[m [1;34m\[m  
+[34m|[m [36m|[m[34m/[m [33m/[m [31m/[m [1;34m/[m  
+[34m|[m[34m/[m[36m|[m [33m|
