@@ -191,6 +191,7 @@ const PostCard: React.FC<PostCardProps> = ({ question,refreshInterests }) => {
             handleClose={() => setShowModal(false)}
             handleEdit={handleEdit}
             setComments={setComments}
+            refreshInterests={refreshInterests}
           />
         </div>
       )}

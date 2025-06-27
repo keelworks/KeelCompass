@@ -4,15 +4,27 @@ import { useStore } from "../../../utils/store";
 import PostCard from "../cards/PostCard";
 import Backdrop from "../modals/BackkDrop";
 import ToggleButton from "../buttons/ToggleButton";
+// Add props interface
+interface PostsSectionProps {
+  refreshInterests: () => void;
+}
 
-const PostsSection: React.FC = () => {
+const PostsSection: React.FC = ({ refreshInterests }) => {
   const { questions, offset, isLoading, error, fetchQuestions } = useStore();
+<<<<<<< HEAD
   const [visiblePosts, setVisiblePosts] = useState(4);
   const [sortOption, setSortOption] = useState<"Most Recent" | "Popular">("Most Recent");
   const [sortedQuestions, setSortedQuestions] = useState(questions);
 
   useEffect(() => {
     fetchQuestions(6, 0);
+=======
+  console.log("function check PostsSection",typeof refreshInterests);
+
+  useEffect(() => {
+    // For example, fetch 3 items starting from offset 0
+    fetchQuestions(10, 0);
+>>>>>>> origin/main
   }, [fetchQuestions]);
 
   // Apply sorting when sort option or questions change
@@ -72,9 +84,15 @@ const PostsSection: React.FC = () => {
       {sortedQuestions.length === 0 ? (
         <p>No posts found.</p>
       ) : (
+<<<<<<< HEAD
         <div className="space-y-4">
           {sortedQuestions.slice(0, visiblePosts).map((q) => (
             <PostCard key={q.id} question={q} />
+=======
+        <div className="space-y-4 overflow-y-scroll max-h-[80vh]">
+          {questions.map((q) => (
+            <PostCard key={q.id} question={q} refreshInterests={refreshInterests} />
+>>>>>>> origin/main
           ))}
         </div>
       )}

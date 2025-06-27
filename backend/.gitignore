@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 .env
+.env.testing
 
 # Editor directories and files
 .vscode/*
@@ -23,5 +24,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env
 secret/

@@ -3,9 +3,11 @@ const { body, query, validationResult } = require("express-validator");
 const authenticator = require("../middlewares/authMiddleware");
 const {
   createComment,
-  getCommentListByQuestionID,
-  updateComment,
+  getCommentsByQuestionID,
+  updateCommentByID,
   deleteCommentByID,
+  takeActionByCommentID,
+  removeActionByCommentID,
 } = require("../controllers/commentController");
 const { HttpStatusCodes } = require("../utils/httpError");
 
@@ -16,20 +18,14 @@ router.post(
   "/",
   authenticator,
   [
-    body("questionID")
-      .notEmpty()
-      .withMessage("question ID is required")
-      .bail()
-      .isInt({ gt: 0 })
-      .withMessage("invalid question ID"),
+    body("questionID").notEmpty().withMessage("question ID is required").bail().isInt({ gt: 0 }).withMessage("invalid question ID"),
     body("content").notEmpty().withMessage("content is required").bail().isString().withMessage("invalid content"),
+    body("parentID").optional({ nullable: true }).isInt({ gt: 0 }).withMessage("invalid parent ID"),
+    body("attachment").optional().isArray().withMessage("attachment must be an array"),
     (req, res, next) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
+        const errorMessages = errors.array().map((error) => error.msg).join(", ");
         return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
       }
       next();
@@ -42,12 +38,7 @@ router.post(
 router.get(
   "/",
   [
-    query("questionID")
-      .notEmpty()
-      .withMessage("question ID is required")
-      .bail()
-      .isInt({ gt: 0 })
-      .withMessage("invalid question ID"),
+    query("questionID").notEmpty().withMessage("question ID is required").bail().isInt({ gt: 0 }).withMessage("invalid question ID"),
     query("count").isInt({ gt: 0 }).withMessage("invalid count").bail(),
     query("offset").isInt({ min: 0 }).withMessage("invalid offset").bail(),
     (req, res, next) => {
@@ -62,7 +53,7 @@ router.get(
       next();
     },
   ],
-  getCommentListByQuestionID
+  getCommentsByQuestionID
 );
 
 // update comment
@@ -70,26 +61,19 @@ router.put(
   "/",
   authenticator,
   [
-    body("commentID")
-      .notEmpty()
-      .withMessage("comment ID is required")
-      .bail()
-      .isInt({ gt: 0 })
-      .withMessage("invalid comment ID"),
+    body("commentID").notEmpty().withMessage("comment ID is required").bail().isInt({ gt: 0 }).withMessage("invalid comment ID"),
     body("content").notEmpty().withMessage("content is required").bail().isString().withMessage("invalid content"),
+    body("attachment").optional().isArray().withMessage("attachment must be an array"),
     (req, res, next) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        const errorMessages = errors
-          .array()
-          .map((error) => error.msg)
-          .join(", ");
+        const errorMessages = errors.array().map((error) => error.msg).join(", ");
         return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
       }
       next();
     },
   ],
-  updateComment
+  updateCommentByID
 );
 
 // delete comment by id
@@ -97,12 +81,7 @@ router.delete(
   "/",
   authenticator,
   [
-    query("commentID")
-      .notEmpty()
-      .withMessage("comment ID is required")
-      .isInt({ gt: 0 })
-      .withMessage("invalid comment ID")
-      .bail(),
+    query("commentID").notEmpty().withMessage("comment ID is required").isInt({ gt: 0 }).withMessage("invalid comment ID").bail(),
     (req, res, next) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -116,6 +95,44 @@ router.delete(
     },
   ],
   deleteCommentByID
+);
+
+// take action on comment
+router.post(
+  "/action",
+  authenticator,
+  [
+    body("commentID").isInt({ gt: 0 }).withMessage("invalid commentID").bail(),
+    body("actionType").notEmpty().withMessage("actionType is required").bail(),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        const errorMessages = errors.map((error) => error.msg).join(", ");
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
+      }
+      next();
+    },
+  ],
+  takeActionByCommentID
+);
+
+// remove action on comment
+router.delete(
+  "/action",
+  authenticator,
+  [
+    body("commentID").isInt({ gt: 0 }).withMessage("invalid commentID").bail(),
+    body("actionType").notEmpty().withMessage("actionType is required").bail(),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        const errorMessages = errors.map((error) => error.msg).join(", ");
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
+      }
+      next();
+    },
+  ],
+  removeActionByCommentID
 );
 
 module.exports = router;

@@ -11,12 +11,16 @@ services:
       - ./backend/.env
     ports:
       - "8080:8080"
+    command: npm run dev
 
   frontend:
     container_name: keelcompass-frontend
     build:
       context: ./frontend
+    env_file:
+      - ./frontend/.env
     ports:
       - "5173:5173"
+    command: npm run dev -- --host
     depends_on:
       - backend

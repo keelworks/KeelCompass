@@ -8,7 +8,7 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   dialect: dbConfig.dialect,
   operatorsAliases: 0,
   define: {
-    timestamps: false
+    timestamps: false,
   },
   pool: {
     max: dbConfig.pool.max,
@@ -16,33 +16,11 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     acquire: dbConfig.pool.acquire,
     idle: dbConfig.pool.idle,
   },
-
-  logging: (msg) => logger.info(msg)
+  logging: (msg) => logger.info(msg),
 });
 
 // connect to mysql db
 sequelize.authenticate()
-  .then(() => {
-    logger.info("database connected");
-  })
-  .catch((error) => {
-    logger.error(`Error: database connection failed: ${error}`);
-  });
-
-// initialize relational models
-const db = {};
-db.sequelize = sequelize;
-
-db.users = require("./User.js")(sequelize);
-db.questions = require("./Question.js")(sequelize, db.users);
-db.comments = require("./Comment.js")(sequelize, db.users, db.questions);
-db.userQuestionActions = require("./UserQuestionAction.js")(sequelize, db.users, db.questions);
-db.categories = require("./Category.js")(sequelize);
-db.questionCategories = require("./QuestionCategory.js")(sequelize, db.questions, db.categories);
-db.interests = require("./Interest.js")(sequelize, db.users, db.questions);
-
-// sync database
-db.sequelize.sync({ force: false })
   .then(() => {
     logger.info("Syncing DB...");
   })
@@ -53,4 +31,19 @@ db.sequelize.sync({ force: false })
     logger.error(`Error: syncing database failed: ${error}`);
   });
 
+// initialize relational models
+const db = {};
+db.sequelize = sequelize;
+
+db.users = require("./User.js")(sequelize);
+db.categories = require("./Category.js")(sequelize);
+db.questions = require("./Question.js")(sequelize, db.users);
+db.comments = require("./Comment.js")(sequelize, db.users, db.questions);
+db.questionCategories = require("./QuestionCategory.js")(sequelize, db.questions, db.categories);
+db.userQuestionActions = require("./UserQuestionAction.js")(sequelize, db.users, db.questions);
+db.userCommentActions = require("./UserCommentAction.js")(sequelize, db.users, db.comments);
+db.interests = require("./Interest.js")(sequelize, db.users, db.questions, db.comments);
+db.notifications = require("./Notification.js")(sequelize, db.users);
+
+// no more sync(); let migrations handle schema
 module.exports = db;

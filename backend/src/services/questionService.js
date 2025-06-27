@@ -1,5 +1,5 @@
 const db = require("../models");
-const ActionTypes = require("../constants/actionTypes")
+const ActionTypes = require("../constants/actionTypes");
 const logger = require("../utils/logger");
 const { HttpError, HttpStatusCodes } = require("../utils/httpError");
 
@@ -25,8 +25,8 @@ const createQuestion = async (title, description, loginUser, attachment) => {
   return newQuestion.id;
 };
 
-// get all questions
-const getQuestionList = async (count, offset) => {
+// get recent questions
+const getRecentQuestions = async (count, offset) => {
   const query = `
   SELECT 
     Questions.id,
@@ -70,6 +70,75 @@ const getQuestionList = async (count, offset) => {
   const totalCount = await Question.count();
 
   var resOffset = offset + questions.length;
+  if (resOffset >= totalCount) {
+    resOffset = -1;
+  }
+
+  return [questions, resOffset, totalCount];
+};
+
+// get popular questions
+const getPopularQuestions = async (count, offset) => {
+  const query = `
+    SELECT 
+      Questions.id,
+      Questions.title,
+      Questions.description,
+      Questions.attachment,
+      Questions.created_at,
+      (
+        SELECT JSON_OBJECT('id', Users.id, 'username', Users.username)
+        FROM Users
+        WHERE Users.id = Questions.user_id
+        LIMIT 1
+      ) AS user,
+      (
+        SELECT COUNT(*)
+        FROM UserQuestionActions
+        WHERE UserQuestionActions.question_id = Questions.id
+          AND UserQuestionActions.action_type = :likeAction
+      ) AS likeCount,
+      (
+        SELECT COUNT(*)
+        FROM Comments
+        WHERE Comments.question_id = Questions.id
+      ) AS commentCount,
+      (
+        (
+          SELECT COUNT(*)
+          FROM UserQuestionActions
+          WHERE UserQuestionActions.question_id = Questions.id
+            AND UserQuestionActions.action_type = :likeAction
+        ) +
+        (
+          SELECT COUNT(*)
+          FROM Comments
+          WHERE Comments.question_id = Questions.id
+        )
+      ) AS popularityScore
+    FROM Questions
+    ORDER BY popularityScore DESC
+    LIMIT :limit OFFSET :offset;
+  `;
+
+  const replacements = {
+    likeAction: ActionTypes.LIKE,
+    limit: count,
+    offset: offset,
+  };
+
+  const questions = await Sequelize.query(query, {
+    replacements,
+    type: Sequelize.QueryTypes.SELECT,
+  });
+
+  questions.forEach((row) => {
+    row.attachment = row.attachment ?? [];
+  });
+
+  const totalCount = await Question.count();
+
+  let resOffset = offset + questions.length;
   if (resOffset >= totalCount) {
     resOffset = -1;
   }
@@ -128,7 +197,7 @@ const getQuestionByID = async (questionID) => {
 };
 
 // update question by id
-const updateQuestion = async (questionID, title, description, loginUser) => {
+const updateQuestionByID = async (questionID, title, description, loginUser, attachment) => {
   const question = await Question.findByPk(questionID);
   if (!question) {
     logger.warn("Warning updating question: question not found. ID = " + questionID);
@@ -136,12 +205,13 @@ const updateQuestion = async (questionID, title, description, loginUser) => {
   }
 
   if (question.user_id != loginUser.id) {
-    logger.warn("Warning updating question: no permission to delete");
+    logger.warn("Warning updating question: no permission to update");
     throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
   }
 
   if (title) question.title = title;
   if (description) question.description = description;
+  if (attachment !== undefined) question.attachment = attachment;
 
   await question.save();
 };
@@ -158,14 +228,14 @@ const deleteQuestionByID = async (questionID, loginUser) => {
     logger.warn("Warning deleting question: no permission to delete");
     throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "no permission");
   }
-
+  console.log('TRYING TO DELETE QUESTION', questionID, loginUser.id)
   await Question.destroy({ where: { id: questionID } });
 
   return;
 };
 
 // take action on question
-const takeAction = async (questionID, actionType, loginUser) => {
+const takeActionByQuestionID = async (questionID, actionType, loginUser) => {
   const question = await Question.findByPk(questionID);
   if (!question) {
     logger.warn("Warning adding actions: question not found. ID = " + questionID);
@@ -194,7 +264,7 @@ const takeAction = async (questionID, actionType, loginUser) => {
 };
 
 // remove action on question
-const removeAction = async (questionID, actionType, loginUser) => {
+const removeActionByQuestionID = async (questionID, actionType, loginUser) => {
   const action = await UserQuestionAction.findOne({
     where: {
       user_id: loginUser.id,
@@ -214,10 +284,11 @@ const removeAction = async (questionID, actionType, loginUser) => {
 
 module.exports = {
   createQuestion,
-  getQuestionList,
+  getRecentQuestions,
+  getPopularQuestions,
   getQuestionByID,
-  updateQuestion,
+  updateQuestionByID,
   deleteQuestionByID,
-  takeAction,
-  removeAction,
+  takeActionByQuestionID,
+  removeActionByQuestionID,
 };

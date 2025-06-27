@@ -36,6 +36,11 @@ app.use(
 // initialize all routes
 app.use("/", router);
 
+// root welcome route
+app.get("/", (_, res) => {
+  res.status(200).send("Welcome to the KeelCompass backend");
+});
+
 // fallback route
 app.use("*", (_, res) => {
   res.status(HttpStatusCodes.NOT_FOUND).send("Invalid route");
