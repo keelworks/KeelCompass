@@ -7,6 +7,16 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
+      question_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        unique: true,
+      },
+      comment_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        unique: true,
+      },
       file_name: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -19,16 +29,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BLOB('long'),
         allowNull: false,
       },
-      question_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        unique: true,
-      },
-      comment_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        unique: true,
-      },
     },
     {
       tableName: "Attachments",
@@ -39,8 +39,8 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Attachment.associate = (models) => {
-    Attachment.belongsTo(models.questions, { foreignKey: 'question_id' });
-    Attachment.belongsTo(models.comments, { foreignKey: 'comment_id' });
+    Attachment.belongsTo(models.question, { foreignKey: 'question_id' });
+    Attachment.belongsTo(models.comment, { foreignKey: 'comment_id' });
   };
 
   return Attachment;

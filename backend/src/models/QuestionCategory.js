@@ -17,5 +17,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
+  QuestionCategory.associate = (models) => {
+    QuestionCategory.belongsTo(models.question, { foreignKey: 'question_id', as: 'question' });
+    QuestionCategory.belongsTo(models.category, { foreignKey: 'category_id', as: 'category' });
+  };
+
   return QuestionCategory;
 };

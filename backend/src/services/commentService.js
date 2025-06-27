@@ -235,6 +235,7 @@ const updateCommentById = async (commentId, content, loginUser) => {
   } catch (err) {
     logger.error(`Failed to notify bookmarked users on comment update: ${err.message}`);
   }
+<<<<<<< Updated upstream
 
   // Notify all users who bookmarked/interested this comment (except the updater)
   try {
@@ -259,6 +260,8 @@ const updateCommentById = async (commentId, content, loginUser) => {
   } catch (err) {
     logger.error(`Failed to notify bookmarked users on comment update: ${err.message}`);
   }
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 };
 

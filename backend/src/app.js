@@ -2,7 +2,6 @@ const express = require("express");
 const morgan = require("morgan");
 const logger = require("./utils/logger");
 const router = require("./routes/routes");
-const { HttpStatusCodes } = require("./utils/httpError");
 
 // initialize express app
 const app = express();
@@ -41,7 +40,7 @@ app.get("/", (_, res) => {
   res.status(200).send("Welcome to the KeelCompass backend");
 });
 
-// Maintenance mode middleware (MUST be before all routes)
+// 503 maintenance mode
 if (process.env.MAINTENANCE_MODE === "true") {
   app.use((_req, res) => {
     res.status(503).json({
@@ -52,39 +51,39 @@ if (process.env.MAINTENANCE_MODE === "true") {
   });
 }
 
-// fallback 404 route (after all routes)
-app.use("*", (_req, res) => {
-  res.status(HttpStatusCodes.NOT_FOUND).json({
+// 404 handler
+app.use((_req, _res, next) => {
+  const notFoundError = {
     status: 404,
-    error: "Page Not Found",
-    message: "The requested page does not exist."
-  });
+    message: "The requested page does not exist.",
+  };
+  next(notFoundError);
 });
 
-// global error handler (must be last)
+// global error handler
 app.use((err, _req, res, _next) => {
   logger.error("Unhandled error:", err);
 
-  // Forbidden error
-  if (err.status === HttpStatusCodes.FORBIDDEN || err.statusCode === HttpStatusCodes.FORBIDDEN) {
-    return res.status(HttpStatusCodes.FORBIDDEN).json({
+  // forbidden error
+  if (err.status === 403 || err.statusCode === 403) {
+    return res.status(403).json({
       status: 403,
       error: "Forbidden",
       message: err.message || "You do not have permission to access this resource."
     });
   }
 
-  // Not Found error
-  if (err.status === HttpStatusCodes.NOT_FOUND || err.statusCode === HttpStatusCodes.NOT_FOUND) {
-    return res.status(HttpStatusCodes.NOT_FOUND).json({
+  // not found error
+  if (err.status === 404 || err.statusCode === 404) {
+    return res.status(404).json({
       status: 404,
       error: "Page Not Found",
       message: err.message || "The requested page does not exist."
     });
   }
 
-  // Internal Server Error (default)
-  res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+  // internal server error
+  res.status(500).json({
     status: 500,
     error: "Internal Server Error",
     message: err.message || "An unexpected error occurred."

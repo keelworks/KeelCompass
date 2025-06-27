@@ -36,8 +36,12 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   User.associate = (models) => {
-    User.hasMany(models.questions, { foreignKey: 'user_id', as: 'questions' });
-    User.hasMany(models.comments, { foreignKey: 'user_id', as: 'comments' });
+    User.hasMany(models.question, { foreignKey: 'user_id', as: 'questions' });
+    User.hasMany(models.comment, { foreignKey: 'user_id', as: 'comments' });
+    User.hasMany(models.notification, { foreignKey: 'user_id', as: 'notifications' });
+    User.hasMany(models.interest, { foreignKey: 'user_id', as: 'interests' });
+    User.hasMany(models.userCommentAction, { foreignKey: 'user_id', as: 'userCommentActions' });
+    User.hasMany(models.userQuestionAction, { foreignKey: 'user_id', as: 'userQuestionActions' });
   };
 
   return User;

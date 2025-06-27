@@ -23,18 +23,14 @@ module.exports = (sequelize, DataTypes) => {
     { 
       tableName: "UserCommentActions", 
       timestamps: true, 
-<<<<<<< Updated upstream
       createdAt: 'created_at',
       updatedAt: false
-=======
-      createdAt: 'created_at', 
->>>>>>> Stashed changes
     }
   );
 
   UserCommentAction.associate = (models) => {
-    UserCommentAction.belongsTo(models.users, { foreignKey: "user_id" });
-    UserCommentAction.belongsTo(models.comments, { foreignKey: "comment_id" });
+    UserCommentAction.belongsTo(models.user, { foreignKey: "user_id", as: "user" });
+    UserCommentAction.belongsTo(models.comment, { foreignKey: "comment_id", as: "comment" });
   };
 
   return UserCommentAction;

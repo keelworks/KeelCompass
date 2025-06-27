@@ -23,10 +23,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: false,
       },
-      attachment: {
-        type: DataTypes.JSON,
-        allowNull: true,
-      },
+
     },
     { 
       tableName: "Comments", 
@@ -36,14 +33,16 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
-  Comment.belongsTo(User, { foreignKey: "user_id", as: "user" });
-  User.hasMany(Comment, { foreignKey: "user_id", sourceKey: "id" });
-
-  Comment.belongsTo(Question, { foreignKey: "question_id", as: "question", onDelete: "CASCADE" });
-  Question.hasMany(Comment, { foreignKey: "question_id", sourceKey: "id" });
-
-  Comment.belongsTo(Comment, { foreignKey: "parent_id", as: "parent" });
-  Comment.hasMany(Comment, { foreignKey: "parent_id", as: "replies" });
+  Comment.associate = (models) => {
+    Comment.belongsTo(models.user, { foreignKey: "user_id", as: "user" });
+    Comment.belongsTo(models.question, { foreignKey: "question_id", as: "question", onDelete: "CASCADE" });
+    Comment.belongsTo(models.comment, { foreignKey: "parent_id", as: "parent" });
+    Comment.hasOne(models.attachment, { foreignKey: 'comment_id', as: 'attachment' });
+    Comment.hasMany(models.comment, { foreignKey: "parent_id", as: "replies" });
+    Comment.hasMany(models.interest, { foreignKey: 'comment_id', as: 'interests' });
+    Comment.hasMany(models.userCommentAction, { foreignKey: 'comment_id', as: 'userCommentActions' });
+    Comment.hasMany(models.notification, { foreignKey: 'comment_id', as: 'notifications' });
+  };
 
   return Comment;
 };

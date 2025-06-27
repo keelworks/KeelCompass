@@ -31,39 +31,28 @@ sequelize.authenticate()
     logger.error(`Error: syncing database failed: ${error}`);
   });
 
+// initialize db
 const db = {};
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
-<<<<<<< Updated upstream
 // load models
-db.users = require("./User.js")(sequelize, DataTypes);
-db.categories = require("./Category.js")(sequelize, DataTypes);
-db.attachments = require("./Attachment.js")(sequelize, DataTypes);
-db.questions = require("./Question.js")(sequelize, DataTypes);
-db.comments = require("./Comment.js")(sequelize, DataTypes);
-db.questionCategories = require("./QuestionCategory.js")(sequelize, DataTypes);
-db.userQuestionActions = require("./UserQuestionAction.js")(sequelize, DataTypes);
-db.userCommentActions = require("./UserCommentAction.js")(sequelize, DataTypes);
-db.interests = require("./Interest.js")(sequelize, DataTypes);
-db.notifications = require("./Notification.js")(sequelize, DataTypes);
+db.user = require("./User.js")(sequelize, Sequelize.DataTypes);
+db.category = require("./Category.js")(sequelize, Sequelize.DataTypes);
+db.question = require("./Question.js")(sequelize, Sequelize.DataTypes);
+db.questionCategory = require("./QuestionCategory.js")(sequelize, Sequelize.DataTypes);
+db.userQuestionAction = require("./UserQuestionAction.js")(sequelize, Sequelize.DataTypes);
+db.comment = require("./Comment.js")(sequelize, Sequelize.DataTypes);
+db.userCommentAction = require("./UserCommentAction.js")(sequelize, Sequelize.DataTypes);
+db.attachment = require("./Attachment.js")(sequelize, Sequelize.DataTypes);
+db.interest = require("./Interest.js")(sequelize, Sequelize.DataTypes);
+db.notification = require("./Notification.js")(sequelize, Sequelize.DataTypes);
 
-// Establish associations
+// initialize associations
 Object.keys(db).forEach(modelName => {
-  if (db[modelName].associate) {
+  if (db[modelName] && db[modelName].associate) {
     db[modelName].associate(db);
   }
 });
-=======
-db.users = require("./User.js")(sequelize);
-db.categories = require("./Category.js")(sequelize);
-db.questions = require("./Question.js")(sequelize, db.users);
-db.questionCategories = require("./QuestionCategory.js")(sequelize, db.questions, db.categories);
-db.userQuestionActions = require("./UserQuestionAction.js")(sequelize, db.users, db.questions);
-db.comments = require("./Comment.js")(sequelize, db.users, db.questions);
-db.userCommentActions = require("./UserCommentAction.js")(sequelize, db.users, db.comments);
-db.interests = require("./Interest.js")(sequelize, db.users, db.questions, db.comments);
-db.notifications = require("./Notification.js")(sequelize, db.users);
->>>>>>> Stashed changes
 
 module.exports = db;

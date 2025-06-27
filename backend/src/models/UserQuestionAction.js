@@ -20,24 +20,17 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
     },
-<<<<<<< Updated upstream
     {
       tableName: "UserQuestionActions",
       timestamps: true,
       createdAt: 'created_at',
-      updatedAt: false,
-=======
-    { 
-      tableName: "UserQuestionActions", 
-      timestamps: true, 
-      createdAt: 'created_at', 
->>>>>>> Stashed changes
+      updatedAt: false
     }
   );
 
   UserQuestionAction.associate = (models) => {
-    UserQuestionAction.belongsTo(models.users, { foreignKey: "user_id" });
-    UserQuestionAction.belongsTo(models.questions, { foreignKey: "question_id" });
+    UserQuestionAction.belongsTo(models.user, { foreignKey: "user_id", as: "user" });
+    UserQuestionAction.belongsTo(models.question, { foreignKey: "question_id", as: "question" });
   };
 
   return UserQuestionAction;

@@ -30,7 +30,7 @@ const ServiceErrorHandler = (error, res, logger, serviceName) => {
 };
 
 module.exports = {
-  HttpStatusCodes,
   HttpError,
+  HttpStatusCodes,
   ServiceErrorHandler,
 };

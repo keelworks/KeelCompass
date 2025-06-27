@@ -23,10 +23,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: "pending",
       },
-      attachment: {
-        type: DataTypes.JSON,
-        allowNull: true,
-      },
     },
     { 
       tableName: "Questions", 
@@ -36,8 +32,15 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
-  Question.belongsTo(User, { foreignKey: { name: 'user_id', allowNull: false, }, onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-  User.hasMany(Question, { foreignKey: "user_id", sourceKey: "id" });
+  Question.associate = (models) => {
+    Question.belongsToMany(models.category, { through: models.questionCategory, foreignKey: 'question_id', otherKey: 'category_id' });
+    Question.belongsTo(models.user, { foreignKey: { name: 'user_id', allowNull: false }, onDelete: 'CASCADE', onUpdate: 'CASCADE', as: 'user' });
+    Question.hasOne(models.attachment, { foreignKey: 'question_id', as: 'attachment' });
+    Question.hasMany(models.comment, { foreignKey: 'question_id', as: 'comments' });
+    Question.hasMany(models.interest, { foreignKey: 'question_id', as: 'interests' });
+    Question.hasMany(models.userQuestionAction, { foreignKey: 'question_id', as: 'userQuestionActions' });
+    Question.hasMany(models.notification, { foreignKey: 'question_id', as: 'notifications' });
+  };
 
   return Question;
 };
