@@ -1,18 +1,17 @@
 const db = require("../models");
+const logger = require("../utils/logger");
+const { HttpError } = require("../utils/httpError");
 const bcrypt = require("bcryptjs");
 const { generateToken } = require("../utils/jwtUtils");
-const logger = require("../utils/logger");
-const { HttpError, HttpStatusCodes } = require("../utils/httpError");
 
-const User = db.users;
+const User = db.user;
 
 // register
 const registerUser = async (username, email, password) => {
   try {
-    logger.info(`Registering user with email: ${email}`);
     const userExists = await User.findOne({ where: { email } });
     if (userExists) {
-      throw new HttpError(HttpStatusCodes.BAD_REQUEST, "User already exists");
+      throw new HttpError(400, "User already exists");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -21,67 +20,53 @@ const registerUser = async (username, email, password) => {
       email,
       password: hashedPassword,
     });
-
     const token = generateToken({ id: user.id, email: user.email });
-
+    logger.info(`User registered successfully with email: ${email}`);
     return token;
   } catch (error) {
     logger.error(`Error registering user: ${error.message}`);
-    if (error instanceof HttpError) {
-      throw error;
-    }
-    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Error registering user.");
+    throw error;
   }
 };
 
 // login
 const loginUser = async (email, password) => {
   try {
-    logger.info(`Logging in user with email: ${email}`);
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "Invalid email or password");
+      throw new HttpError(401, "No user found with the provided email address");
     }
-
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      throw new HttpError(HttpStatusCodes.UNAUTHORIZED, "Invalid email or password");
+      throw new HttpError(401, "Invalid password");
     }
 
-        const token = generateToken({ id: user.id, email: user.email });
-
+    const token = generateToken({ id: user.id, email: user.email });
+    logger.info(`User logged in successfully with email: ${email}`);
     return token;
   } catch (error) {
     logger.error(`Error logging in user: ${error.message}`);
-    if (error instanceof HttpError) {
-      throw error;
-    }
-    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Error logging in user.");
+    throw error;
   }
 };
 
 // reset password
 const resetUserPassword = async (username, email, newPassword) => {
   try {
-    logger.info(`Resetting password for user with email: ${email}`);
     const user = await User.findOne({ where: { username, email } });
     if (!user) {
-      throw new HttpError(HttpStatusCodes.NOT_FOUND, "User not found with provided username and email");
+      throw new HttpError(401, "No user found with the provided email address");
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
-
     const token = generateToken({ id: user.id, email: user.email });
-
+    logger.info(`User password reset successfully with email: ${email}`);
     return token;
   } catch (error) {
     logger.error(`Error resetting password: ${error.message}`);
-    if (error instanceof HttpError) {
-      throw error;
-    }
-    throw new HttpError(HttpStatusCodes.INTERNAL_SERVER_ERROR, "Error resetting password.");
+    throw error;
   }
 };
 

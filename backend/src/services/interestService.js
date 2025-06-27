@@ -161,8 +161,23 @@ const deleteInterest = async (loginUser, interestId) => {
   }
 };
 
+// get interests by comment id
+const getInterestsByCommentId = async (commentId) => {
+  try {
+    return await Interest.findAll({
+      where: { comment_id: commentId },
+      attributes: ["user_id"],
+      raw: true,
+    });
+  } catch (error) {
+    logger.error(`Error fetching interests for comment ${commentId}: ${error.message}`);
+    throw error;
+  }
+};
+
 module.exports = {
   saveInterest,
   getUserInterests,
-  deleteInterest
+  deleteInterest,
+  getInterestsByCommentId
 };
