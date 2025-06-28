@@ -3,14 +3,20 @@ import { IoSend } from "react-icons/io5";
 import api from "../../../utils/api";
 
 interface CommentBoxProps {
-  questionID: number;
+  questionId: number;
   onCommentAdded: () => void;
 }
 
-const CommentBox: React.FC<CommentBoxProps> = ({ questionID, onCommentAdded }) => {
+const CommentBox: React.FC<CommentBoxProps> = ({ questionId, onCommentAdded }) => {
   const [comment, setComment] = useState("");
 
   const handleSend = async () => {
+    // Debug: Log questionId
+    console.log('CommentBox handleSend, questionId:', questionId);
+    if (typeof questionId !== 'number' || isNaN(questionId) || questionId <= 0) {
+      alert('Invalid or missing question ID. Cannot post comment.');
+      return;
+    }
     const token = localStorage.getItem("token");
   
     if (!token) {
@@ -24,7 +30,7 @@ const CommentBox: React.FC<CommentBoxProps> = ({ questionID, onCommentAdded }) =
       const response = await api.post(
         "/comments",
         {
-          questionID,
+          questionId,
           content: comment,
         },
         {

@@ -34,12 +34,19 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   question,
   likes,
   setLikes,
+  comments,
   setComments,
   handleClose,
   handleEdit,
   username,
   refreshInterests,
 }) => {
+  React.useEffect(() => {
+    if (!question || typeof question.id !== 'number' || question.id <= 0) {
+      console.warn('ExplodedPostCard: Invalid question.id:', question && question.id);
+    }
+  }, [question]);
+  const loggedInUserId = Number(localStorage.getItem('userId')) || 0;
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [liked, setLiked] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -61,8 +68,8 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const deletePostFromStore = useStore((state) => state.deletePost);
   const updatePostInStore = useStore((state) => state.updatePost);
-  const loggedInUserId = Number(localStorage.getItem('userId'));
-  const isAuthor = loggedInUserId === question.user.id;
+  
+  
 
   const shouldTruncate = question.description.length > 150;
   const displayText = elongated
@@ -109,10 +116,10 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
       });
 
       if (res.status === 200) {
-        setCommentList((prev) =>
-          prev.filter((comment) => comment.id !== commentId)
+        setCommentList((prevComments) =>
+          prevComments.filter((comment) => comment.id !== commentId)
         );
-        setComments((prev) => prev - 1);
+        setComments(comments - 1);
         setDeletingComment(null);
         showSnackbarMessage('Comment deleted successfully');
       }
@@ -335,7 +342,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
                 <Flag size={16} className="mr-2" />
                 Report
               </li>
-              {isAuthor && (
+              {loggedInUserId === question.user.id && (
                 <>
                   <li
                     className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer space-x-2"
@@ -416,7 +423,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
 
       {/* Post Section */}
       <div className="w-full bg-[#F9F9F9] rounded p-4">
-        {isAuthor && isEditing ? (
+        {loggedInUserId === question.user.id && isEditing ? (
           <>
             <input
               value={editedTitle}
@@ -466,7 +473,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
           </div>
         </div>
 
-        {isAuthor && isEditing && (
+        {loggedInUserId === question.user.id && isEditing && (
           <div className="flex justify-end space-x-2">
             <button
               className="px-3 py-1 bg-gray-200 rounded"
@@ -518,7 +525,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
           .map((comment) => (
             <CommentItem
               key={comment.id}
-              comment={comment}
+              comment={{ ...comment, userId: comment.user }}
               loggedInUserId={loggedInUserId}
               onDelete={setDeletingComment}
               onUpdate={handleCommentUpdate}
@@ -528,7 +535,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
       </div>
 
       {/* Comment Box */}
-      <CommentBox questionID={question.id} onCommentAdded={handleAddComment} />
+      <CommentBox questionId={question && typeof question.id === 'number' && question.id > 0 ? question.id : 0} onCommentAdded={handleAddComment} />
 
       {/* Close Button */}
       <div className="absolute top-4 right-12">

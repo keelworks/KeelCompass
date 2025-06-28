@@ -8,7 +8,7 @@ interface Comment {
   id: number;
   content: string;
   created_at: string;
-  user: { id: number; username: string };
+  userId: { id: number; username: string };
   likeCount?: number;
 }
 
@@ -34,7 +34,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
   const [likeCount, setLikeCount] = useState(comment.likeCount || 0);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const isAuthor = comment.user.id === loggedInUserId;
+  const isAuthor = comment.userId.id === loggedInUserId;
 
   const formatDateTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleString('en-GB', {
@@ -54,7 +54,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
       const res = await api.post(
         `/comments/action`,
         {
-          commentID: comment.id,
+          commentId: comment.id,
           actionType: 'like',
         },
         {
@@ -83,7 +83,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
       const res = await api.put(
         `/comments`,
         {
-          commentID: comment.id,
+          commentId: comment.id,
           content: editedContent,
         },
         {
@@ -132,7 +132,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
       {/* Comment Header */}
       <div className="flex justify-between items-start mb-2">
         <div>
-          <strong>{comment.user.username}</strong>
+          <strong>{comment.userId.username}</strong>
           <p className="text-xs text-gray-500">
             {formatDateTime(comment.created_at)}
           </p>
