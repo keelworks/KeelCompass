@@ -1,66 +1,48 @@
 const express = require("express");
-const { body, query } = require("express-validator");
+const { body, query, param } = require("express-validator");
 const authenticator = require("../middlewares/authMiddleware");
-const {
-  createComment,
-  getCommentsByQuestionId,
-  updateCommentById,
-  deleteCommentById,
-  takeActionByCommentId,
-  removeActionByCommentId,
-} = require("../controllers/commentController");
 const { handleValidationErrors } = require("../utils/validationUtils");
 const upload = require("../utils/multerConfig");
 
+const commentController = require("../controllers/commentControllers");
+
 const router = express.Router();
 
-const createCommentValidation = [
-  body("questionId").notEmpty().withMessage("question ID is required").bail().isInt({ gt: 0 }).withMessage("invalid question ID"),
-  body("content").notEmpty().withMessage("content is required").bail().isString().withMessage("invalid content"),
-  body("parentId").optional({ nullable: true }).isInt({ gt: 0 }).withMessage("invalid parent ID"),
+const getCommentsValidation = [
+  query("questionId").notEmpty().withMessage("Question ID is required.").bail().isInt({ gt: 0 }).withMessage("Invalid question ID.").toInt(),
+  query("count").isInt({ gt: 0 }).withMessage("Invalid count.").bail().toInt(),
+  query("offset").isInt({ min: 0 }).withMessage("Invalid offset.").bail().toInt(),
   handleValidationErrors,
 ];
 
-const getCommentsValidation = [
-  query("questionId").notEmpty().withMessage("question ID is required").bail().isInt({ gt: 0 }).withMessage("invalid question ID"),
-  query("count").isInt({ gt: 0 }).withMessage("invalid count").bail(),
-  query("offset").isInt({ min: 0 }).withMessage("invalid offset").bail(),
+const createCommentValidation = [
+  body("questionId").notEmpty().withMessage("Question ID is required.").bail().isInt({ gt: 0 }).withMessage("Invalid question ID."),
+  body("content").notEmpty().withMessage("Content is required.").bail().isString().withMessage("Invalid content."),
+  body("parentId").optional({ nullable: true }).isInt({ gt: 0 }).withMessage("Invalid parent ID."),
   handleValidationErrors,
 ];
 
 const updateCommentValidation = [
-  body("commentId").notEmpty().withMessage("comment ID is required").bail().isInt({ gt: 0 }).withMessage("invalid comment ID"),
-  body("content").notEmpty().withMessage("content is required").bail().isString().withMessage("invalid content"),
+  param("id").notEmpty().withMessage("Comment ID is required.").bail().isInt({ gt: 0 }).withMessage("Invalid comment ID."),
+  body("content").notEmpty().withMessage("Content is required.").bail().isString().withMessage("Invalid content."),
   handleValidationErrors,
 ];
 
 const deleteCommentValidation = [
-  query("commentId").notEmpty().withMessage("comment ID is required").isInt({ gt: 0 }).withMessage("invalid comment ID").bail(),
+  param("id").notEmpty().withMessage("Comment ID is required.").isInt({ gt: 0 }).withMessage("Invalid comment ID.").bail(),
   handleValidationErrors,
 ];
 
-const commentActionValidation = [
-  body("commentId").isInt({ gt: 0 }).withMessage("invalid commentId").bail(),
-  body("actionType").notEmpty().withMessage("actionType is required").bail(),
-  handleValidationErrors,
-];
+// get all comments by question id
+router.get("/", getCommentsValidation, commentController.getCommentsByQuestionId);
 
-// post comment
-router.post("/", authenticator, upload.single("attachment"), createCommentValidation, createComment);
+// create comment
+router.post("/", authenticator, upload.single("attachment"), createCommentValidation, commentController.createComment);
 
-// get comments by question id
-router.get("/", getCommentsValidation, getCommentsByQuestionId);
-
-// update comment
-router.put("/", authenticator, upload.single("attachment"), updateCommentValidation, updateCommentById);
+// update comment by id
+router.put("/:id", authenticator, upload.single("attachment"), updateCommentValidation, commentController.updateComment);
 
 // delete comment by id
-router.delete("/", authenticator, deleteCommentValidation, deleteCommentById);
-
-// take action on comment
-router.post("/action", authenticator, commentActionValidation, takeActionByCommentId);
-
-// remove action on comment
-router.delete("/action", authenticator, commentActionValidation, removeActionByCommentId);
+router.delete("/:id", authenticator, deleteCommentValidation, commentController.deleteComment);
 
 module.exports = router;

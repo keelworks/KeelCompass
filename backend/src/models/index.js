@@ -37,16 +37,16 @@ db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
 // load models
-db.user = require("./User.js")(sequelize, Sequelize.DataTypes);
-db.category = require("./Category.js")(sequelize, Sequelize.DataTypes);
-db.question = require("./Question.js")(sequelize, Sequelize.DataTypes);
-db.questionCategory = require("./QuestionCategory.js")(sequelize, Sequelize.DataTypes);
-db.userQuestionAction = require("./UserQuestionAction.js")(sequelize, Sequelize.DataTypes);
-db.comment = require("./Comment.js")(sequelize, Sequelize.DataTypes);
-db.userCommentAction = require("./UserCommentAction.js")(sequelize, Sequelize.DataTypes);
-db.attachment = require("./Attachment.js")(sequelize, Sequelize.DataTypes);
-db.interest = require("./Interest.js")(sequelize, Sequelize.DataTypes);
-db.notification = require("./Notification.js")(sequelize, Sequelize.DataTypes);
+db.User = require("./User.js")(sequelize, Sequelize.DataTypes);
+db.Category = require("./Category.js")(sequelize, Sequelize.DataTypes);
+db.Question = require("./Question.js")(sequelize, Sequelize.DataTypes);
+db.QuestionCategory = require("./QuestionCategory.js")(sequelize, Sequelize.DataTypes);
+db.UserQuestionAction = require("./UserQuestionAction.js")(sequelize, Sequelize.DataTypes);
+db.Comment = require("./Comment.js")(sequelize, Sequelize.DataTypes);
+db.UserCommentAction = require("./UserCommentAction.js")(sequelize, Sequelize.DataTypes);
+db.Attachment = require("./Attachment.js")(sequelize, Sequelize.DataTypes);
+db.Interest = require("./Interest.js")(sequelize, Sequelize.DataTypes);
+db.Notification = require("./Notification.js")(sequelize, Sequelize.DataTypes);
 
 // initialize associations
 Object.keys(db).forEach(modelName => {

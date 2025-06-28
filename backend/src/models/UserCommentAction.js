@@ -10,10 +10,18 @@ module.exports = (sequelize, DataTypes) => {
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
       },
       comment_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+          model: 'comments',
+          key: 'id',
+        },
       },
       action_type: {
         type: DataTypes.ENUM("like", "report"),
@@ -29,8 +37,8 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   UserCommentAction.associate = (models) => {
-    UserCommentAction.belongsTo(models.user, { foreignKey: "user_id", as: "user" });
-    UserCommentAction.belongsTo(models.comment, { foreignKey: "comment_id", as: "comment" });
+    UserCommentAction.belongsTo(models.User, { foreignKey: "user_id", as: "user" });
+    UserCommentAction.belongsTo(models.Comment, { foreignKey: "comment_id", as: "comment" });
   };
 
   return UserCommentAction;

@@ -1,19 +1,23 @@
 const express = require("express");
+const router = express.Router();
 const authRoutes = require("./authRoutes");
-const questionRoutes = require("./questionRoutes.js");
-const commentRoutes = require("./commentRoutes");
-const interestRoutes = require("./interestRoutes");
 const searchRoutes = require("./searchRoutes.js");
+const questionRoutes = require("./questionRoutes.js");
+const userQuestionActionRoutes = require("./userQuestionActionRoutes");
+const commentRoutes = require("./commentRoutes");
+const userCommentActionRoutes = require("./userCommentActionRoutes");
+const interestRoutes = require("./interestRoutes");
 const notificationRoutes = require("./notificationRoutes");
 
-const router = express.Router();
 
 // routes
 router.use("/api/auth", authRoutes);
-router.use("/api/questions", questionRoutes);
-router.use("/api/comments", commentRoutes);
-router.use("/api/interests", interestRoutes);
 router.use("/api/search", searchRoutes);
+router.use("/api/questions", questionRoutes);
+router.use("/api/question-actions", userQuestionActionRoutes);
+router.use("/api/comments", commentRoutes);
+router.use("/api/comment-actions", userCommentActionRoutes);
+router.use("/api/interests", interestRoutes);
 router.use("/api/notifications", notificationRoutes);
 
 // static routes

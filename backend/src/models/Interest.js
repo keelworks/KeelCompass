@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
       },
       question_id: {
         type: DataTypes.INTEGER,
@@ -37,9 +41,9 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Interest.associate = (models) => {
-    Interest.belongsTo(models.user, { foreignKey: 'user_id', as: 'user' });
-    Interest.belongsTo(models.question, { foreignKey: 'question_id', as: 'question' });
-    Interest.belongsTo(models.comment, { foreignKey: 'comment_id', as: 'comment' });
+    Interest.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
+    Interest.belongsTo(models.Question, { foreignKey: 'question_id', as: 'question' });
+    Interest.belongsTo(models.Comment, { foreignKey: 'comment_id', as: 'comment' });
   };
 
   return Interest;

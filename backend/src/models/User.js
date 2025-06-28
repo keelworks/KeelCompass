@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: "volunteer"
       },
-      username: {
+      name: {
         type: DataTypes.STRING(50),
         allowNull: false,
       },
@@ -36,12 +36,12 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   User.associate = (models) => {
-    User.hasMany(models.question, { foreignKey: 'user_id', as: 'questions' });
-    User.hasMany(models.comment, { foreignKey: 'user_id', as: 'comments' });
-    User.hasMany(models.notification, { foreignKey: 'user_id', as: 'notifications' });
-    User.hasMany(models.interest, { foreignKey: 'user_id', as: 'interests' });
-    User.hasMany(models.userCommentAction, { foreignKey: 'user_id', as: 'userCommentActions' });
-    User.hasMany(models.userQuestionAction, { foreignKey: 'user_id', as: 'userQuestionActions' });
+    User.hasMany(models.Question, { foreignKey: 'user_id', as: 'questions' });
+    User.hasMany(models.Comment, { foreignKey: 'user_id', as: 'comments' });
+    User.hasMany(models.Notification, { foreignKey: 'user_id', as: 'notifications' });
+    User.hasMany(models.Interest, { foreignKey: 'user_id', as: 'interests' });
+    User.hasMany(models.UserCommentAction, { foreignKey: 'user_id', as: 'userCommentActions' });
+    User.hasMany(models.UserQuestionAction, { foreignKey: 'user_id', as: 'userQuestionActions' });
   };
 
   return User;

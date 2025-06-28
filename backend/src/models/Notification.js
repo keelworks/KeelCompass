@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: User,
+          model: 'users',
           key: 'id',
         },
       },
@@ -66,9 +66,9 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Notification.associate = (models) => {
-    Notification.belongsTo(models.user, { foreignKey: 'user_id', as: 'user' });
-    Notification.belongsTo(models.question, { foreignKey: 'question_id', as: 'question' });
-    Notification.belongsTo(models.comment, { foreignKey: 'comment_id', as: 'comment' });
+    Notification.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
+    Notification.belongsTo(models.Question, { foreignKey: 'question_id', as: 'question' });
+    Notification.belongsTo(models.Comment, { foreignKey: 'comment_id', as: 'comment' });
   };
 
   return Notification;

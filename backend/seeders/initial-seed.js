@@ -4,7 +4,8 @@ const bcrypt = require("bcryptjs");
 
 module.exports = {
   async up(queryInterface, _) {
-    // Seed Categories
+    console.log('Seeding Categories...');
+    // seed categories
     await queryInterface.bulkInsert("Categories", [
       { id: 1, name: "Career Development" },
       { id: 2, name: "Job Search" },
@@ -13,15 +14,17 @@ module.exports = {
       { id: 5, name: "KCompass Help" },
     ]);
 
-    // Seed Users (with roles)
+    console.log('Seeding Users...');
+    // seed users (with roles)
     const passwordHash = bcrypt.hashSync("Password1", 10);
     await queryInterface.bulkInsert("Users", [
-      { id: 1, username: "john_doe", email: "john@example.com", password: passwordHash, role: "volunteer" },
-      { id: 2, username: "jane_doe", email: "jane@example.com", password: passwordHash, role: "volunteer" },
-      { id: 3, username: "thomas_garrod", email: "thomas@example.com", password: passwordHash, role: "facilitator" },
+      { id: 1, name: "john doe", email: "john@example.com", password: passwordHash, role: "volunteer" },
+      { id: 2, name: "jane doe", email: "jane@example.com", password: passwordHash, role: "volunteer" },
+      { id: 3, name: "thomas garrod", email: "thomas@example.com", password: passwordHash, role: "facilitator" },
     ]);
 
-    // Seed Questions (with status)
+    console.log('Seeding Questions...');
+    // seed questions (with status)
     await queryInterface.bulkInsert("Questions", [
       {
         id: 1,
@@ -95,25 +98,33 @@ module.exports = {
       },
     ]);
 
-    // Seed QuestionCategories
+    // seed question categories
     await queryInterface.bulkInsert("QuestionCategories", [
       { question_id: 1, category_id: 1 },
       { question_id: 2, category_id: 3 },
       { question_id: 3, category_id: 1 },
       { question_id: 3, category_id: 2 },
       { question_id: 4, category_id: 2 },
-      // Question 5 → No category
+      // question 5 → no category
       { question_id: 6, category_id: 1 },
       { question_id: 6, category_id: 3 },
       { question_id: 7, category_id: 4 },
       { question_id: 8, category_id: 1 },
       { question_id: 8, category_id: 2 },
       { question_id: 8, category_id: 4 },
-      // Question 9 → No category
+      // question 9 → no category
       { question_id: 10, category_id: 5 },
     ]);
 
-    // Seed Comments
+    console.log('Seeding UserQuestionActions...');
+    // seed likes and reports to questions
+    await queryInterface.bulkInsert("UserQuestionActions", [
+      { user_id: 2, question_id: 1, action_type: "like" },
+      { user_id: 1, question_id: 2, action_type: "report" },
+    ]);
+
+    console.log('Seeding Comments...');
+    // seed comments
     await queryInterface.bulkInsert("Comments", [
       { id: 1, user_id: 2, question_id: 1, content: "Python is indeed a great choice, but don’t overlook Java for jobs in enterprise solutions." },
       { id: 2, user_id: 1, question_id: 2, content: "If you have experience tutoring or mentoring, it’s worth highlighting those skills." },
@@ -127,44 +138,83 @@ module.exports = {
       { id: 10, user_id: 1, question_id: 10, content: "Becoming a Data Scientist often requires strong statistical and machine learning skills." },
     ]);
 
-    await queryInterface.bulkInsert("UserQuestionActions", [
-      { user_id: 2, question_id: 1, action_type: "like" },
-      { user_id: 1, question_id: 2, action_type: "report" },
+    console.log('Seeding threaded comment...');
+    // seed a threaded comment (reply to comment 1)
+    await queryInterface.bulkInsert("Comments", [
+      { id: 11, user_id: 1, question_id: 1, parent_id: 1, content: "Reply to comment 1" }
     ]);
 
+    console.log('Seeding UserCommentActions...');
+    // seed likes and reports to comments
     await queryInterface.bulkInsert("UserCommentActions", [
       { user_id: 1, comment_id: 1, action_type: "like" },
       { user_id: 2, comment_id: 2, action_type: "report" },
     ]);
 
+    console.log('Seeding Attachments...');
+    // seed attachments
+    await queryInterface.bulkInsert("Attachments", [
+      {
+        id: 1,
+        question_id: 1,
+        comment_id: null,
+        file_name: "resume.pdf",
+        mime_type: "application/pdf",
+        data: Buffer.from("Sample PDF content"),
+        created_at: new Date()
+      },
+      {
+        id: 2,
+        question_id: null,
+        comment_id: 1,
+        file_name: "feedback.png",
+        mime_type: "image/png",
+        data: Buffer.from("Sample PNG content"),
+        created_at: new Date()
+      }
+    ]);
+
+    console.log('Seeding Interests...');
+    // seed interests
     await queryInterface.bulkInsert("Interests", [
-      { user_id: 1, comment_id: 1 },
-      { user_id: 2, question_id: 1 },
+      { user_id: 1, question_id: 2 },
+      { user_id: 2, comment_id: 1 }
     ]);
 
-    const makeNotifications = (user_id) => [
-      { user_id, type: "question_approved", message: "Your question has been approved.", read: false },
-      { user_id, type: "question_rejected", message: "Your question was rejected.", read: false },
-      { user_id, type: "question_liked", message: "Someone liked your question.", read: false },
-      { user_id, type: "question_reported", message: "Someone reported your question.", read: false },
-      { user_id, type: "comment_liked", message: "Someone liked your comment.", read: false },
-      { user_id, type: "comment_reported", message: "Someone reported your comment.", read: false },
-      { user_id, type: "question_updated", message: "A question you bookmarked has been updated.", read: false },
-      { user_id, type: "announcement", message: "Check out what's new.", read: false },
+    console.log('Seeding Notifications...');
+    // seed notifications
+    const notifications = [
+      { user_id: 1, question_id: 1, type: "approved", message: "Your question has been approved.", read: false },
+      { user_id: 1, question_id: 1, type: "rejected", message: "Your question was rejected.", read: false },
+      { user_id: 1, question_id: 1, type: "liked", message: "Someone liked your question.", read: false },
+      { user_id: 1, question_id: 1, type: "reported", message: "Someone reported your question.", read: false },
+      { user_id: 1, comment_id: 1, type: "liked", message: "Someone liked your comment.", read: false },
+      { user_id: 1, comment_id: 1, type: "reported", message: "Someone reported your comment.", read: false },
+      { user_id: 1, question_id: 1, type: "updated", message: "A question you bookmarked has been updated.", read: false },
+      { user_id: 1, comment_id: 1, type: "bookmarked", message: "Your comment was bookmarked.", read: false },
+      { user_id: 1, type: "announcement", message: "Check out what's new.", read: false },
+      { user_id: 2, question_id: 2, type: "approved", message: "Your question has been approved.", read: false },
+      { user_id: 2, question_id: 2, type: "rejected", message: "Your question was rejected.", read: false },
+      { user_id: 2, question_id: 2, type: "liked", message: "Someone liked your question.", read: false },
+      { user_id: 2, question_id: 2, type: "reported", message: "Someone reported your question.", read: false },
+      { user_id: 2, comment_id: 2, type: "liked", message: "Someone liked your comment.", read: false },
+      { user_id: 2, comment_id: 2, type: "reported", message: "Someone reported your comment.", read: false },
+      { user_id: 2, question_id: 2, type: "updated", message: "A question you bookmarked has been updated.", read: false },
+      { user_id: 2, question_id: 2, type: "bookmarked", message: "Your question was bookmarked.", read: false },
+      { user_id: 2, type: "announcement", message: "Check out what's new.", read: false },
     ];
-
-    await queryInterface.bulkInsert("Notifications", [
-      ...makeNotifications(1),
-      ...makeNotifications(2),
-    ]);
+    await queryInterface.bulkInsert("Notifications", notifications);
   },
 
   async down(queryInterface, _) {
+    // Delete in strict reverse order of insertion to avoid FK constraint errors
     await queryInterface.bulkDelete("Notifications", null, {});
     await queryInterface.bulkDelete("Interests", null, {});
+    await queryInterface.bulkDelete("Attachments", null, {});
     await queryInterface.bulkDelete("UserCommentActions", null, {});
-    await queryInterface.bulkDelete("UserQuestionActions", null, {});
     await queryInterface.bulkDelete("Comments", null, {});
+    await queryInterface.bulkDelete("UserQuestionActions", null, {});
+    await queryInterface.bulkDelete("QuestionCategories", null, {});
     await queryInterface.bulkDelete("Questions", null, {});
     await queryInterface.bulkDelete("Users", null, {});
     await queryInterface.bulkDelete("Categories", null, {});

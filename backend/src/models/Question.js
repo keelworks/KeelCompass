@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
       },
       title: {
         type: DataTypes.STRING(255),
@@ -17,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       description: {
         type: DataTypes.TEXT,
+        allowNull: false,
       },
       status: {
         type: DataTypes.STRING,
@@ -33,13 +38,13 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Question.associate = (models) => {
-    Question.belongsToMany(models.category, { through: models.questionCategory, foreignKey: 'question_id', otherKey: 'category_id' });
-    Question.belongsTo(models.user, { foreignKey: { name: 'user_id', allowNull: false }, onDelete: 'CASCADE', onUpdate: 'CASCADE', as: 'user' });
-    Question.hasOne(models.attachment, { foreignKey: 'question_id', as: 'attachment' });
-    Question.hasMany(models.comment, { foreignKey: 'question_id', as: 'comments' });
-    Question.hasMany(models.interest, { foreignKey: 'question_id', as: 'interests' });
-    Question.hasMany(models.userQuestionAction, { foreignKey: 'question_id', as: 'userQuestionActions' });
-    Question.hasMany(models.notification, { foreignKey: 'question_id', as: 'notifications' });
+    Question.belongsToMany(models.Category, { through: models.QuestionCategory, foreignKey: 'question_id', otherKey: 'category_id' });
+    Question.belongsTo(models.User, { foreignKey: { name: 'user_id', allowNull: false }, onDelete: 'CASCADE', onUpdate: 'CASCADE', as: 'user' });
+    Question.hasOne(models.Attachment, { foreignKey: 'question_id', as: 'attachment' });
+    Question.hasMany(models.Comment, { foreignKey: 'question_id', as: 'comments' });
+    Question.hasMany(models.Interest, { foreignKey: 'question_id', as: 'interests' });
+    Question.hasMany(models.UserQuestionAction, { foreignKey: 'question_id', as: 'userQuestionActions' });
+    Question.hasMany(models.Notification, { foreignKey: 'question_id', as: 'notifications' });
   };
 
   return Question;

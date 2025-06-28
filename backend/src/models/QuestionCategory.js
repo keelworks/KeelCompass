@@ -5,10 +5,18 @@ module.exports = (sequelize, DataTypes) => {
       question_id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
+        references: {
+          model: 'questions',
+          key: 'id',
+        },
       },
       category_id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
+        references: {
+          model: 'categories',
+          key: 'id',
+        },
       },
     },
     { 
@@ -18,8 +26,8 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   QuestionCategory.associate = (models) => {
-    QuestionCategory.belongsTo(models.question, { foreignKey: 'question_id', as: 'question' });
-    QuestionCategory.belongsTo(models.category, { foreignKey: 'category_id', as: 'category' });
+    QuestionCategory.belongsTo(models.Question, { foreignKey: 'question_id', as: 'question' });
+    QuestionCategory.belongsTo(models.Category, { foreignKey: 'category_id', as: 'category' });
   };
 
   return QuestionCategory;

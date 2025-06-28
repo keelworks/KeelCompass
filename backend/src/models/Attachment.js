@@ -11,11 +11,19 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         unique: true,
+        references: {
+          model: 'questions',
+          key: 'id',
+        },
       },
       comment_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         unique: true,
+        references: {
+          model: 'comments',
+          key: 'id',
+        },
       },
       file_name: {
         type: DataTypes.STRING,
@@ -39,8 +47,8 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Attachment.associate = (models) => {
-    Attachment.belongsTo(models.question, { foreignKey: 'question_id' });
-    Attachment.belongsTo(models.comment, { foreignKey: 'comment_id' });
+    Attachment.belongsTo(models.Question, { foreignKey: 'question_id' });
+    Attachment.belongsTo(models.Comment, { foreignKey: 'comment_id' });
   };
 
   return Attachment;

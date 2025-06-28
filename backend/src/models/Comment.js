@@ -10,14 +10,26 @@ module.exports = (sequelize, DataTypes) => {
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
       },
       question_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+          model: 'questions',
+          key: 'id',
+        },
       },
       parent_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
+        references: {
+          model: 'comments',
+          key: 'id',
+        },
       },
       content: {
         type: DataTypes.TEXT,
@@ -34,14 +46,14 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Comment.associate = (models) => {
-    Comment.belongsTo(models.user, { foreignKey: "user_id", as: "user" });
-    Comment.belongsTo(models.question, { foreignKey: "question_id", as: "question", onDelete: "CASCADE" });
-    Comment.belongsTo(models.comment, { foreignKey: "parent_id", as: "parent" });
-    Comment.hasOne(models.attachment, { foreignKey: 'comment_id', as: 'attachment' });
-    Comment.hasMany(models.comment, { foreignKey: "parent_id", as: "replies" });
-    Comment.hasMany(models.interest, { foreignKey: 'comment_id', as: 'interests' });
-    Comment.hasMany(models.userCommentAction, { foreignKey: 'comment_id', as: 'userCommentActions' });
-    Comment.hasMany(models.notification, { foreignKey: 'comment_id', as: 'notifications' });
+    Comment.belongsTo(models.User, { foreignKey: "user_id", as: "user" });
+    Comment.belongsTo(models.Question, { foreignKey: "question_id", as: "question", onDelete: "CASCADE" });
+    Comment.belongsTo(models.Comment, { foreignKey: "parent_id", as: "parent" });
+    Comment.hasOne(models.Attachment, { foreignKey: 'comment_id', as: 'attachment' });
+    Comment.hasMany(models.Comment, { foreignKey: "parent_id", as: "replies" });
+    Comment.hasMany(models.Interest, { foreignKey: 'comment_id', as: 'interests' });
+    Comment.hasMany(models.UserCommentAction, { foreignKey: 'comment_id', as: 'userCommentActions' });
+    Comment.hasMany(models.Notification, { foreignKey: 'comment_id', as: 'notifications' });
   };
 
   return Comment;

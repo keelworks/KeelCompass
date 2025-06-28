@@ -1,46 +1,30 @@
 const express = require("express");
-const { param, validationResult } = require("express-validator");
+const { body, param } = require("express-validator");
 const authenticator = require("../middlewares/authMiddleware");
-const {
-  getNotificationsByUserId,
-  markNotificationRead,
-} = require("../controllers/notificationController");
+const { handleValidationErrors } = require("../utils/validationUtils");
+
+const notificationController = require("../controllers/notificationControllers");
 
 const router = express.Router();
 
+const createNotificationsForAllUsersValidation = [
+  body("message").notEmpty().withMessage("Message is required."),
+  body("targetUrl").optional().isString(),
+  handleValidationErrors,
+];
+
+const markNotificationReadValidation = [
+  param("id").isInt({ gt: 0 }).withMessage("Invalid notification ID."),
+  handleValidationErrors,
+];
+
 // get all notifications by user id
-router.get("/", authenticator, getNotificationsByUserId);
+router.get("/", authenticator, notificationController.getNotificationsByUserId);
 
-// create notifications for all users (system announcement)
-router.post(
-  "/system",
-  authenticator,
-  [
-    body("message").notEmpty().withMessage("message is required"),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ message: errors.array().map(e => e.msg).join(", ") });
-      }
-      next();
-    }
-  ],
-  createSystemNotifications
-);
+// create notifications for all users
+router.post("/announcement", authenticator, createNotificationsForAllUsersValidation, notificationController.createNotificationsForAllUsers);
 
-// mark a notification as read
-router.patch(
-  "/:id/mark-read",
-  authenticator,
-  param("id").isInt({ gt: 0 }).withMessage("Notification ID must be a positive integer"),
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ message: errors.array().map(e => e.msg).join(", ") });
-    }
-    next();
-  },
-  markNotificationRead
-);
+// mark notification as read
+router.patch("/:id/mark-read", authenticator, markNotificationReadValidation, notificationController.markNotificationRead);
 
 module.exports = router;

@@ -73,15 +73,6 @@ app.use((err, _req, res, _next) => {
     });
   }
 
-  // not found error
-  if (err.status === 404 || err.statusCode === 404) {
-    return res.status(404).json({
-      status: 404,
-      error: "Page Not Found",
-      message: err.message || "The requested page does not exist."
-    });
-  }
-
   // internal server error
   res.status(500).json({
     status: 500,
