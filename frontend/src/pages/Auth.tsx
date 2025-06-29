@@ -39,7 +39,7 @@ const AuthPage = () => {
       const response = await api.post(
         `/auth/${isSignup ? "register" : "login"}`,
         isSignup
-          ? { username: formData.name, email: formData.email, password: formData.password }
+          ? { name: formData.name, email: formData.email, password: formData.password }
           : { email: formData.email, password: formData.password }
       );
 
@@ -50,9 +50,9 @@ const AuthPage = () => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("lastActive", new Date().getTime().toString());
 
-      const decoded = jwtDecode<{ id: number; username: string }>(data.token);
+      const decoded = jwtDecode<{ id: number; email: string }>(data.token);
       localStorage.setItem("userId", decoded.id.toString());
-      localStorage.setItem("username", decoded.username);
+      localStorage.setItem("userEmail", decoded.email);
       console.log("Decoded JWT:", decoded);
 
       navigate("/dashboard");
