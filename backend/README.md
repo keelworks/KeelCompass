@@ -28,3 +28,31 @@ npx sequelize-cli db:migrate
 npx sequelize-cli db:seed:undo:all
 npx sequelize-cli db:seed:all
 ```
+
+## Resetting Database
+
+1. Open MySQL shell 
+
+```bash
+mysql -u root -p
+```
+
+2. Drop and recreate the database
+
+```bash
+DROP DATABASE keelworks_keelcompass_db;
+CREATE DATABASE keelworks_keelcompass_db;
+EXIT;
+```
+
+3. Run migrations
+
+```bash
+npx sequelize-cli db:migrate
+```
+
+4. Seed database
+
+```bash
+npx sequelize-cli db:seed:all
+```

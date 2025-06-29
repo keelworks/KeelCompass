@@ -1,6 +1,4 @@
-const { DataTypes } = require("sequelize");
-
-module.exports = (sequelize, User, Question) => {
+module.exports = (sequelize, DataTypes) => {
   const Comment = sequelize.define(
     "Comment",
     {
@@ -13,51 +11,50 @@ module.exports = (sequelize, User, Question) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: User,
-          key: "id",
+          model: 'users',
+          key: 'id',
         },
       },
       question_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: Question,
-          key: "id",
+          model: 'questions',
+          key: 'id',
         },
       },
       parent_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: "Comments",
-          key: "id",
+          model: 'comments',
+          key: 'id',
         },
-        onDelete: "CASCADE",
       },
       content: {
         type: DataTypes.TEXT,
         allowNull: false,
       },
-      attachment: {
-        type: DataTypes.JSON,
-        allowNull: true,
-      },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
+
     },
-    { tableName: "Comments" }
+    { 
+      tableName: "Comments", 
+      timestamps: true, 
+      createdAt: 'created_at', 
+      updatedAt: 'updated_at'
+    }
   );
 
-  Comment.belongsTo(User, { foreignKey: "user_id", as: "user" });
-  User.hasMany(Comment, { foreignKey: "user_id", sourceKey: "id" });
-
-  Comment.belongsTo(Question, { foreignKey: "question_id", as: "question", onDelete: "CASCADE" });
-  Question.hasMany(Comment, { foreignKey: "question_id", sourceKey: "id" });
-
-  Comment.belongsTo(Comment, { foreignKey: "parent_id", as: "parent" });
-  Comment.hasMany(Comment, { foreignKey: "parent_id", as: "replies" });
+  Comment.associate = (models) => {
+    Comment.belongsTo(models.User, { foreignKey: "user_id", as: "user" });
+    Comment.belongsTo(models.Question, { foreignKey: "question_id", as: "question", onDelete: "CASCADE" });
+    Comment.belongsTo(models.Comment, { foreignKey: "parent_id", as: "parent" });
+    Comment.hasOne(models.Attachment, { foreignKey: 'comment_id', as: 'attachment' });
+    Comment.hasMany(models.Comment, { foreignKey: "parent_id", as: "replies" });
+    Comment.hasMany(models.Interest, { foreignKey: 'comment_id', as: 'interests' });
+    Comment.hasMany(models.UserCommentAction, { foreignKey: 'comment_id', as: 'userCommentActions' });
+    Comment.hasMany(models.Notification, { foreignKey: 'comment_id', as: 'notifications' });
+  };
 
   return Comment;
 };

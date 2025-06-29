@@ -1,6 +1,4 @@
-const { DataTypes } = require("sequelize");
-
-module.exports = (sequelize, Question, Category) => {
+module.exports = (sequelize, DataTypes) => {
   const QuestionCategory = sequelize.define(
     "QuestionCategory",
     {
@@ -8,24 +6,29 @@ module.exports = (sequelize, Question, Category) => {
         type: DataTypes.INTEGER,
         primaryKey: true,
         references: {
-          model: Question,
-          key: "id",
+          model: 'questions',
+          key: 'id',
         },
       },
       category_id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         references: {
-          model: Category,
-          key: "id",
+          model: 'categories',
+          key: 'id',
         },
       },
     },
-    { tableName: "QuestionCategories", timestamps: false }
+    { 
+      tableName: "QuestionCategories", 
+      timestamps: false 
+    }
   );
 
-  Question.belongsToMany(Category, { through: QuestionCategory, foreignKey: "question_id" });
-  Category.belongsToMany(Question, { through: QuestionCategory, foreignKey: "category_id" });
+  QuestionCategory.associate = (models) => {
+    QuestionCategory.belongsTo(models.Question, { foreignKey: 'question_id', as: 'question' });
+    QuestionCategory.belongsTo(models.Category, { foreignKey: 'category_id', as: 'category' });
+  };
 
   return QuestionCategory;
 };

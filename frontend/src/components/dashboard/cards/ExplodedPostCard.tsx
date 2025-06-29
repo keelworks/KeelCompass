@@ -14,8 +14,8 @@ interface Comment {
   id: number;
   content: string;
   created_at: string;
-  user: { id: number; username: string }; // 🔥 UPDATED: Added user.id
-  likeCount?: number; // 🔥 NEW: Added like count
+  user: { id: number; username: string }; // UPDATED: Added user.id
+  likeCount?: number; // NEW: Added like count
 }
 
 interface ExplodedPostCardProps {
@@ -34,18 +34,27 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   question,
   likes,
   setLikes,
+  comments,
   setComments,
   handleClose,
   handleEdit,
   username,
   refreshInterests,
 }) => {
+  React.useEffect(() => {
+    if (!question || typeof question.id !== 'number' || question.id <= 0) {
+      console.warn('ExplodedPostCard: Invalid question.id:', question && question.id);
+    }
+  }, [question]);
+  const loggedInUserId = Number(localStorage.getItem('userId')) || 0;
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [liked, setLiked] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(question.title);
-  const [editedDescription, setEditedDescription] = useState(question.description);
+  const [editedDescription, setEditedDescription] = useState(
+    question.description
+  );
   const [commentList, setCommentList] = useState<Comment[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [elongated, setElongated] = useState(false);
@@ -59,8 +68,8 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const deletePostFromStore = useStore((state) => state.deletePost);
   const updatePostInStore = useStore((state) => state.updatePost);
-  const loggedInUserId = Number(localStorage.getItem('userId'));
-  const isAuthor = loggedInUserId === question.user.id;
+  
+  
 
   const shouldTruncate = question.description.length > 150;
   const displayText = elongated
@@ -71,7 +80,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
     try {
       const res = await api.get(`/comments`, {
         params: {
-          questionID: question.id,
+          questionId: question.id,
           count: limit,
           offset: offset,
         },
@@ -82,9 +91,9 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
         // NEW: Initialize like counts for comments
         const commentsWithLikes = data.comments.map((comment: Comment) => ({
           ...comment,
-          likeCount: comment.likeCount || 0
+          likeCount: comment.likeCount || 0,
         }));
-        
+
         setCommentList(commentsWithLikes);
         setComments(data.total);
       }
@@ -100,15 +109,17 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
 
     try {
       const res = await api.delete(`/comments`, {
-        params: { commentID: commentId },
+        params: { commentId: commentId },
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (res.status === 200) {
-        setCommentList(prev => prev.filter(comment => comment.id !== commentId));
-        setComments(prev => prev - 1);
+        setCommentList((prevComments) =>
+          prevComments.filter((comment) => comment.id !== commentId)
+        );
+        setComments(comments - 1);
         setDeletingComment(null);
         showSnackbarMessage('Comment deleted successfully');
       }
@@ -120,11 +131,9 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
 
   // NEW: Comment update handler
   const handleCommentUpdate = (commentId: number, newContent: string) => {
-    setCommentList(prev => 
-      prev.map(comment => 
-        comment.id === commentId 
-          ? { ...comment, content: newContent }
-          : comment
+    setCommentList((prev) =>
+      prev.map((comment) =>
+        comment.id === commentId ? { ...comment, content: newContent } : comment
       )
     );
   };
@@ -167,42 +176,25 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
   };
 
   const deleteInterestsByQuestionId = async (questionId: number) => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const getRes = await fetch(`${import.meta.env.VITE_API_URL}/interests`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await api.get(`/interests`);
+      const data = res.data;
 
-      const data = await getRes.json();
-
-      if (getRes.ok && data.message === 'success' && data.interests) {
+      if (res.status === 200 && data.message === 'success' && data.interests) {
         const interestsToDelete = data.interests.filter(
           (interest: any) => interest.question_id === questionId
         );
 
         for (const interest of interestsToDelete) {
-          await fetch(
-            `${import.meta.env.VITE_API_URL}/interests/${interest.id}`,
-            {
-              method: 'DELETE',
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          await api.delete(`/interests/${interest.id}`);
         }
 
         console.log(
-          `Deleted ${interestsToDelete.length} interests for question ${questionId}`
+          'Successfully deleted interests associated with the question.'
         );
       }
-    } catch (error) {
-      console.error('Error deleting interests:', error);
+    } catch (err) {
+      console.error('Error deleting interests:', err);
     }
   };
 
@@ -234,7 +226,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
       const res = await api.post(
         `/questions/action`,
         {
-          questionID: question.id,
+          questionId: question.id,
           actionType: 'like',
         },
         {
@@ -271,6 +263,8 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
       const data = await res.json();
       if (res.ok && data.message === 'Interest created successfully') {
         setIsBookmarked(true);
+        refreshInterests();
+        handleClose();
       }
     } catch (err) {
       console.error('Error bookmarking post:', err);
@@ -348,7 +342,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
                 <Flag size={16} className="mr-2" />
                 Report
               </li>
-              {isAuthor && (
+              {loggedInUserId === question.user.id && (
                 <>
                   <li
                     className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer space-x-2"
@@ -429,7 +423,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
 
       {/* Post Section */}
       <div className="w-full bg-[#F9F9F9] rounded p-4">
-        {isAuthor && isEditing ? (
+        {loggedInUserId === question.user.id && isEditing ? (
           <>
             <input
               value={editedTitle}
@@ -479,7 +473,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
           </div>
         </div>
 
-        {isAuthor && isEditing && (
+        {loggedInUserId === question.user.id && isEditing && (
           <div className="flex justify-end space-x-2">
             <button
               className="px-3 py-1 bg-gray-200 rounded"
@@ -531,7 +525,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
           .map((comment) => (
             <CommentItem
               key={comment.id}
-              comment={comment}
+              comment={{ ...comment, userId: comment.user }}
               loggedInUserId={loggedInUserId}
               onDelete={setDeletingComment}
               onUpdate={handleCommentUpdate}
@@ -541,7 +535,7 @@ const ExplodedPostCard: React.FC<ExplodedPostCardProps> = ({
       </div>
 
       {/* Comment Box */}
-      <CommentBox questionID={question.id} onCommentAdded={handleAddComment} />
+      <CommentBox questionId={question && typeof question.id === 'number' && question.id > 0 ? question.id : 0} onCommentAdded={handleAddComment} />
 
       {/* Close Button */}
       <div className="absolute top-4 right-12">

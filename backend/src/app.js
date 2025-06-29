@@ -2,7 +2,6 @@ const express = require("express");
 const morgan = require("morgan");
 const logger = require("./utils/logger");
 const router = require("./routes/routes");
-const { HttpStatusCodes } = require("./utils/httpError");
 
 // initialize express app
 const app = express();
@@ -41,9 +40,45 @@ app.get("/", (_, res) => {
   res.status(200).send("Welcome to the KeelCompass backend");
 });
 
-// fallback route
-app.use("*", (_, res) => {
-  res.status(HttpStatusCodes.NOT_FOUND).send("Invalid route");
+// 503 maintenance mode
+if (process.env.MAINTENANCE_MODE === "true") {
+  app.use((_req, res) => {
+    res.status(503).json({
+      status: 503,
+      error: "Maintenance",
+      message: "The system is undergoing scheduled maintenance. Please try again later."
+    });
+  });
+}
+
+// 404 handler
+app.use((_req, _res, next) => {
+  const notFoundError = {
+    status: 404,
+    message: "The requested page does not exist.",
+  };
+  next(notFoundError);
+});
+
+// global error handler
+app.use((err, _req, res, _next) => {
+  logger.error("Unhandled error:", err);
+
+  // forbidden error
+  if (err.status === 403 || err.statusCode === 403) {
+    return res.status(403).json({
+      status: 403,
+      error: "Forbidden",
+      message: err.message || "You do not have permission to access this resource."
+    });
+  }
+
+  // internal server error
+  res.status(500).json({
+    status: 500,
+    error: "Internal Server Error",
+    message: err.message || "An unexpected error occurred."
+  });
 });
 
 module.exports = app;

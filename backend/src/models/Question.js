@@ -1,6 +1,4 @@
-const { DataTypes } = require("sequelize");
-
-module.exports = (sequelize, User) => {
+module.exports = (sequelize, DataTypes) => {
   const Question = sequelize.define(
     "Question",
     {
@@ -13,8 +11,8 @@ module.exports = (sequelize, User) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: User,
-          key: "id",
+          model: 'users',
+          key: 'id',
         },
       },
       title: {
@@ -23,26 +21,31 @@ module.exports = (sequelize, User) => {
       },
       description: {
         type: DataTypes.TEXT,
+        allowNull: false,
       },
       status: {
         type: DataTypes.STRING,
         allowNull: false,
         defaultValue: "pending",
       },
-      attachment: {
-        type: DataTypes.JSON,
-        allowNull: true,
-      },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
     },
-    { tableName: "Questions" }
+    { 
+      tableName: "Questions", 
+      timestamps: true, 
+      createdAt: 'created_at', 
+      updatedAt: 'updated_at' 
+    }
   );
 
-  Question.belongsTo(User, { foreignKey: { name: 'user_id', allowNull: false, }, onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-  User.hasMany(Question, { foreignKey: "user_id", sourceKey: "id" });
+  Question.associate = (models) => {
+    Question.belongsToMany(models.Category, { through: models.QuestionCategory, foreignKey: 'question_id', otherKey: 'category_id' });
+    Question.belongsTo(models.User, { foreignKey: { name: 'user_id', allowNull: false }, onDelete: 'CASCADE', onUpdate: 'CASCADE', as: 'user' });
+    Question.hasOne(models.Attachment, { foreignKey: 'question_id', as: 'attachment' });
+    Question.hasMany(models.Comment, { foreignKey: 'question_id', as: 'comments' });
+    Question.hasMany(models.Interest, { foreignKey: 'question_id', as: 'interests' });
+    Question.hasMany(models.UserQuestionAction, { foreignKey: 'question_id', as: 'userQuestionActions' });
+    Question.hasMany(models.Notification, { foreignKey: 'question_id', as: 'notifications' });
+  };
 
   return Question;
 };

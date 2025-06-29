@@ -1,6 +1,7 @@
 import { useState } from "react"; //  Import useState
 import InterestCard from "../cards/InterestCard"
 import Backdrop from "../modals/BackkDrop";
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Question {
   id: number;
@@ -75,12 +76,21 @@ const MyInterestsSection = ({ interests, loading }: MyInterestsSectionProps) => 
 
         {/* NEW: View All / Show Less Button */}
         {hasMoreInterests && (
-          <div className="mt-4 flex justify-center">
+          <div className="mt-6 flex justify-center">
             <button
               onClick={() => setShowAll(!showAll)}
-              className="text-[#007880] hover:text-[#005a61] font-medium text-sm transition-colors duration-200 underline"
+              className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#007880] to-[#00a0aa] text-white font-medium text-sm rounded-lg shadow-md hover:shadow-lg hover:from-[#005a61] hover:to-[#007880] transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#007880] focus:ring-opacity-50"
             >
-              {showAll ? 'Show Less' : 'View all My Interests'}
+              <span className="transition-all duration-200">
+                {showAll ? 'Show Less' : 'View All My Interests'}
+              </span>
+              <div className="transition-transform duration-200 group-hover:scale-110">
+                {showAll ? (
+                  <ChevronUp size={16} className="transition-transform duration-200" />
+                ) : (
+                  <ChevronDown size={16} className="transition-transform duration-200" />
+                )}
+              </div>
             </button>
           </div>
         )}

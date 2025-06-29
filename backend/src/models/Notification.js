@@ -1,6 +1,4 @@
-const { DataTypes } = require('sequelize');
-
-module.exports = (sequelize, User) => {
+module.exports = (sequelize, DataTypes) => {
   const Notification = sequelize.define(
     'Notification',
     {
@@ -11,14 +9,39 @@ module.exports = (sequelize, User) => {
       },
       user_id: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
-          model: User,
+          model: 'users',
+          key: 'id',
+        },
+      },
+      question_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'questions',
+          key: 'id',
+        },
+      },
+      comment_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'comments',
           key: 'id',
         },
       },
       type: {
-        type: DataTypes.STRING(50),
+        type: DataTypes.ENUM(
+          'approved',
+          'rejected',
+          'liked',
+          'reported',
+          'commented',
+          'bookmarked',
+          'updated',
+          'announcement'
+        ),
         allowNull: false,
       },
       message: {
@@ -33,19 +56,20 @@ module.exports = (sequelize, User) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
     },
     {
       tableName: 'Notifications',
-      timestamps: false,
+      timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: false
     }
   );
 
-  Notification.belongsTo(User, { foreignKey: 'user_id' });
-  User.hasMany(Notification, { foreignKey: 'user_id', sourceKey: 'id' });
+  Notification.associate = (models) => {
+    Notification.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
+    Notification.belongsTo(models.Question, { foreignKey: 'question_id', as: 'question' });
+    Notification.belongsTo(models.Comment, { foreignKey: 'comment_id', as: 'comment' });
+  };
 
   return Notification;
 };

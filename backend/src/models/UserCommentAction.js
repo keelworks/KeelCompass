@@ -1,6 +1,4 @@
-const { DataTypes } = require("sequelize");
-
-module.exports = (sequelize, User, Comment) => {
+module.exports = (sequelize, DataTypes) => {
   const UserCommentAction = sequelize.define(
     "UserCommentAction",
     {
@@ -13,35 +11,35 @@ module.exports = (sequelize, User, Comment) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: User,
-          key: "id",
+          model: 'users',
+          key: 'id',
         },
       },
       comment_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: Comment,
-          key: "id",
+          model: 'comments',
+          key: 'id',
         },
       },
       action_type: {
         type: DataTypes.ENUM("like", "report"),
         allowNull: false,
       },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
     },
-    { tableName: "UserCommentActions", timestamps: false }
+    { 
+      tableName: "UserCommentActions", 
+      timestamps: true, 
+      createdAt: 'created_at',
+      updatedAt: false
+    }
   );
 
-  UserCommentAction.belongsTo(User, { foreignKey: "user_id" });
-  User.hasMany(UserCommentAction, { foreignKey: "user_id" });
-
-  UserCommentAction.belongsTo(Comment, { foreignKey: "comment_id" });
-  Comment.hasMany(UserCommentAction, { foreignKey: "comment_id" });
+  UserCommentAction.associate = (models) => {
+    UserCommentAction.belongsTo(models.User, { foreignKey: "user_id", as: "user" });
+    UserCommentAction.belongsTo(models.Comment, { foreignKey: "comment_id", as: "comment" });
+  };
 
   return UserCommentAction;
 };

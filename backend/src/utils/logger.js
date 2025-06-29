@@ -1,7 +1,7 @@
 const { createLogger, format, transports } = require("winston");
 const path = require("path");
 
-// Default log file path fallback if not set
+// default log file path fallback if not set
 const logFilePath = process.env.LOG_PATH || path.join(__dirname, "../../logs/app.log");
 
 const logger = createLogger({
@@ -17,7 +17,7 @@ const logger = createLogger({
   ],
 });
 
-// Add console logging if NOT production
+// add console logging if not production
 if (process.env.NODE_ENV !== "production") {
   logger.add(
     new transports.Console({

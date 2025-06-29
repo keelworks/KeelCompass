@@ -1,74 +1,30 @@
 const express = require("express");
-const { body, param, validationResult } = require("express-validator");
+const { body, param } = require("express-validator");
 const authenticator = require("../middlewares/authMiddleware");
-const {
-  createUpdateNotifications,
-  createSystemNotifications,
-  getNotificationsByUserID,
-  markNotificationRead,
-} = require("../controllers/notificationController");
-const { HttpStatusCodes } = require("../utils/httpError");
+const { handleValidationErrors } = require("../utils/validationUtils");
+
+const notificationController = require("../controllers/notificationControllers");
 
 const router = express.Router();
 
-// Create notifications for specific users (question/comment update)
-router.post(
-  "/updates",
-  authenticator,
-  [
-    body("userIds").isArray({ min: 1 }).withMessage("userIds must be a non-empty array"),
-    body("type").notEmpty().withMessage("type is required"),
-    body("message").notEmpty().withMessage("message is required"),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors.array().map(error => error.msg).join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    }
-  ],
-  createUpdateNotifications
-);
+const createNotificationsForAllUsersValidation = [
+  body("message").notEmpty().withMessage("Message is required."),
+  body("targetUrl").optional().isString(),
+  handleValidationErrors,
+];
 
-// Create notifications for all users (system announcement)
-router.post(
-  "/system",
-  authenticator,
-  [
-    body("type").notEmpty().withMessage("type is required"),
-    body("message").notEmpty().withMessage("message is required"),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors.array().map(error => error.msg).join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    }
-  ],
-  createSystemNotifications
-);
+const markNotificationReadValidation = [
+  param("id").isInt({ gt: 0 }).withMessage("Invalid notification ID."),
+  handleValidationErrors,
+];
 
-// Get all notifications for the logged-in user
-router.get("/", authenticator, getNotificationsByUserID);
+// get all notifications by user id
+router.get("/", authenticator, notificationController.getNotificationsByUserId);
 
-// Mark a specific notification as read
-router.patch(
-  "/:id/mark-read",
-  authenticator,
-  [
-    param("id").isInt({ gt: 0 }).withMessage("invalid notification id"),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        const errorMessages = errors.array().map(error => error.msg).join(", ");
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ message: errorMessages });
-      }
-      next();
-    }
-  ],
-  markNotificationRead
-);
+// create notifications for all users
+router.post("/announcement", authenticator, createNotificationsForAllUsersValidation, notificationController.createNotificationsForAllUsers);
+
+// mark notification as read
+router.patch("/:id/mark-read", authenticator, markNotificationReadValidation, notificationController.markNotificationRead);
 
 module.exports = router;

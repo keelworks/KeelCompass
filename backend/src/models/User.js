@@ -1,6 +1,4 @@
-const { DataTypes } = require("sequelize");
-
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define(
     "User",
     {
@@ -15,7 +13,7 @@ module.exports = (sequelize) => {
         allowNull: false,
         defaultValue: "volunteer"
       },
-      username: {
+      name: {
         type: DataTypes.STRING(50),
         allowNull: false,
       },
@@ -28,13 +26,23 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(255),
         allowNull: false,
       },
-      created_at: {
-        type: DataTypes.DATE,
-        field: "created_at",
-      },
     },
-    { tableName: "Users" }
+    { 
+      tableName: "Users", 
+      timestamps: true, 
+      createdAt: 'created_at', 
+      updatedAt: 'updated_at' 
+    }
   );
+
+  User.associate = (models) => {
+    User.hasMany(models.Question, { foreignKey: 'user_id', as: 'questions' });
+    User.hasMany(models.Comment, { foreignKey: 'user_id', as: 'comments' });
+    User.hasMany(models.Notification, { foreignKey: 'user_id', as: 'notifications' });
+    User.hasMany(models.Interest, { foreignKey: 'user_id', as: 'interests' });
+    User.hasMany(models.UserCommentAction, { foreignKey: 'user_id', as: 'userCommentActions' });
+    User.hasMany(models.UserQuestionAction, { foreignKey: 'user_id', as: 'userQuestionActions' });
+  };
 
   return User;
 };

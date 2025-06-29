@@ -44,7 +44,7 @@ const PostCard: React.FC<PostCardProps> = ({ question,refreshInterests }) => {
       const res = await api.post(
         `/questions/action`,
         {
-          questionID: postData.id,
+          questionId: postData.id,
           actionType: "like",
         },
         {
@@ -79,7 +79,7 @@ const PostCard: React.FC<PostCardProps> = ({ question,refreshInterests }) => {
       try {
         const res = await api.get(`/comments`, {
           params: {
-            questionID: postData.id,
+            questionId: postData.id,
             count: 1,
             offset: 0,
           },

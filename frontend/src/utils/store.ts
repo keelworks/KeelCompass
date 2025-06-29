@@ -34,8 +34,8 @@ interface AppState {
   offset: number;
   total: number;
   fetchQuestions: (count: number, offset: number) => Promise<void>;
-  deletePost: (questionID: number) => Promise<boolean>; 
-  updatePost: (questionID: number, title: string, description: string) => Promise<boolean>; 
+  deletePost: (questionId: number) => Promise<boolean>; 
+  updatePost: (questionId: number, title: string, description: string) => Promise<boolean>; 
 
 
   // For "interests"
@@ -85,7 +85,7 @@ export const useStore = create<AppState>((set) => ({
     }
   },
 
-  updatePost: async (questionID, title, description) => {
+  updatePost: async (questionId, title, description) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -95,7 +95,7 @@ export const useStore = create<AppState>((set) => ({
   
       const response = await axiosInstance.put(
         "/questions",
-        { questionID, title, description }, 
+        { questionId, title, description }, 
         {
           headers: {
             Authorization: `Bearer ${token}`, 
@@ -106,7 +106,7 @@ export const useStore = create<AppState>((set) => ({
       if (response.data.message === "success") {
         set((state) => ({
           questions: state.questions.map((q) =>
-            q.id === questionID ? { ...q, title, description } : q
+            q.id === questionId ? { ...q, title, description } : q
           ),
         }));
         return true;
@@ -121,7 +121,7 @@ export const useStore = create<AppState>((set) => ({
     }
   },
   
-  deletePost: async (questionID) => {
+  deletePost: async (questionId) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -129,16 +129,15 @@ export const useStore = create<AppState>((set) => ({
         return false;
       }
   
-      const response = await axiosInstance.delete("/questions", {
+      const response = await axiosInstance.delete(`/questions/${questionId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        params: { questionID }, // Assuming your backend accepts it as query param
       });
   
       if (response.data.message === "success") {
         set((state) => ({
-          questions: state.questions.filter((q) => q.id !== questionID),
+          questions: state.questions.filter((q) => q.id !== questionId),
         }));
         return true;
       } else {

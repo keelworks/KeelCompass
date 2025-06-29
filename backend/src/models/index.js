@@ -1,4 +1,4 @@
-const { Sequelize } = require("sequelize");
+const { Sequelize, DataTypes } = require("sequelize");
 const logger = require("../utils/logger.js");
 const dbConfig = require("../configs/dbConfig.js");
 
@@ -31,19 +31,28 @@ sequelize.authenticate()
     logger.error(`Error: syncing database failed: ${error}`);
   });
 
-// initialize relational models
+// initialize db
 const db = {};
 db.sequelize = sequelize;
+db.Sequelize = Sequelize;
 
-db.users = require("./User.js")(sequelize);
-db.categories = require("./Category.js")(sequelize);
-db.questions = require("./Question.js")(sequelize, db.users);
-db.comments = require("./Comment.js")(sequelize, db.users, db.questions);
-db.questionCategories = require("./QuestionCategory.js")(sequelize, db.questions, db.categories);
-db.userQuestionActions = require("./UserQuestionAction.js")(sequelize, db.users, db.questions);
-db.userCommentActions = require("./UserCommentAction.js")(sequelize, db.users, db.comments);
-db.interests = require("./Interest.js")(sequelize, db.users, db.questions, db.comments);
-db.notifications = require("./Notification.js")(sequelize, db.users);
+// load models
+db.User = require("./User.js")(sequelize, Sequelize.DataTypes);
+db.Category = require("./Category.js")(sequelize, Sequelize.DataTypes);
+db.Question = require("./Question.js")(sequelize, Sequelize.DataTypes);
+db.QuestionCategory = require("./QuestionCategory.js")(sequelize, Sequelize.DataTypes);
+db.UserQuestionAction = require("./UserQuestionAction.js")(sequelize, Sequelize.DataTypes);
+db.Comment = require("./Comment.js")(sequelize, Sequelize.DataTypes);
+db.UserCommentAction = require("./UserCommentAction.js")(sequelize, Sequelize.DataTypes);
+db.Attachment = require("./Attachment.js")(sequelize, Sequelize.DataTypes);
+db.Interest = require("./Interest.js")(sequelize, Sequelize.DataTypes);
+db.Notification = require("./Notification.js")(sequelize, Sequelize.DataTypes);
 
-// no more sync(); let migrations handle schema
+// initialize associations
+Object.keys(db).forEach(modelName => {
+  if (db[modelName] && db[modelName].associate) {
+    db[modelName].associate(db);
+  }
+});
+
 module.exports = db;
