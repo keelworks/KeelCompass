@@ -39,7 +39,7 @@ const AuthPage = () => {
       const response = await api.post(
         `/auth/${isSignup ? "register" : "login"}`,
         isSignup
-          ? { username: formData.name, email: formData.email, password: formData.password }
+          ? { name: formData.name, email: formData.email, password: formData.password }
           : { email: formData.email, password: formData.password }
       );
 
