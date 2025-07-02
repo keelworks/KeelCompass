@@ -8,14 +8,14 @@ const db = require("../models");
 const User = db.User;
 
 // register
-const register = async (name, email, password) => {
+const register = async (username, email, password) => {
   try {
     const user = await User.findOne({ where: { email } });
     if (user) throw new HttpError(409, "User already exists");
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await User.create({
-      name,
+      username,
       email,
       password: hashedPassword,
     });

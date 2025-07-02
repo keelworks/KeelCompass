@@ -8,7 +8,7 @@ const getNotificationsByUserId = async (req, res, next) => {
     const userId = req.user.id;
     
     const notifications = await notificationService.getNotificationsByUserId(userId);
-    return res.status(200).json({ message: "Fetched notifications successfully", notifications });
+    return res.status(200).json(notifications);
   } catch (error) {
     logger.error(`Caught in getNotificationsByUserId controller: ${error.message}`);
     next(error);  }
@@ -21,7 +21,7 @@ const createNotificationsForAllUsers = async (req, res, next) => {
     const type = 'announcement';
     
     const result = await notificationService.createNotificationsForAllUsers(type, message, targetUrl);
-    return res.status(200).json({ message: "All users notified successfully", count: result.length });
+    return res.status(200).json(result);
   } catch (error) {
     logger.error(`Caught in createNotificationsForAllUsers controller: ${error.message}`);
     next(error);  }
@@ -34,7 +34,7 @@ const markNotificationRead = async (req, res, next) => {
     const notificationId = req.params.id;
 
     const notification = await notificationService.markNotificationRead(userId, notificationId);
-    return res.status(200).json({ message: "Notification marked as read", notificationId: notification.id });
+    return res.status(200).json(notification);
   } catch (error) {
     logger.error(`Caught in markNotificationRead controller: ${error.message}`);
     next(error);  }

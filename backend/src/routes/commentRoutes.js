@@ -8,13 +8,6 @@ const commentController = require("../controllers/commentControllers");
 
 const router = express.Router();
 
-const getCommentsValidation = [
-  query("questionId").notEmpty().withMessage("Question ID is required.").bail().isInt({ gt: 0 }).withMessage("Invalid question ID.").toInt(),
-  query("count").isInt({ gt: 0 }).withMessage("Invalid count.").bail().toInt(),
-  query("offset").isInt({ min: 0 }).withMessage("Invalid offset.").bail().toInt(),
-  handleValidationErrors,
-];
-
 const createCommentValidation = [
   body("questionId").notEmpty().withMessage("Question ID is required.").bail().isInt({ gt: 0 }).withMessage("Invalid question ID."),
   body("content").notEmpty().withMessage("Content is required.").bail().isString().withMessage("Invalid content."),
@@ -32,9 +25,6 @@ const deleteCommentValidation = [
   param("id").notEmpty().withMessage("Comment ID is required.").isInt({ gt: 0 }).withMessage("Invalid comment ID.").bail(),
   handleValidationErrors,
 ];
-
-// get all comments by question id
-router.get("/", getCommentsValidation, commentController.getCommentsByQuestionId);
 
 // create comment
 router.post("/", authenticator, upload.single("attachment"), createCommentValidation, commentController.createComment);

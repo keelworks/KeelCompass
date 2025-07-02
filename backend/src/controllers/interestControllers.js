@@ -8,7 +8,7 @@ const getUserInterests = async (req, res, next) => {
     const userId = req.user.id;
 
     const interests = await interestService.getUserInterests(userId);
-    return res.status(200).json({ message: "Fetched interests successfully", interests: interests });
+    return res.status(200).json(interests);
   } catch (error) {
     logger.error(`Caught in getUserInterests controller: ${error.message}`);
     next(error);
@@ -22,7 +22,7 @@ const createInterest = async (req, res, next) => {
     const { questionId, commentId } = req.body;
 
     const result = await interestService.createInterest(userId, questionId, commentId);
-    return res.status(201).json({ message: "Interest created successfully", interestId: result });
+    return res.status(201).json(result);
   } catch (error) {
     logger.error(`Caught in createInterest controller: ${error.message}`);
     next(error);
@@ -35,8 +35,8 @@ const deleteInterest = async (req, res, next) => {
     const userId = req.user.id;
     const interestId = req.params.id;
 
-    await interestService.deleteInterest(userId, interestId);
-    return res.status(200).json({ message: "Interest deleted successfully", interestId: interestId });
+    const deletedId = await interestService.deleteInterest(userId, interestId);
+    return res.status(200).json(deletedId);
   } catch (error) {
     logger.error(`Caught in deleteInterest controller: ${error.message}`);
     next(error);

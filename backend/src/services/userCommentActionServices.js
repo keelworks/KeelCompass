@@ -41,7 +41,7 @@ const createCommentAction = async (userId, commentId, actionType) => {
       );
       logger.info(`Notification sent to user ${comment.user_id} for ${notifType} on comment ${comment.id}`);
     }
-    return { message: "Comment action taken successfully", commentId, actionType };
+    return commentId;
   } catch (error) {
     logEverything(error, "userCommentActionServices");
     if (error instanceof HttpError) throw error;
@@ -63,7 +63,7 @@ const deleteCommentAction = async (userId, commentId, actionType) => {
 
     await action.destroy();
     logger.info(`Comment action removed successfully for user ${userId} on comment ${commentId}`);
-    return { message: "Comment action removed successfully", commentId, actionType };
+    return commentId;
   } catch (error) {
     logEverything(error, "userCommentActionServices");
     if (error instanceof HttpError) throw error;

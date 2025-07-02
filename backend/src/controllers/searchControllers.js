@@ -17,7 +17,7 @@ const searchQuestionByKeyword = async (req, res, next) => {
     }
 
     const [questions, totalCount, resOffset] = await searchService.searchQuestionByKeyword(query, count, offset, parsedCategoryIds, hasNone);
-    return res.status(200).json({ message: "Searched questions successfully", questions, totalCount: totalCount, resOffset: resOffset });
+    return res.status(200).json({ questions, totalCount, resOffset });
   } catch (error) {
     logger.error(`Caught in searchQuestionByKeyword controller: ${error.message}`);
     next(error);

@@ -12,7 +12,7 @@ const getAttachmentByOwner = async (owner) => {
     const where = question_id ? { question_id } : { comment_id };
     const attachment = await Attachment.findOne({ where });
     logger.info(`Fetched attachment ${attachment.id} for question ${question_id} or comment ${comment_id}`);
-    return { message: "Attachment fetched successfully", attachmentId: attachment.id };
+    return attachment.id;
   } catch (error) {
     logEverything(error, "attachmentServices");
     if (error instanceof HttpError) throw error;
@@ -37,7 +37,7 @@ const createAttachment = async (file, owner) => {
       comment_id: comment_id || null,
     });
     logger.info(`Created attachment ${attachment.id} for question ${question_id} or comment ${comment_id}`);
-    return { message: "Attachment created successfully", attachmentId: attachment.id };
+    return attachment.id;
   } catch (error) {
     logEverything(error, "attachmentServices");
     if (error instanceof HttpError) throw error;
@@ -53,7 +53,7 @@ const deleteAttachment = async (id) => {
 
     await attachment.destroy();
     logger.info(`Attachment ${id} deleted successfully`);
-    return { message: "Attachment deleted successfully", attachmentId: id };
+    return id;
   } catch (error) {
     logEverything(error, "attachmentServices");
     if (error instanceof HttpError) throw error;

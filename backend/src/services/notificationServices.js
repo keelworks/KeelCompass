@@ -34,7 +34,7 @@ const createNotification = async (userId, type, message, targetUrl) => {
       read: false,
     });
     logger.info(`Notification created for user ${userId} [type: ${type}]`);
-    return { message: "Notification created successfully", notificationId: notification.id };
+    return notification.id;
   } catch (error) {
     logEverything(error, "notificationServices");
     if (error instanceof HttpError) throw error;
@@ -54,7 +54,7 @@ const createNotificationsForUsers = async (userIds, type, message, targetUrl) =>
     }));
     const result = await Notification.bulkCreate(notifications);
     logger.info(`Created notifications for users: [${userIds.join(', ')}], type: ${type}`);
-    return { message: "Notifications created successfully", notificationIds: result.map((notification) => notification.id) };
+    return result.map((notification) => notification.id);
   } catch (error) {
     logEverything(error, "notificationServices");
     if (error instanceof HttpError) throw error;
@@ -69,7 +69,7 @@ const createNotificationsForAllUsers = async (type, message, targetUrl) => {
     const userIds = users.map((user) => user.id);
     const result = await createNotificationsForUsers(userIds, type, message, targetUrl);
     logger.info(`Created notifications for all users [count: ${userIds.length}], type: ${type}`);
-    return { message: "Notifications created successfully", notificationIds: result.notificationIds };
+    return result.notificationIds;
   } catch (error) {
     logEverything(error, "notificationServices");
     if (error instanceof HttpError) throw error;
@@ -91,7 +91,7 @@ const markNotificationRead = async (userId, notificationId) => {
     notification.read = true;
     await notification.save();
     logger.info(`Notification ${notificationId} marked as read for user ${userId}`);
-    return { message: "Notification marked as read successfully", notificationId };
+    return notificationId;
   } catch (error) {
     logEverything(error, "notificationServices");
     if (error instanceof HttpError) throw error;

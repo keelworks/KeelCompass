@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import Snackbar from "../components/ui/Snackbar";
-import api from "../utils/api";
+import { register, login } from "../utils/store";
 
 const AuthPage = () => {
   const navigate = useNavigate();
   const [isSignup, setIsSignup] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+  const [formData, setFormData] = useState({ username: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [showSnackbar, setShowSnackbar] = useState(false);
 
@@ -16,7 +16,7 @@ const AuthPage = () => {
   };
 
   const validateForm = () => {
-    if (isSignup && !formData.name) return "Name is required";
+    if (isSignup && !formData.username) return "Username is required";
     if (!formData.email.includes("@")) return "Invalid email format";
     if (formData.password.length < 8 || !/[A-Z]/.test(formData.password) || !/[0-9]/.test(formData.password)) {
       return "Password must be 8+ chars, 1 number, 1 uppercase";
@@ -36,27 +36,52 @@ const AuthPage = () => {
     }
 
     try {
-      const response = await api.post(
-        `/auth/${isSignup ? "register" : "login"}`,
-        isSignup
-          ? { name: formData.name, email: formData.email, password: formData.password }
-          : { email: formData.email, password: formData.password }
-      );
-
-      const data = response.data;
-
-      if (!data.token) throw new Error("Invalid response from server");
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("lastActive", new Date().getTime().toString());
-
-      const decoded = jwtDecode<{ id: number; username: string }>(data.token);
-      localStorage.setItem("userId", decoded.id.toString());
-      localStorage.setItem("username", decoded.username);
-      console.log("Decoded JWT:", decoded);
-
-      navigate("/dashboard");
-      console.log(data);
+      if (isSignup) {
+        const token = await register({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+        });
+        localStorage.setItem("token", token);
+        localStorage.setItem("lastActive", new Date().getTime().toString());
+        try {
+          const decoded = jwtDecode<{ id: number; username: string }>(token);
+          if (decoded && typeof decoded.id !== 'undefined') {
+            localStorage.setItem("userId", decoded.id.toString());
+          } else {
+            localStorage.removeItem("userId");
+          }
+          localStorage.setItem("username", decoded.username);
+        } catch (e) {
+          localStorage.removeItem("userId");
+          localStorage.removeItem("username");
+        }
+        setShowSnackbar(true);
+        setTimeout(() => setShowSnackbar(false), 4000);
+        navigate("/");
+        return;
+      } else {
+        const token = await login({
+          email: formData.email,
+          password: formData.password,
+        });
+        if (!token) throw new Error("Invalid response from server");
+        localStorage.setItem("token", token);
+        localStorage.setItem("lastActive", new Date().getTime().toString());
+        try {
+          const decoded = jwtDecode<{ id: number; username: string }>(token);
+          if (decoded && typeof decoded.id !== 'undefined') {
+            localStorage.setItem("userId", decoded.id.toString());
+          } else {
+            localStorage.removeItem("userId");
+          }
+          localStorage.setItem("username", decoded.username);
+        } catch (e) {
+          localStorage.removeItem("userId");
+          localStorage.removeItem("username");
+        }
+        navigate("/dashboard");
+      }
     } catch (err) {
       setError("Invalid Email or Password. Please try again.");
       setShowSnackbar(true);
@@ -76,9 +101,9 @@ const AuthPage = () => {
           {isSignup && (
             <input
               type="text"
-              name="name"
-              placeholder="Full Name"
-              value={formData.name}
+              name="username"
+              placeholder="Username"
+              value={formData.username}
               onChange={handleChange}
               className="w-full p-2 border rounded mb-3"
               required
@@ -117,7 +142,6 @@ const AuthPage = () => {
             {isSignup ? "Login" : "Sign Up"}
           </button>
         </p>
-
 
         {!isSignup && (
           <p className="text-center mt-2">

@@ -45,13 +45,13 @@ CREATE DATABASE keelworks_keelcompass_db;
 EXIT;
 ```
 
-3. Run migrations
+3. Run migrations from the backend directory
 
 ```bash
 npx sequelize-cli db:migrate
 ```
 
-4. Seed database
+4. Seed database from the backend directory
 
 ```bash
 npx sequelize-cli db:seed:all

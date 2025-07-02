@@ -81,7 +81,7 @@ const createInterest = async (userId, questionId, commentId) => {
       }
     }
     logger.info(`User ${userId} bookmarked ${questionId ? "question" : "comment"} ${questionId || commentId}`);
-    return { message: "Interest created successfully", interestId: newInterest.id };
+    return newInterest.id;
   } catch (error) {
     logEverything(error, "interestServices");
     if (error instanceof HttpError) throw error;
@@ -98,7 +98,6 @@ const deleteInterest = async (userId, interestId) => {
 
     await interest.destroy();
     logger.info(`Interest ${interestId} deleted successfully`);
-    return { message: "Interest deleted successfully", interestId: interestId };
   } catch (error) {
     logEverything(error, "interestServices");
     if (error instanceof HttpError) throw error;

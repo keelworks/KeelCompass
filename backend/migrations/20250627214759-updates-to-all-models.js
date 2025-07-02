@@ -6,16 +6,11 @@ module.exports = {
     // 1. Attachments: Remove updated_at
     await queryInterface.removeColumn('Attachments', 'updated_at');
 
-    // 2. Users: Add name, updated_at; remove username
-    await queryInterface.addColumn('Users', 'name', {
-      type: Sequelize.STRING(50),
-      allowNull: false
-    });
+    // 2. Users: Add updated_at
     await queryInterface.addColumn('Users', 'updated_at', {
       type: Sequelize.DATE,
       defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
     });
-    await queryInterface.removeColumn('Users', 'username');
 
     // 3. Questions: Add updated_at; set description to NOT NULL
     await queryInterface.addColumn('Questions', 'updated_at', {
@@ -25,6 +20,13 @@ module.exports = {
     await queryInterface.changeColumn('Questions', 'description', {
       type: Sequelize.TEXT,
       allowNull: false
+    });
+
+    // Change status column to ENUM('pending', 'approved', 'rejected')
+    await queryInterface.changeColumn('Questions', 'status', {
+      type: Sequelize.ENUM('pending', 'approved', 'rejected'),
+      allowNull: false,
+      defaultValue: 'pending'
     });
 
     // 4. Comments: Add updated_at

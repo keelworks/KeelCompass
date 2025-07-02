@@ -18,9 +18,9 @@ module.exports = {
     // seed users (with roles)
     const passwordHash = bcrypt.hashSync("Password1", 10);
     await queryInterface.bulkInsert("Users", [
-      { id: 1, name: "john doe", email: "john@example.com", password: passwordHash, role: "volunteer" },
-      { id: 2, name: "jane doe", email: "jane@example.com", password: passwordHash, role: "volunteer" },
-      { id: 3, name: "thomas garrod", email: "thomas@example.com", password: passwordHash, role: "facilitator" },
+      { id: 1, username: "johndoe", email: "john@example.com", password: passwordHash, role: "volunteer" },
+      { id: 2, username: "janedoe", email: "jane@example.com", password: passwordHash, role: "volunteer" },
+      { id: 3, username: "thomasgarrod", email: "thomas@example.com", password: passwordHash, role: "facilitator" },
     ]);
 
     console.log('Seeding Questions...');

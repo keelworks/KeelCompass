@@ -22,12 +22,11 @@ const Navigation: React.FC = () => {
 
 
 
+  // Only remove token on logout; keep userId for app-wide usage
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("lastActive");
     localStorage.removeItem("userId");
-    localStorage.removeItem("username");
-    navigate("/auth");
+    navigate("/");
   };
 
   return (

@@ -3,44 +3,11 @@ const logEverything = require("../utils/logEverything");
 const { HttpError } = require("../utils/httpError");
 
 const db = require("../models");
-const User = db.User;
 const Question = db.Question;
 const Comment = db.Comment;
-const Attachment = db.Attachment;
 const attachmentService = require("./attachmentServices");
 const interestService = require("./interestServices");
 const notificationService = require("./notificationServices");
-
-// get all comments by question id
-const getCommentsByQuestionId = async (questionId, count = 10, offset = 0) => {
-  try {
-    const question = await Question.findByPk(questionId);
-    if (!question) throw new HttpError(404, "Question not found");
-
-    const { count: totalCount, rows: comments } = await Comment.findAndCountAll({
-      order: [["created_at"]],
-      where: {
-        question_id: questionId,
-      },
-      include: [
-        { model: User, as: "user", attributes: ["id", ["name", "username"]] },
-        { model: Attachment, as: "attachment", attributes: ["id", "file_name", "mime_type"] },
-      ],
-      attributes: ["id", "content", "created_at"],
-      limit: count,
-      offset: offset,
-    });
-
-    const nextOffset = offset + comments.length;
-    const resOffset = nextOffset >= totalCount ? -1 : nextOffset;
-    logger.info(`Fetched comments for question ${questionId}`);
-    return [comments, totalCount, resOffset];
-  } catch (error) {
-    logEverything(error, "commentServices");
-    if (error instanceof HttpError) throw error;
-    throw new HttpError(500, "Error fetching comments");
-  }
-};
 
 // create comment
 const createComment = async (userId, questionId, content, parentId = null, attachment = null) => {
@@ -91,7 +58,7 @@ const createComment = async (userId, questionId, content, parentId = null, attac
       logger.error(`Failed to create comment notification: ${err.message}`);
     }
     logger.info(`Comment created successfully with ID: ${newComment.id}`);
-    return { message: "Comment created successfully", commentId: newComment.id };
+    return newComment.id;
   } catch (error) {
     logEverything(error, "commentServices");
     if (error instanceof HttpError) throw error;
@@ -139,7 +106,7 @@ const updateCommentById = async (userId, commentId, content, attachment = null) 
       logger.error(`Failed to notify bookmarked users on comment update: ${err.message}`);
     }
     logger.info(`Comment ${commentId} updated successfully`);
-    return { message: "Comment updated successfully", commentId };
+    return commentId;
   } catch (error) {
     logEverything(error, "commentServices");
     if (error instanceof HttpError) throw error;
@@ -156,7 +123,7 @@ const deleteCommentById = async (userId, commentId) => {
 
     await Comment.destroy({ where: { id: commentId } });
     logger.info(`Comment ${commentId} deleted successfully`);
-    return { message: "Comment deleted successfully", commentId };
+    return commentId;
   } catch (error) {
     logEverything(error, "commentServices");
     if (error instanceof HttpError) throw error;
@@ -166,7 +133,6 @@ const deleteCommentById = async (userId, commentId) => {
 
 
 module.exports = {
-  getCommentsByQuestionId,
   createComment,
   updateCommentById,
   deleteCommentById,

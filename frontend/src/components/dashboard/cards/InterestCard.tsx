@@ -1,10 +1,7 @@
 import React from "react";
 import InfoCard from "./InfoCard"
 
-
-
 interface InterestCardProps {
-  
   title: string;
   content: string;
   date: string;

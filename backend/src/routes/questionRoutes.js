@@ -14,6 +14,11 @@ const getQuestionsValidation = [
   handleValidationErrors,
 ];
 
+const getQuestionByIdValidation = [
+  param("id").notEmpty().isInt({ gt: 0 }).withMessage("Invalid question ID.").bail(),
+  handleValidationErrors,
+];
+
 const createQuestionValidation = [
   body("categoryIds").optional().isArray().withMessage("Invalid category IDs.").bail(),
   body("title").notEmpty().withMessage("Title is required").bail().isString().withMessage("Invalid title"),
@@ -34,10 +39,13 @@ const deleteQuestionValidation = [
 ];
 
 // get recent questions
-router.get("/", getQuestionsValidation, questionControllers.getRecentQuestions);
+router.get("/", authenticator, getQuestionsValidation, questionControllers.getRecentQuestions);
 
 // get popular questions
-router.get("/popular", getQuestionsValidation, questionControllers.getPopularQuestions);
+router.get("/popular", authenticator, getQuestionsValidation, questionControllers.getPopularQuestions);
+
+// get question by id
+router.get("/:id", authenticator, getQuestionByIdValidation, questionControllers.getQuestionById);
 
 // post question
 router.post("/", authenticator, upload.single("attachment"), createQuestionValidation, questionControllers.createQuestion);

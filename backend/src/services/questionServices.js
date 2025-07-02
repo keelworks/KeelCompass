@@ -8,9 +8,10 @@ const Question = db.Question;
 const UserQuestionAction = db.UserQuestionAction;
 const Attachment = db.Attachment;
 const Comment = db.Comment;
+const Interest = db.Interest;
 
 // get recent questions
-const getRecentQuestions = async (count = 10, offset = 0) => {
+const getRecentQuestions = async (userId, count = 10, offset = 0) => {
   try {
     count = parseInt(count, 10);
     offset = parseInt(offset, 10);
@@ -19,10 +20,11 @@ const getRecentQuestions = async (count = 10, offset = 0) => {
 
     const { count: totalCount, rows: questions } = await Question.findAndCountAll({
       include: [
-        { model: User, as: "user", attributes: ["id", ["name", "username"]] },
-        { model: UserQuestionAction, as: "userQuestionActions", attributes: ["action_type"] },
+        { model: User, as: "user", attributes: ["id", "username"] },
+        { model: UserQuestionAction, as: "userQuestionActions", attributes: ["user_id", "action_type"] },
         { model: Attachment, as: "attachment", attributes: ["id", "file_name", "mime_type"] },
         { model: Comment, as: "comments", attributes: ["id"] },
+        { model: Interest, as: "interests", attributes: ["id", "user_id"] },
       ],
       order: [["created_at", "DESC"]],
       limit: count,
@@ -32,14 +34,25 @@ const getRecentQuestions = async (count = 10, offset = 0) => {
 
     const questionsWithCounts = questions.map(q => {
       const uqas = Array.isArray(q.userQuestionActions) ? q.userQuestionActions : [];
+      const userInterest = Array.isArray(q.interests) ? q.interests.find(i => i.user_id === userId) : null;
+      const isInterested = !!userInterest;
+      const interestId = isInterested ? userInterest.id : null;
+      const hasLiked = uqas.some(a => a.action_type === "like" && a.user_id === userId);
       const likeCount = uqas.filter(a => a.action_type === "like").length;
-      const reportCount = uqas.filter(a => a.action_type === "report").length;
       const comments = Array.isArray(q.comments) ? q.comments : [];
       const commentCount = comments.length;
       return {
-        ...q.toJSON(),
+        id: q.id,
+        user: { username: q.user?.username },
+        title: q.title,
+        description: q.description,
+        status: q.status,
+        createdAt: q.created_at,
+        updatedAt: q.updated_at,
+        isInterested,
+        interestId,
+        hasLiked,
         likeCount,
-        reportCount,
         commentCount,
       };
     });
@@ -47,7 +60,11 @@ const getRecentQuestions = async (count = 10, offset = 0) => {
     const nextOffset = offset + questionsWithCounts.length;
     const resOffset = nextOffset >= totalCount ? -1 : nextOffset;
     logger.info(`Fetched ${questionsWithCounts.length} recent questions, totalCount: ${totalCount}, resOffset: ${resOffset}`);
-    return [questionsWithCounts, totalCount, resOffset];
+    return {
+      questions: questionsWithCounts,
+      total: totalCount,
+      offset: resOffset,
+    };
   } catch (error) {
     logEverything(error, "questionServices");
     if (error instanceof HttpError) throw error;
@@ -56,23 +73,39 @@ const getRecentQuestions = async (count = 10, offset = 0) => {
 };
 
 // get popular questions
-const getPopularQuestions = async (count = 10, offset = 0) => {
+const getPopularQuestions = async (userId, count = 10, offset = 0) => {
   try {
     const allQuestions = await Question.findAll({
       include: [
-        { model: User, as: "user", attributes: ["id", ["name", "username"]] },
-        { model: UserQuestionAction, as: "userQuestionActions", attributes: ["action_type"] },
+        { model: User, as: "user", attributes: ["id", "username"] },
+        { model: UserQuestionAction, as: "userQuestionActions", attributes: ["user_id", "action_type"] },
         { model: Attachment, as: "attachment", attributes: ["id", "file_name", "mime_type"] },
         { model: Comment, as: "comments", attributes: ["id"] },
+        { model: Interest, as: "interests", attributes: ["user_id"] },
       ],
     });
 
     const questionsWithScores = allQuestions.map(q => {
-      const likeCount = q.userQuestionActions?.filter(a => a.action_type === "like").length || 0;
-      const commentCount = q.comments?.length || 0;
+      const uqas = Array.isArray(q.userQuestionActions) ? q.userQuestionActions : [];
+      const userInterest = Array.isArray(q.interests) ? q.interests.find(i => i.user_id === userId) : null;
+      const isInterested = !!userInterest;
+      const interestId = userInterest ? userInterest.id : null;
+      const hasLiked = uqas.some(a => a.action_type === "like" && a.user_id === userId);
+      const likeCount = uqas.filter(a => a.action_type === "like").length;
+      const comments = Array.isArray(q.comments) ? q.comments : [];
+      const commentCount = comments.length;
       const popularityScore = likeCount + commentCount;
       return {
-        ...q.toJSON(),
+        id: q.id,
+        user: { username: q.user?.username },
+        title: q.title,
+        description: q.description,
+        status: q.status,
+        createdAt: q.created_at,
+        updatedAt: q.updated_at,
+        isInterested,
+        interestId,
+        hasLiked,
         likeCount,
         commentCount,
         popularityScore,
@@ -80,16 +113,99 @@ const getPopularQuestions = async (count = 10, offset = 0) => {
     });
 
     const sortedQuestions = questionsWithScores
-      .sort((a, b) => b.popularityScore - a.popularityScore || new Date(b.created_at) - new Date(a.created_at));
+      .sort((a, b) => b.popularityScore - a.popularityScore || new Date(b.createdAt) - new Date(a.createdAt));
 
     const pagedQuestions = sortedQuestions.slice(offset, offset + count);
     const resOffset = offset + pagedQuestions.length >= sortedQuestions.length ? -1 : offset + pagedQuestions.length;
 
-    return [pagedQuestions, sortedQuestions.length, resOffset];
+    return {
+      questions: pagedQuestions,
+      total: sortedQuestions.length,
+      offset: resOffset,
+    };
   } catch (error) {
     logEverything(error, "questionServices");
     if (error instanceof HttpError) throw error;
     throw new HttpError(500, "Error fetching popular questions");
+  }
+};
+
+// get question by id
+const getQuestion = async (userId, questionId) => {
+  try {
+    const question = await Question.findByPk(questionId, {
+      include: [
+        { model: User, as: "user", attributes: ["id", "username"] },
+        { model: UserQuestionAction, as: "userQuestionActions", attributes: ["user_id", "action_type"] },
+        { model: Attachment, as: "attachment", attributes: ["id", "file_name", "mime_type"] },
+        {
+          model: Comment,
+          as: "comments",
+          include: [
+            { model: User, as: "user", attributes: ["id", "username"] },
+            { model: Attachment, as: "attachment", attributes: ["id", "file_name", "mime_type"] },
+            { model: db.UserCommentAction, as: "userCommentActions", attributes: ["user_id", "action_type"] },
+          ],
+        },
+        { model: Interest, as: "interests", attributes: ["id", "user_id"] },
+      ],
+      order: [[{ model: Comment, as: "comments" }, "created_at", "ASC"]],
+    });
+    if (!question) throw new HttpError(404, "Question not found");
+
+    const uqas = Array.isArray(question.userQuestionActions) ? question.userQuestionActions : [];
+    const userInterest = Array.isArray(question.interests) ? question.interests.find(i => i.user_id === userId) : null;
+    const isInterested = !!userInterest;
+    const interestId = isInterested ? userInterest.id : null;
+    const hasLiked = uqas.some(a => a.action_type === "like" && a.user_id === userId);
+    const likeCount = uqas.filter(a => a.action_type === "like").length;
+    const comments = Array.isArray(question.comments) ? question.comments.map(c => {
+      const ucas = Array.isArray(c.userCommentActions) ? c.userCommentActions : [];
+      const likeCount = ucas.filter(a => a.action_type === "like").length;
+      const hasLiked = ucas.some(a => a.action_type === "like" && a.user_id === userId);
+      return {
+        id: c.id,
+        user: { id: c.user?.id, username: c.user?.username },
+        content: c.content,
+        createdAt: c.created_at,
+        updatedAt: c.updated_at,
+        attachment: c.attachment ? {
+          id: c.attachment.id,
+          fileName: c.attachment.file_name,
+          mimeType: c.attachment.mime_type,
+          data: c.attachment.data || null,
+        } : null,
+        hasLiked,
+        likeCount,
+      };
+    }) : [];
+
+    const commentCount = comments.length;
+
+    return {
+      id: question.id,
+      user: { id: question.user?.id, username: question.user?.username },
+      title: question.title,
+      description: question.description,
+      status: question.status,
+      createdAt: question.created_at,
+      updatedAt: question.updated_at,
+      attachment: question.attachment ? {
+        id: question.attachment.id,
+        fileName: question.attachment.file_name,
+        mimeType: question.attachment.mime_type,
+      } : null,
+      isInterested,
+      interestId,
+      hasLiked,
+      likeCount,
+      comments,
+      commentCount,
+    };
+  } catch (error) {
+    logEverything(error, "questionServices");
+    if (error instanceof HttpError) throw error;
+    throw new HttpError(500, "Error fetching question");
   }
 };
 
@@ -113,7 +229,7 @@ const createQuestion = async (userId, categoryIds, title, description, attachmen
     }
 
     logger.info(`Question created successfully with ID: ${newQuestion.id}`);
-    return { message: "Question created successfully", questionId: newQuestion.id };
+    return newQuestion.id;
   } catch (error) {
     logEverything(error, "questionServices");
     if (error instanceof HttpError) throw error;
@@ -142,7 +258,7 @@ const updateQuestion = async (userId, questionId, title, description, attachment
     }
 
     logger.info(`Question ${questionId} updated successfully`);
-    return { message: "Question updated successfully", questionId: question.id };
+    return question.id;
   } catch (error) {
     logEverything(error, "questionServices");
     if (error instanceof HttpError) throw error;
@@ -159,7 +275,7 @@ const deleteQuestion = async (userId, questionId) => {
 
     await Question.destroy({ where: { id: questionId } });
     logger.info(`Question ${questionId} deleted successfully`);
-    return { message: "Question deleted successfully", questionId: questionId };
+    return questionId;
   } catch (error) {
     logEverything(error, "questionServices");
     if (error instanceof HttpError) throw error;
@@ -170,6 +286,7 @@ const deleteQuestion = async (userId, questionId) => {
 module.exports = {
   getRecentQuestions,
   getPopularQuestions,
+  getQuestion,
   createQuestion,
   updateQuestion,
   deleteQuestion,

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const authRoutes = require("./authRoutes");
+const categoryRoutes = require("./categoryRoutes");
 const searchRoutes = require("./searchRoutes.js");
 const questionRoutes = require("./questionRoutes.js");
 const userQuestionActionRoutes = require("./userQuestionActionRoutes");
@@ -12,6 +13,7 @@ const notificationRoutes = require("./notificationRoutes");
 
 // routes
 router.use("/api/auth", authRoutes);
+router.use("/api/categories", categoryRoutes);
 router.use("/api/search", searchRoutes);
 router.use("/api/questions", questionRoutes);
 router.use("/api/question-actions", userQuestionActionRoutes);

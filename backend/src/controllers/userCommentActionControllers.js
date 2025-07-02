@@ -8,8 +8,8 @@ const createCommentAction = async (req, res, next) => {
     const userId = req.user.id;
     const { commentId, actionType } = req.body;
 
-    await userCommentActionService.createCommentAction(userId, commentId, actionType);
-    return res.status(201).json({ message: "Comment action created successfully", commentId: commentId, actionType: actionType });
+    const createdId = await userCommentActionService.createCommentAction(userId, commentId, actionType);
+    return res.status(201).json(createdId);
   } catch (error) {
     logger.error(`Caught in createCommentAction controller: ${error.message}`);
     next(error); 
@@ -22,8 +22,8 @@ const deleteCommentAction = async (req, res, next) => {
     const userId = req.user.id;
     const { commentId, actionType } = req.body;
 
-    await userCommentActionService.deleteCommentAction(userId, commentId, actionType);
-    return res.status(200).json({ message: "Comment action deleted successfully", commentId: commentId, actionType: actionType });
+    const deletedId = await userCommentActionService.deleteCommentAction(userId, commentId, actionType);
+    return res.status(200).json(deletedId);
   } catch (error) {
     logger.error(`Caught in deleteCommentAction controller: ${error.message}`);
     next(error);

@@ -31,7 +31,7 @@ const createQuestionAction = async (userId, questionId, actionType) => {
         notifType = "reported";
         message = "Your question was reported.";
       } else {
-        return { message: "Question action taken successfully", questionId, actionType };
+        return questionId;
       }
       await notificationService.createNotification(
         question.user_id,
@@ -41,7 +41,7 @@ const createQuestionAction = async (userId, questionId, actionType) => {
       );
       logger.info(`Notification sent to user ${question.user_id} for ${notifType} on question ${question.id}`);
     }
-    return { message: "Question action taken successfully", questionId, actionType };
+    return questionId;
   } catch (error) {
     logEverything(error, "userQuestionActionServices");
     if (error instanceof HttpError) throw error;
@@ -63,7 +63,7 @@ const deleteQuestionAction = async (userId, questionId, actionType) => {
 
     await action.destroy();
     logger.info(`Question action removed successfully for user ${userId} on question ${questionId}`);
-    return { message: "Question action removed successfully", questionId, actionType };
+    return questionId;
   } catch (error) {
     logEverything(error, "userQuestionActionServices");
     if (error instanceof HttpError) throw error;

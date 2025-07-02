@@ -24,7 +24,10 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       action_type: {
-        type: DataTypes.ENUM("like", "report"),
+        type: DataTypes.ENUM(
+          "like", 
+          "report"
+        ),
         allowNull: false,
       },
     },

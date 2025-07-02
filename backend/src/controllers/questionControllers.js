@@ -5,10 +5,11 @@ const questionService = require("../services/questionServices");
 // get recent questions
 const getRecentQuestions = async (req, res, next) => {
   try {
+    const userId = req.user?.id;
     const { count, offset } = req.query;
 
-    const [questions, totalCount, resOffset] = await questionService.getRecentQuestions(count, offset);
-    return res.status(200).json({ message: "Fetched recent questions successfully", questions: questions, total: totalCount, offset: resOffset });
+    const result = await questionService.getRecentQuestions(userId, count, offset);
+    return res.status(200).json(result);
   } catch (error) {
     logger.error(`Caught in getRecentQuestions controller: ${error.message}`);
     next(error);
@@ -18,12 +19,27 @@ const getRecentQuestions = async (req, res, next) => {
 // get popular questions
 const getPopularQuestions = async (req, res, next) => {
   try {
+    const userId = req.user?.id;
     const { count, offset } = req.query;
 
-    const [questions, totalCount, resOffset] = await questionService.getPopularQuestions(count, offset);
-    return res.status(200).json({ message: "Fetched popular questions successfully", questions: questions, total: totalCount, offset: resOffset });
+    const result = await questionService.getPopularQuestions(userId, count, offset);
+    return res.status(200).json(result);
   } catch (error) {
     logger.error(`Caught in getPopularQuestions controller: ${error.message}`);
+    next(error);
+  }
+};
+
+// get question by id
+const getQuestionById = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    const { id } = req.params;
+
+    const result = await questionService.getQuestion(userId, id);
+    return res.status(200).json(result);
+  } catch (error) {
+    logger.error(`Caught in getQuestionById controller: ${error.message}`);
     next(error);
   }
 };
@@ -36,7 +52,7 @@ const createQuestion = async (req, res, next) => {
     const attachment = req.file;
 
     const questionId = await questionService.createQuestion(userId, categoryIds, title, description, attachment);
-    return res.status(201).json({ message: "Question created successfully", questionId: questionId });
+    return res.status(201).json(questionId);
   } catch (error) {
     logger.error(`Caught in createQuestion controller: ${error.message}`);
     next(error);
@@ -51,8 +67,8 @@ const updateQuestion = async (req, res, next) => {
     const { title, description } = req.body;
     const attachment = req.file;
 
-    await questionService.updateQuestion(userId, questionId, title, description, attachment);
-    return res.status(200).json({ message: "Question updated successfully", questionId });
+    const updatedId = await questionService.updateQuestion(userId, questionId, title, description, attachment);
+    return res.status(200).json(updatedId);
   } catch (error) {
     logger.error(`Caught in updateQuestion controller: ${error.message}`);
     next(error);
@@ -74,6 +90,7 @@ const deleteQuestion = async (req, res, next) => {
 };
 
 module.exports = {
+  getQuestionById,
   getRecentQuestions,
   getPopularQuestions,
   createQuestion,

@@ -32,7 +32,7 @@ const searchQuestionByKeyword = async (query, count = 10, offset = 0, categoryId
         ],
       },
       include: [
-        { model: User, as: "user", attributes: ["id", "name"] },
+        { model: User, as: "user", attributes: ["id", "username"] },
         { model: Category, as: "Categories", attributes: [], through: { attributes: [] }, required: false },
         { model: Attachment, as: 'attachment', attributes: ['id', 'file_name', 'mime_type'], required: false },
         { model: Comment, as: 'comments', attributes: ['id'], required: false },
