@@ -1,26 +1,24 @@
-import { useState, useEffect } from "react";
+
 import { FaRegThumbsUp, FaRegCommentDots, FaRegBookmark, FaBookmark } from "react-icons/fa";
 import { MdOutlineRateReview } from "react-icons/md";
 import { formatDate } from "../../../utils/format";
-import { UserActionType, QuestionListItem } from "../../../utils/types";
+import { UserActionType, QuestionListItem, Interest } from "../../../utils/types";
 import { createUserQuestionAction, deleteUserQuestionAction, createInterest, deleteInterest } from "../../../utils/store";
-import QuestionDetails from "./QuestionDetails";
 
 interface QuestionItemProps {
   questionItem: QuestionListItem;
-  selectedQuestionId: number | null;
+  interests: Interest[];
+  setInterests: (interests: Interest[]) => void;
+  onInterestsUpdated: () => void;
+  onLikeQuestion: (questionId: number, hasLiked: boolean, likeCount: number) => void;
   setSelectedQuestionId: (id: number | null) => void;
-  onQuestionUpdated?: (updatedQuestion: Partial<QuestionListItem> & { id: number }) => void;
-  onQuestionDeleted?: (deletedId: number) => void;
-  onBookmark?: () => void;
 }
 
-function QuestionItem({ questionItem, selectedQuestionId, setSelectedQuestionId, onQuestionUpdated, onQuestionDeleted, onBookmark }: QuestionItemProps) {
-  const { id, user, title, description, status, createdAt, isInterested: interested, interestId: localInterestId, hasLiked: liked, likeCount: likes, commentCount, } = questionItem;
-  const [isInterested, setIsInterested] = useState(interested);
-  const [interestId, setInterestId] = useState<number | null>(localInterestId);
-  const [hasLiked, setHasLiked] = useState(liked);
-  const [likeCount, setLikeCount] = useState(likes);
+function QuestionItem({ questionItem, interests, setInterests, onInterestsUpdated, onLikeQuestion, setSelectedQuestionId }: QuestionItemProps) {
+  const { id, user, title, description, status, createdAt, hasLiked, likeCount, commentCount } = questionItem;
+
+  const isInterested = questionItem.isInterested;
+  const interestId = questionItem.interestId;
 
   const renderDescription = () => {
     const text = description || '';
@@ -31,14 +29,11 @@ function QuestionItem({ questionItem, selectedQuestionId, setSelectedQuestionId,
     return text;
   }
 
-  const handleCardClick = () => {
-    setSelectedQuestionId(id);
-  }
-
-  const handleLikes = async (e: React.MouseEvent) => {
+  const handleLikeQuestion = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setHasLiked((prev) => !prev);
-    setLikeCount((prev) => prev + (hasLiked ? -1 : 1));
+    const newLiked = !hasLiked;
+    const newLikes = likeCount + (hasLiked ? -1 : 1);
+    onLikeQuestion(id, newLiked, newLikes);
     try {
       if (!hasLiked) {
         await createUserQuestionAction({ questionId: id, actionType: UserActionType.Like });
@@ -46,56 +41,33 @@ function QuestionItem({ questionItem, selectedQuestionId, setSelectedQuestionId,
         await deleteUserQuestionAction({ questionId: id, actionType: UserActionType.Like });
       }
     } catch (error) {
-      setHasLiked((prev) => !prev);
-      setLikeCount((prev) => prev + (hasLiked ? 1 : -1));
       alert("Failed to update like status.");
     }
   };
 
-  const handleBookmark = async (e: React.MouseEvent) => {
+  const handleBookmarkQuestion = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isInterested) {
-      setIsInterested(true);
       try {
-        const newInterestId = await createInterest({ questionId: id });
-        setInterestId(newInterestId);
-        if (onBookmark) onBookmark();
+        const newInterest: Interest = await createInterest({ questionId: id });
+        setInterests([...interests, newInterest]);
       } catch (error) {
-        setIsInterested(false);
         alert("Failed to bookmark question.");
       }
     } else {
       if (interestId == null) return;
-      setIsInterested(false);
       try {
         await deleteInterest({ id: interestId });
-        setInterestId(null);
-        if (onBookmark) onBookmark();
+        setInterests(interests.filter(i => i.id !== interestId));
       } catch (error) {
-        setIsInterested(true);
         alert("Failed to remove bookmark.");
       }
     }
+    onInterestsUpdated();
   }
-
-  const closeQuestionDetails = () => {
-    setSelectedQuestionId(null);
-  }
-
-  // sync likes and count from parent props
-  useEffect(() => {
-    setHasLiked(questionItem.hasLiked);
-    setLikeCount(questionItem.likeCount);
-  }, [questionItem.hasLiked, questionItem.likeCount]);
-
-  // sync bookmark state from parent props
-  useEffect(() => {
-    setIsInterested(questionItem.isInterested);
-    setInterestId(questionItem.interestId);
-  }, [questionItem.isInterested, questionItem.interestId]);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col gap-2 cursor-pointer" onClick={handleCardClick}>
+    <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col gap-2 cursor-pointer" onClick={() => setSelectedQuestionId(id)}>
       <div className="flex items-center justify-between mb-2">
         {/* Username and Date */}
         <div className="flex items-center gap-2">
@@ -110,7 +82,7 @@ function QuestionItem({ questionItem, selectedQuestionId, setSelectedQuestionId,
               <span className="text-gray-500 text-xs">In Review</span>
             </span>
           )}
-          <button className="p-1 rounded hover:bg-gray-100" onClick={handleBookmark} title="Bookmark" type="button">
+          <button className="p-1 rounded hover:bg-gray-100" onClick={handleBookmarkQuestion} title="Bookmark" type="button">
             {isInterested
               ? <FaBookmark className="text-blue-500" />
               : <FaRegBookmark className="text-gray-500" />}
@@ -128,7 +100,7 @@ function QuestionItem({ questionItem, selectedQuestionId, setSelectedQuestionId,
 
       <div className="flex justify-end mt-3 text-gray-600 text-sm">
         {/* Likes */}
-        <div className={`flex items-center mr-4 cursor-pointer select-none text-sm ${hasLiked ? 'text-blue-600' : 'text-gray-600'}`} onClick={handleLikes}>
+        <div className={`flex items-center mr-4 cursor-pointer select-none text-sm ${hasLiked ? 'text-blue-600' : 'text-gray-600'}`} onClick={handleLikeQuestion}>
           <FaRegThumbsUp className="mr-1" />
           <span>{likeCount}</span>
         </div>
@@ -138,22 +110,6 @@ function QuestionItem({ questionItem, selectedQuestionId, setSelectedQuestionId,
           <span>{commentCount}</span>
         </div>
       </div>
-
-      {/* Question Details */}
-      {selectedQuestionId === id && (
-        <QuestionDetails
-          questionId={id}
-          onQuestionUpdated={onQuestionUpdated}
-          onQuestionDeleted={onQuestionDeleted}
-          onLikeUpdate={(questionId: number, hasLiked: boolean, likeCount: number) => {
-            if (questionId === id) { setHasLiked(hasLiked), setLikeCount(likeCount)}
-          }}
-          onBookmarkUpdate={(questionId: number, isInterested: boolean, interestId: number | null) => {
-            if (questionId === id) { setIsInterested(isInterested), setInterestId(interestId)}
-          }}
-          onClose={closeQuestionDetails}
-        />
-      )}
     </div>
   );
 }

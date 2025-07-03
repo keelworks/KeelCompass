@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { FaFileAlt, FaRegThumbsUp, FaRegCommentDots, FaThumbsUp } from 'react-icons/fa';
 import { formatDateTime } from '../../../utils/format';
-import { Attachment, QuestionDetail, UserActionType } from '../../../utils/types';
+import { Attachment, Interest, QuestionDetail, UserActionType } from '../../../utils/types';
 import { getQuestion, createUserQuestionAction, deleteUserQuestionAction, createInterest, deleteInterest, updateQuestion, deleteQuestion } from '../../../utils/store';
 import ThreeDotsMenu from '../../../components/ui/ThreeDotsMenu';
 import CommentItem from './CommentItem';
@@ -9,28 +9,30 @@ import CommentBox from './CommentInput';
 
 interface QuestionDetailsProps {
   questionId: number;
-  onClose: () => void;
-  onLikeUpdate?: (questionId: number, hasLiked: boolean, likeCount: number) => void;
-  onBookmarkUpdate?: (questionId: number, isInterested: boolean, interestId: number) => void;
+  interests: Interest[];
+  setInterests: (interests: Interest[]) => void;
+  onInterestsUpdated: () => void;
+  onLikeQuestion: (questionId: number, hasLiked: boolean, likeCount: number) => void;
   onQuestionUpdated?: (updatedQuestion: { id: number; title: string; description: string }) => void;
   onQuestionDeleted?: (deletedId: number) => void;
+  onClose: () => void;
 }
 
-function QuestionDetails({ questionId, onClose, onLikeUpdate, onBookmarkUpdate, onQuestionUpdated, onQuestionDeleted }: QuestionDetailsProps) {
+function QuestionDetails({ questionId, onClose, interests, setInterests, onInterestsUpdated, onLikeQuestion, onQuestionUpdated, onQuestionDeleted }: QuestionDetailsProps) {
   const userId = Number(localStorage.getItem('userId'));
   const menuRef = useRef<HTMLDivElement>(null);
 
   const [question, setQuestion] = useState<QuestionDetail | null>(null);
   const [attachment, setAttachment] = useState<File | null>(null);
-  const [hasLiked, setHasLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [isInterested, setIsInterested] = useState(false);
-  const [interestId, setInterestId] = useState<number | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState({ title: '', description: '' });
   const [showAllReplies, setShowAllReplies] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+
+  const currentInterest = interests.find(i => i.question_id === questionId);
+  const isInterested = !!currentInterest;
+  const interestId = currentInterest?.id;
 
   function attachmentToFile(attachment: Attachment): File | null {
     if (!attachment?.data) return null;
@@ -52,20 +54,11 @@ function QuestionDetails({ questionId, onClose, onLikeUpdate, onBookmarkUpdate, 
       const res = await getQuestion({ id: questionId });
       setQuestion(res);
       setAttachment(res.attachment ? attachmentToFile(res.attachment) : null);
-      setHasLiked(res.hasLiked);
-      setLikeCount(res.likeCount);
-      setIsInterested(res.isInterested);
-      setInterestId(res.interestId ?? null);
-
       console.log('Fetched question:', res);
     } catch (err) {
       console.error(err);
       setQuestion(null);
       setAttachment(null);
-      setHasLiked(false);
-      setLikeCount(0);
-      setIsInterested(false);
-      setInterestId(null);
     }
   }
 
@@ -74,58 +67,47 @@ function QuestionDetails({ questionId, onClose, onLikeUpdate, onBookmarkUpdate, 
     setAttachment(file);
   };
 
-  const handleUserQuestionAction = async (e: React.MouseEvent) => {
+  const handleLikeQuestion = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!question) return;
-    const newLiked = !hasLiked;
-    const newLikes = likeCount + (hasLiked ? -1 : 1);
-    setHasLiked(newLiked);
-    setLikeCount(newLikes);
-    if (onLikeUpdate) {
-      onLikeUpdate(question.id, newLiked, newLikes);
-    }
+    const newLiked = !question.hasLiked;
+    const newLikes = question.likeCount + (question.hasLiked ? -1 : 1);
+    setQuestion({
+      ...question,
+      hasLiked: newLiked,
+      likeCount: newLikes,
+    });
+    onLikeQuestion(question.id, newLiked, newLikes);
     try {
-      if (!hasLiked) {
+      if (!question.hasLiked) {
         await createUserQuestionAction({ questionId: question.id, actionType: UserActionType.Like });
       } else {
         await deleteUserQuestionAction({ questionId: question.id, actionType: UserActionType.Like });
       }
     } catch (error) {
-      setHasLiked(hasLiked);
-      setLikeCount(likeCount);
-      if (onLikeUpdate) {
-        onLikeUpdate(question.id, hasLiked, likeCount);
-      }
       alert('Failed to update like status.');
     }
   }
 
-  const handleBookmarkQuestion = async () => {
-    if (!question) return;
+  const handleBookmarkQuestion = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (!isInterested) {
-      setIsInterested(true);
       try {
-        const newInterest = await createInterest({ questionId: question.id });
-        setInterestId(newInterest);
-        if (onBookmarkUpdate) onBookmarkUpdate(question.id, true, newInterest);
+        const newInterest: Interest = await createInterest({ questionId: questionId });
+        setInterests([...interests, newInterest]);
       } catch (error) {
-        setIsInterested(false);
-        if (onBookmarkUpdate) onBookmarkUpdate(question.id, false, 0);
-        alert('Failed to bookmark question.');
+        alert("Failed to bookmark question.");
       }
     } else {
       if (interestId == null) return;
-      setIsInterested(false);
       try {
         await deleteInterest({ id: interestId });
-        setInterestId(null);
-        if (onBookmarkUpdate) onBookmarkUpdate(question.id, false, 0);
+        setInterests(interests.filter(i => i.id !== interestId));
       } catch (error) {
-        setIsInterested(true);
-        if (onBookmarkUpdate) onBookmarkUpdate(question.id, true, interestId);
-        alert('Failed to remove bookmark.');
+        alert("Failed to remove bookmark.");
       }
     }
+    onInterestsUpdated();
   }
 
   const handleEditQuestion = () => {
@@ -207,7 +189,6 @@ function QuestionDetails({ questionId, onClose, onLikeUpdate, onBookmarkUpdate, 
         {question && (
           <div className="absolute top-4 right-4">
             <ThreeDotsMenu
-              userId={userId}
               menuRef={menuRef}
               menuId={`question-${question.id}`}
               openMenuId={openMenuId}
@@ -216,6 +197,7 @@ function QuestionDetails({ questionId, onClose, onLikeUpdate, onBookmarkUpdate, 
               handleReport={handleReportQuestion}
               handleEdit={handleEditQuestion}
               handleDelete={() => setShowDeleteConfirmation(true)}
+              userId={userId}
               question={question}
               isInterested={isInterested}
             />
@@ -295,13 +277,14 @@ function QuestionDetails({ questionId, onClose, onLikeUpdate, onBookmarkUpdate, 
                         }}
                       >
                         Choose File
-                        <input
-                          id="attachment"
-                          type="file"
-                          accept="image/*,application/pdf"
-                          onChange={handleAttachmentChange}
-                        />
                       </label>
+                      <input
+                        id="attachment"
+                        className="hidden"
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={handleAttachmentChange}
+                      />
                     </div>
                   )}
                 </div>
@@ -348,9 +331,9 @@ function QuestionDetails({ questionId, onClose, onLikeUpdate, onBookmarkUpdate, 
                   )}
                 </div>
                 <div className="flex items-center space-x-4">
-                  <div className={`flex items-center text-sm select-none ${hasLiked ? 'text-blue-600' : 'text-gray-600'}`} onClick={handleUserQuestionAction} style={{ cursor: 'pointer' }} >
-                    {hasLiked ? <FaThumbsUp className="mr-1" /> : <FaRegThumbsUp className="mr-1" />}
-                    {likeCount} Likes
+                  <div className={`flex items-center text-sm select-none ${question.hasLiked ? 'text-blue-600' : 'text-gray-600'}`} onClick={handleLikeQuestion} style={{ cursor: 'pointer' }} >
+                    {question.hasLiked ? <FaThumbsUp className="mr-1" /> : <FaRegThumbsUp className="mr-1" />}
+                    {question.likeCount} Likes
                   </div>
                   <div className="flex items-center text-gray-600 text-sm">
                     <FaRegCommentDots className="mr-1" /> {question.commentCount} Comments

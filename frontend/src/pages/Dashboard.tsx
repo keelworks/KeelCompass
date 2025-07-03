@@ -26,6 +26,15 @@ const Dashboard = () => {
     setInterests(await getUserInterests());
   };
 
+  const handleLikeQuestion = (questionId: number, hasLiked: boolean, likeCount: number) => {
+    setQuestions(prev => ({
+      ...prev,
+      questions: prev.questions.map(q =>
+        q.id === questionId ? { ...q, hasLiked, likeCount } : q
+      ),
+    }));
+  };
+
   const handleQuestionUpdated = (updatedQuestion: Partial<QuestionsResponse> & { id: number }) => {
     setQuestions(prev => ({
       ...prev,
@@ -95,23 +104,36 @@ const Dashboard = () => {
         {/* Middle */}
         <div className="flex items-center justify-between mb-6" style={{ width: "676px", height: "44px" }}>
           <div className="w-full">
-            <SearchBar 
-              pageSize={PAGE_SIZE} 
-              setQuestions={setQuestions} 
-              setSearchActive={setSearchActive} 
+            <SearchBar
+              pageSize={PAGE_SIZE}
+              setQuestions={setQuestions}
+              setSearchActive={setSearchActive}
             />
           </div>
         </div>
         <QuestionsSection
-          questions={questions}
+          questions={{
+            ...questions,
+            questions: questions.questions.map(q => {
+              const found = interests.find(i => i.question_id === q.id);
+              return {
+                ...q,
+                isInterested: !!found,
+                interestId: found ? found.id : null,
+              };
+            }),
+          }}
           setQuestions={setQuestions}
-          tab={tab}
-          setTab={setTab}
-          searchActive={searchActive}
-          setSearchActive={setSearchActive}
-          onBookmark={refreshInterests}
+          interests={interests}
+          setInterests={setInterests}
+          onInterestsUpdated={refreshInterests}
+          onLikeQuestion={handleLikeQuestion}
           onQuestionUpdated={handleQuestionUpdated}
           onQuestionDeleted={handleQuestionDeleted}
+          searchActive={searchActive}
+          setSearchActive={setSearchActive}
+          tab={tab}
+          setTab={setTab}
           hasMore={hasMore}
           pageSize={PAGE_SIZE}
         />

@@ -1,23 +1,27 @@
 import { useEffect, useState } from "react";
+import { Interest } from "../../../utils/types";
 import { QuestionListItem, QuestionsResponse } from "../../../utils/types";
-import { getRecentQuestions, getPopularQuestions } from "../../../utils/store";
 import QuestionItem from "./QuestionItem";
 import QuestionDetails from "./QuestionDetails";
 
-interface PostsSectionProps {
+interface QuestionsSectionProps {
   questions: QuestionsResponse;
   setQuestions: (questions: QuestionsResponse) => void;
-  tab: 'recent' | 'popular';
-  setTab: (tab: 'recent' | 'popular') => void;
-  searchActive: boolean;
-  setSearchActive: (active: boolean) => void;
+  interests: Interest[];
+  setInterests: (interests: Interest[]) => void;
+  onInterestsUpdated: () => void;
+  onLikeQuestion: (questionId: number, hasLiked: boolean, likeCount: number) => void;
   onQuestionUpdated: (updatedQuestion: Partial<QuestionListItem> & { id: number }) => void;
   onQuestionDeleted: (deletedId: number) => void;
+  searchActive: boolean;
+  setSearchActive: (active: boolean) => void;
+  tab: 'recent' | 'popular';
+  setTab: (tab: 'recent' | 'popular') => void;
   hasMore: boolean;
   pageSize: number;
 }
 
-function PostsSection({ questions, tab, setTab, setQuestions, hasMore, onQuestionUpdated, onQuestionDeleted, pageSize, searchActive, setSearchActive }: PostsSectionProps) {
+function QuestionsSection({ questions, setQuestions, interests, setInterests, onInterestsUpdated, onLikeQuestion, onQuestionUpdated, onQuestionDeleted, searchActive, setSearchActive, tab, setTab, hasMore, pageSize }: QuestionsSectionProps) {
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(pageSize);
 
@@ -43,22 +47,6 @@ function PostsSection({ questions, tab, setTab, setQuestions, hasMore, onQuestio
       });
     }
   };
-
-  // SYNC BOOKMARKS AND MAKE SURE LIKES ARE SYNCED TOO
-  const handleBookmarkUpdate = async (questionId: number, isInterested: boolean, interestId: number | null) => {
-    try {
-      let updated: QuestionsResponse;
-      if (tab === 'recent') {
-        updated = await getRecentQuestions({ count: pageSize, offset: questions.offset });
-      } else {
-        updated = await getPopularQuestions({ count: pageSize, offset: questions.offset });
-      }
-      setQuestions(updated);
-    } catch (err) {
-      console.error('Failed to refresh questions after bookmark:', err);
-    }
-  };
-
 
   // reset visible count when tab or questions change
   useEffect(() => {
@@ -98,10 +86,11 @@ function PostsSection({ questions, tab, setTab, setQuestions, hasMore, onQuestio
             <QuestionItem
               key={q.id}
               questionItem={q}
-              selectedQuestionId={selectedQuestionId}
+              interests={interests}
+              setInterests={setInterests}
+              onInterestsUpdated={onInterestsUpdated}
+              onLikeQuestion={onLikeQuestion}
               setSelectedQuestionId={setSelectedQuestionId}
-              onQuestionUpdated={onQuestionUpdated}
-              onQuestionDeleted={onQuestionDeleted}
             />
           ))}
         </div>
@@ -121,9 +110,12 @@ function PostsSection({ questions, tab, setTab, setQuestions, hasMore, onQuestio
       {typeof selectedQuestionId === 'number' && !isNaN(selectedQuestionId) && (
         <QuestionDetails
           questionId={selectedQuestionId}
+          interests={interests}
+          setInterests={setInterests}
+          onInterestsUpdated={onInterestsUpdated}
+          onLikeQuestion={onLikeQuestion}
           onQuestionUpdated={onQuestionUpdated}
           onQuestionDeleted={onQuestionDeleted}
-          onBookmarkUpdate={handleBookmarkUpdate}
           onClose={() => setSelectedQuestionId(null)}
         />
       )}
@@ -131,4 +123,4 @@ function PostsSection({ questions, tab, setTab, setQuestions, hasMore, onQuestio
   );
 };
 
-export default PostsSection;
+export default QuestionsSection;

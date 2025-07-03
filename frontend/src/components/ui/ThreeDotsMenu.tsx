@@ -8,7 +8,7 @@ interface ThreeDotsMenuProps {
   menuId: string;
   openMenuId: string | null;
   setOpenMenuId: (id: string | null) => void;
-  handleBookmark?: () => void;
+  handleBookmark?: (e?: React.MouseEvent) => void;
   handleReport: () => void;
   handleEdit?: () => void;
   handleDelete?: () => void;
@@ -34,7 +34,7 @@ const ThreeDotsMenu = ({
 }: ThreeDotsMenuProps) => {
   return (
     <>
-      <button onClick={() => setOpenMenuId(openMenuId === menuId ? null : menuId)}>
+      <button onClick={() => setOpenMenuId(openMenuId === menuId ? null : menuId)} type="button">
         <BsThreeDotsVertical size={20} />
       </button>
 
@@ -43,7 +43,7 @@ const ThreeDotsMenu = ({
         <div ref={menuRef} className="absolute right-0 mt-2 w-32 bg-white shadow-md rounded-md z-50">
           <ul className="text-sm text-gray-700">
             {question && handleBookmark && (
-              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center" onClick={() => { handleBookmark(); setOpenMenuId(null); }}>
+              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center" onClick={(e) => { handleBookmark?.(e); setOpenMenuId(null); }}>
                 {isInterested ? (
                   <FaBookmark size={14} className="mr-2 text-blue-500" />
                 ) : (

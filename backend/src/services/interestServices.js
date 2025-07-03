@@ -45,7 +45,7 @@ const getInterestsByCommentId = async (commentId) => {
 // create interest
 const createInterest = async (userId, questionId, commentId) => {
   try {
-    let target, where = { user_id: userId }, interestData;
+    let target, where = {}, interestData = {};
     if (questionId) {
       target = await Question.findByPk(questionId);
       if (!target) throw new HttpError(404, "Question not found");
@@ -80,8 +80,23 @@ const createInterest = async (userId, questionId, commentId) => {
         logger.error(`Failed to create ${questionId ? "question" : "comment"} bookmark notification: ${err.message}`);
       }
     }
+    
+    const fullInterest = await Interest.findByPk(newInterest.id, {
+      include: [
+        {
+          model: Question,
+          as: 'question',
+          attributes: ['id', 'title', 'description'],
+        },
+        {
+          model: Comment,
+          as: 'comment',
+          attributes: ['id', 'content'],
+        },
+      ],
+    });
     logger.info(`User ${userId} bookmarked ${questionId ? "question" : "comment"} ${questionId || commentId}`);
-    return newInterest.id;
+    return fullInterest;
   } catch (error) {
     logEverything(error, "interestServices");
     if (error instanceof HttpError) throw error;

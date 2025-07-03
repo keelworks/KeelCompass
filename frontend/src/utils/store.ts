@@ -114,8 +114,8 @@ export async function getUserInterests(): Promise<Interest[]> {
   return res.data;
 }
 
-export async function createInterest(params: { questionId: number }): Promise<number> {
-  const res = await axiosInstance.post<number>('/interests', params);
+export async function createInterest(params: { questionId: number }): Promise<Interest> {
+  const res = await axiosInstance.post<Interest>('/interests', params);
   return res.data;
 }
 

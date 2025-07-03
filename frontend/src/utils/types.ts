@@ -85,7 +85,6 @@ export interface Interest {
   question_id: number;
   comment_id: number | null;
   created_at: string;
-  updated_at: string;
   question?: {
     id: number;
     title: string;
