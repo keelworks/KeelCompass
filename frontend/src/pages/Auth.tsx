@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import Snackbar from "../components/ui/Snackbar";
 import { register, login } from "../utils/store";
+import Snackbar from "../components/ui/Snackbar";
 
-const AuthPage = () => {
+const Auth = () => {
   const navigate = useNavigate();
+
   const [isSignup, setIsSignup] = useState(false);
   const [formData, setFormData] = useState({ username: "", email: "", password: "" });
   const [error, setError] = useState("");
@@ -93,10 +94,6 @@ const AuthPage = () => {
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-6 bg-white shadow-lg rounded-lg">
         <h2 className="text-2xl font-semibold text-center mb-6">{isSignup ? "Sign Up" : "Login"}</h2>
-        {showSnackbar && error && (
-          <Snackbar message={error} onClose={() => setShowSnackbar(false)} />
-        )}
-
         <form onSubmit={handleSubmit}>
           {isSignup && (
             <input
@@ -132,13 +129,9 @@ const AuthPage = () => {
           </button>
         </form>
 
-
         <p className="text-center mt-3">
           {isSignup ? "Already have an account?" : "Don't have an account?"} {" "}
-          <button
-            onClick={() => setIsSignup(!isSignup)}
-            className="text-blue-500 underline"
-          >
+          <button className="text-blue-500 underline" onClick={() => setIsSignup(!isSignup)}>
             {isSignup ? "Login" : "Sign Up"}
           </button>
         </p>
@@ -149,8 +142,12 @@ const AuthPage = () => {
           </p>
         )}
       </div>
+      
+      {showSnackbar && error && (
+        <Snackbar message={error} onClose={() => setShowSnackbar(false)} />
+      )}
     </div>
   );
 };
 
-export default AuthPage;
+export default Auth;

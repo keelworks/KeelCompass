@@ -1,39 +1,23 @@
 import { useState, useRef } from 'react';
 import { FaRegThumbsUp, FaRegCommentDots } from 'react-icons/fa';
+import { formatDateTime } from '../../../utils/format';
 import { Comment, UserActionType } from '../../../utils/types';
 import { createUserCommentAction, deleteUserCommentAction, updateComment, deleteComment } from '../../../utils/store';
-import { formatDateTime } from '../../../utils/format';
-import ThreeDotsMenu from '../../modules/ThreeDotsMenu';
+import ThreeDotsMenu from '../../../components/ui/ThreeDotsMenu';
 
-function CommentItem({ comment, openMenuId, setOpenMenuId, onCommentDeleted }: { 
-  comment: Comment, 
-  openMenuId: string | null, 
-  setOpenMenuId: (id: string | null) => void,
+function CommentItem({ comment, onCommentDeleted, openMenuId, setOpenMenuId }: {
+  comment: Comment,
   onCommentDeleted?: () => void
+  openMenuId: string | null,
+  setOpenMenuId: (id: string | null) => void,
 }) {
-  const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({ content: comment.content });
   const userId = Number(localStorage.getItem('userId'));
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const [liked, setLiked] = useState(!!comment.hasLiked);
   const [likeCount, setLikeCount] = useState(typeof comment.likeCount === 'number' ? comment.likeCount : 0);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  const handleCancelEdit = () => {
-    setEditMode(false);
-    setEditForm({ content: comment.content });
-  };
-
-  const handleSaveEdit = async () => {
-    try {
-      await updateComment(comment.id, { content: editForm.content });
-      comment.content = editForm.content;
-      setEditMode(false);
-    } catch (err) {
-      alert('Failed to update comment.');
-    }
-  };
-
+  const [editMode, setEditMode] = useState(false);
+  const [editForm, setEditForm] = useState({ content: comment.content });
 
   const handleLike = async () => {
     const prevLiked = liked;
@@ -52,12 +36,6 @@ function CommentItem({ comment, openMenuId, setOpenMenuId, onCommentDeleted }: {
     }
   };
 
-  const handleReportComment = () => {
-    // TODO: implement report logic
-    setOpenMenuId(null);
-    alert('Reported!');
-  };
-
   const handleEditComment = () => {
     if (editMode) {
       setEditMode(false);
@@ -68,10 +46,24 @@ function CommentItem({ comment, openMenuId, setOpenMenuId, onCommentDeleted }: {
     setOpenMenuId(null);
   };
 
+  const handleCancelEdit = () => {
+    setEditMode(false);
+    setEditForm({ content: comment.content });
+  };
+
+  const handleSubmitEdit = async () => {
+    try {
+      await updateComment({ id: comment.id, content: editForm.content });
+      comment.content = editForm.content;
+      setEditMode(false);
+    } catch (err) {
+      alert('Failed to update comment.');
+    }
+  };
 
   const handleDeleteComment = async () => {
     try {
-      await deleteComment(comment.id);
+      await deleteComment({ id: comment.id });
       setOpenMenuId(null);
       if (onCommentDeleted) onCommentDeleted();
     } catch (err) {
@@ -80,15 +72,22 @@ function CommentItem({ comment, openMenuId, setOpenMenuId, onCommentDeleted }: {
     }
   };
 
+  const handleReportComment = () => {
+    setOpenMenuId(null);
+    alert('Reported!');
+  };
 
   return (
     <div className="w-full bg-gray-100 rounded-lg px-4 py-3 mb-3 shadow-sm">
       <div>
         <div className="flex items-start justify-between">
+          {/* Username and Date */}
           <div>
             <span className="font-semibold text-[#004466]">{comment.user.username}</span>
             <div className="text-xs text-gray-500 mt-1">{formatDateTime(comment.createdAt)}</div>
           </div>
+
+          {/* Menu */}
           <div className="relative">
             <ThreeDotsMenu
               menuRef={menuRef}
@@ -104,6 +103,7 @@ function CommentItem({ comment, openMenuId, setOpenMenuId, onCommentDeleted }: {
           </div>
         </div>
 
+        {/* Content */}
         {editMode ? (
           <div className="mt-2">
             <textarea
@@ -114,7 +114,7 @@ function CommentItem({ comment, openMenuId, setOpenMenuId, onCommentDeleted }: {
             />
             <div className="flex gap-2 justify-end">
               <button className="px-3 py-1 bg-gray-200 rounded" onClick={handleCancelEdit}>Cancel</button>
-              <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={handleSaveEdit}>Save</button>
+              <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={handleSubmitEdit}>Save</button>
             </div>
           </div>
         ) : (
@@ -123,6 +123,7 @@ function CommentItem({ comment, openMenuId, setOpenMenuId, onCommentDeleted }: {
           </div>
         )}
 
+        {/* Likes */}
         <div className="flex items-center justify-end gap-6 mt-3">
           <div className={`flex items-center text-sm cursor-pointer select-none ${liked ? 'text-blue-600' : 'text-gray-600'}`} onClick={handleLike}>
             <FaRegThumbsUp className="mr-1" />

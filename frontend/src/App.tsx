@@ -1,10 +1,9 @@
 import { Navigate, Route, Routes, Outlet } from "react-router-dom";
-import AuthGuard from "./components/auth/AuthGuard";
-import AuthPage from "./pages/Auth";
+import Auth from "./pages/Auth";
+import AuthGuard from "./pages/AuthGuard";
 import Dashboard from "./pages/Dashboard";
+import CreateQuestionDashboard from "./pages/CreateQuestion";
 import QnA from "./pages/QnA";
-import PostQuestionQnA from "./pages/CreateQuestionQnA";
-import CreateQuestionDashboard from "./pages/CreateQuestionDashboard";
 import Fallback from "./pages/Fallback";
 
 function App() {
@@ -13,13 +12,12 @@ function App() {
       <Route path="/" element={
         localStorage.getItem("token")
           ? <Navigate to="/dashboard" replace />
-          : <AuthPage />
+          : <Auth />
       } />
       <Route element={<AuthGuard><Outlet /></AuthGuard>}>
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard/post-question" element={<CreateQuestionDashboard />} />
         <Route path="/qna" element={<QnA />} />
-        <Route path="/qna/post-question" element={<PostQuestionQnA />} />
+        <Route path="/questions/new" element={<CreateQuestionDashboard />} />
       </Route>
       <Route path="*" element={<Fallback />} />
     </Routes>

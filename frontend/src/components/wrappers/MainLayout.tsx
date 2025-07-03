@@ -1,5 +1,5 @@
 import React from "react";
-import Navigation from "../navigation/Navigation";
+import Navigation from "../navigation/Sidebar";
 
 interface MainLayoutProps {
   children: React.ReactNode;

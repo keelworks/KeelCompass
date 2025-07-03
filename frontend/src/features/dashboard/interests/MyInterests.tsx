@@ -1,30 +1,15 @@
-import { useState, useEffect } from "react"; //  Import useState
-import InterestItem from "./cards/InterestItem";
-
+import { useState } from "react";
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { formatDate } from '../../utils/format';
-import { getUserInterests } from '../../utils/store';
-import { Interest } from '../../utils/types';
+import { formatDate } from '../../../utils/format';
+import { Interest } from '../../../utils/types';
+import InterestItem from "./InterestItem";
 
-const MyInterestsSection = () => {
-  const userId = Number(localStorage.getItem('userId'));
+interface MyInterstProps  {
+  interests: Interest[];
+}
 
-  const [interests, setInterests] = useState<Interest[]>([]);
+const MyInterests = ({ interests }: MyInterstProps) => {
   const [showAll, setShowAll] = useState(false);
-
-  const fetchInterests = async () => {
-    try {
-      const interests = await getUserInterests(userId);
-      setInterests(interests);
-    } catch (err: any) {
-      console.error(err);
-      setInterests([]);
-    }
-  };
-
-  useEffect(() => {
-    fetchInterests();
-  }, []);
 
   return (
     <div className="flex flex-col h-full">
@@ -73,4 +58,4 @@ const MyInterestsSection = () => {
   );
 };
 
-export default MyInterestsSection;
+export default MyInterests;

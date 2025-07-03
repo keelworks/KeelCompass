@@ -33,7 +33,7 @@ export interface Category {
 // response for get recent/popular questions
 export interface QuestionsResponse {
   questions: QuestionListItem[];
-  total: number;
+  count: number;
   offset: number;
 }
 
@@ -61,7 +61,7 @@ export interface QuestionDetail extends Omit<QuestionListItem, 'user'> {
 }
 
 export interface Attachment {
-  id: number;
+  id?: number;
   fileName: string;
   mimeType: string;
   data?: string;
@@ -95,4 +95,11 @@ export interface Interest {
     id: number;
     content: string;
   } | null;
+}
+
+// response for search
+export interface SearchResponse {
+  questions: QuestionListItem[];
+  count: number;
+  offset: number;
 }

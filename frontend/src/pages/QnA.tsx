@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../components/wrappers/MainLayout";
-import CategoryFilter from "../components/qna/CategoryFilter";
-import QnACard2 from "../components/qna/QnACard";
-import FilterTab from "../components/qna/FilterTab";
-import SearchBar from "../components/searchBar/SearchBar";
+import CategoryFilter from "../features/qna/CategoryFilter";
+import QnACard2 from "../features/qna/QnACard";
+import FilterTab from "../features/qna/FilterTab";
 
 const QnA = () => {
   const navigate = useNavigate();
@@ -26,7 +25,7 @@ const QnA = () => {
   };
 
   const handleAskQuestionClick = () => {
-    navigate("/qna/post-question");
+    navigate("/questions/new");
   };
 
   return (
@@ -37,9 +36,6 @@ const QnA = () => {
           className="flex items-center justify-between mb-6"
           style={{ width: "676px", height: "44px" }}
         >
-          <div className="w-full">
-            <SearchBar />
-          </div>
         </div>
 
         <div className="mb-4">

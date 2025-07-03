@@ -11,6 +11,10 @@ const getAttachmentByOwner = async (owner) => {
     const { question_id, comment_id } = owner;
     const where = question_id ? { question_id } : { comment_id };
     const attachment = await Attachment.findOne({ where });
+    if (!attachment) {
+      logger.info(`No attachment found for question ${question_id} or comment ${comment_id}`);
+      return null;
+    }
     logger.info(`Fetched attachment ${attachment.id} for question ${question_id} or comment ${comment_id}`);
     return attachment.id;
   } catch (error) {
@@ -23,6 +27,22 @@ const getAttachmentByOwner = async (owner) => {
 // create attachment
 const createAttachment = async (file, owner) => {
   try {
+    // Only allow image and PDF mimetypes
+    const allowedTypes = [
+      'application/pdf',
+      'image/png',
+      'image/jpeg',
+      'image/jpg',
+      'image/gif',
+      'image/webp',
+      'image/bmp',
+      'image/svg+xml',
+      'image/tiff',
+      'image/x-icon',
+    ];
+    if (!allowedTypes.includes(file.mimetype)) {
+      throw new HttpError(400, 'Only image and PDF files are allowed as attachments.');
+    }
     const { question_id, comment_id } = owner;
     if (!question_id && !comment_id) throw new HttpError(400, "Attachment must be linked to a question or a comment");
     const existingAttachment = await getAttachmentByOwner({ question_id, comment_id });

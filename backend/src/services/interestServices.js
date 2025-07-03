@@ -90,14 +90,15 @@ const createInterest = async (userId, questionId, commentId) => {
 };
 
 // delete interest
-const deleteInterest = async (userId, interestId) => {
+const deleteInterest = async (userId, id) => {
   try {
-    const interest = await Interest.findByPk(interestId);
+    const interest = await Interest.findByPk(id);
     if (!interest) throw new HttpError(404, "Interest not found");
     if (interest.user_id != userId) throw new HttpError(401, "No permission to delete interest");
 
     await interest.destroy();
-    logger.info(`Interest ${interestId} deleted successfully`);
+    logger.info(`Interest ${id} deleted successfully`);
+    return id;
   } catch (error) {
     logEverything(error, "interestServices");
     if (error instanceof HttpError) throw error;

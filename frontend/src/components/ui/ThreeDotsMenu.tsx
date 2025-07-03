@@ -3,8 +3,22 @@ import { BsThreeDotsVertical } from 'react-icons/bs';
 import { FaBookmark, FaRegBookmark } from 'react-icons/fa';
 import { Flag, Edit, Trash2 } from 'lucide-react';
 
+interface ThreeDotsMenuProps {
+  menuRef: React.RefObject<HTMLDivElement>;
+  menuId: string;
+  openMenuId: string | null;
+  setOpenMenuId: (id: string | null) => void;
+  handleBookmark?: () => void;
+  handleReport: () => void;
+  handleEdit?: () => void;
+  handleDelete?: () => void;
+  userId: number;
+  question?: any;
+  comment?: any;
+  isInterested?: boolean;
+}
+
 const ThreeDotsMenu = ({
-  userId,
   menuRef,
   menuId,
   openMenuId,
@@ -13,28 +27,18 @@ const ThreeDotsMenu = ({
   handleReport,
   handleEdit,
   handleDelete,
+  userId,
   question,
   comment,
   isInterested,
-}: { 
-  userId: number; 
-  menuRef: React.RefObject<HTMLDivElement>; 
-  menuId: string;
-  openMenuId: string | null;
-  setOpenMenuId: (id: string | null) => void;
-  handleBookmark?: () => void; 
-  handleReport: () => void; 
-  handleEdit?: () => void; 
-  handleDelete?: () => void; 
-  question?: any; 
-  comment?: any; 
-  isInterested?: boolean;
-}) => {
+}: ThreeDotsMenuProps) => {
   return (
     <>
       <button onClick={() => setOpenMenuId(openMenuId === menuId ? null : menuId)}>
         <BsThreeDotsVertical size={20} />
       </button>
+
+      {/* Menu Dropdown */}
       {openMenuId === menuId && (
         <div ref={menuRef} className="absolute right-0 mt-2 w-32 bg-white shadow-md rounded-md z-50">
           <ul className="text-sm text-gray-700">

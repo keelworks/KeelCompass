@@ -9,6 +9,7 @@ const UserQuestionAction = db.UserQuestionAction;
 const Attachment = db.Attachment;
 const Comment = db.Comment;
 const Interest = db.Interest;
+const attachmentService = require("./attachmentServices");
 
 // get recent questions
 const getRecentQuestions = async (userId, count = 10, offset = 0) => {
@@ -137,7 +138,7 @@ const getQuestion = async (userId, questionId) => {
       include: [
         { model: User, as: "user", attributes: ["id", "username"] },
         { model: UserQuestionAction, as: "userQuestionActions", attributes: ["user_id", "action_type"] },
-        { model: Attachment, as: "attachment", attributes: ["id", "file_name", "mime_type"] },
+        { model: Attachment, as: "attachment", attributes: ["id", "file_name", "mime_type", "data"] },
         {
           model: Comment,
           as: "comments",
@@ -173,7 +174,11 @@ const getQuestion = async (userId, questionId) => {
           id: c.attachment.id,
           fileName: c.attachment.file_name,
           mimeType: c.attachment.mime_type,
-          data: c.attachment.data || null,
+          data: c.attachment.data
+            ? Buffer.isBuffer(c.attachment.data)
+              ? c.attachment.data.toString('base64')
+              : c.attachment.data
+            : null,
         } : null,
         hasLiked,
         likeCount,
@@ -194,6 +199,11 @@ const getQuestion = async (userId, questionId) => {
         id: question.attachment.id,
         fileName: question.attachment.file_name,
         mimeType: question.attachment.mime_type,
+        data: question.attachment.data
+          ? Buffer.isBuffer(question.attachment.data)
+            ? question.attachment.data.toString('base64')
+            : question.attachment.data
+          : null,
       } : null,
       isInterested,
       interestId,
