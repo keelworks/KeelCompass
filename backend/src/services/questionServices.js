@@ -259,12 +259,14 @@ const updateQuestion = async (userId, questionId, title, description, attachment
     await question.save();
 
     // update attachment
+    const existingAttachment = await Attachment.findOne({ where: { question_id: question.id } });
     if (attachment) {
-      const existingAttachment = await Attachment.findOne({ where: { question_id: question.id } });
       if (existingAttachment) {
         await attachmentService.deleteAttachment(existingAttachment.id);
       }
       await attachmentService.createAttachment(attachment, { question_id: question.id });
+    } else if (existingAttachment) {
+      await attachmentService.deleteAttachment(existingAttachment.id);
     }
 
     logger.info(`Question ${questionId} updated successfully`);
