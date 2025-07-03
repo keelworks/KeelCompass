@@ -1,11 +1,11 @@
 const express = require("express");
 const { body } = require("express-validator");
-const authenticator = require("../middlewares/authMiddleware");
 const { handleValidationErrors } = require("../utils/validationUtils");
-
+const isUser = require("../middlewares/isUser");
 const searchControllers = require("../controllers/searchControllers");
 
 const router = express.Router();
+router.use(isUser);
 
 const searchValidation = [
   body("query").notEmpty().withMessage("Search query is required.").bail().isString().withMessage("Query must be a string."),
@@ -26,6 +26,6 @@ const searchValidation = [
 ];
 
 // search questions by keyword
-router.post("/", authenticator, searchValidation, searchControllers.searchQuestionByKeyword);
+router.post("/", searchValidation, searchControllers.searchQuestionByKeyword);
 
 module.exports = router;

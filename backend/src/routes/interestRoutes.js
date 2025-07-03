@@ -1,11 +1,11 @@
 const express = require("express");
 const { body, param } = require("express-validator");
-const authenticator = require("../middlewares/authMiddleware");
 const { handleValidationErrors } = require("../utils/validationUtils");
-
+const isUser = require("../middlewares/isUser");
 const interestController = require("../controllers/interestControllers");
 
 const router = express.Router();
+router.use(isUser);
 
 const createInterestValidation = [
   body('questionId').optional().isInt({ min: 1 }).withMessage('Invalid question ID.'),
@@ -23,12 +23,12 @@ const deleteInterestValidation = [
 ];
 
 // get user interests
-router.get('/', authenticator, interestController.getUserInterests);
+router.get('/', interestController.getUserInterests);
 
 // create interest
-router.post('/', authenticator, createInterestValidation, interestController.createInterest);
+router.post('/', createInterestValidation, interestController.createInterest);
 
 // delete interest
-router.delete('/:id', authenticator, deleteInterestValidation, interestController.deleteInterest);
+router.delete('/:id', deleteInterestValidation, interestController.deleteInterest);
 
 module.exports = router;

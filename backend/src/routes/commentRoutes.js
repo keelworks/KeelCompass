@@ -1,12 +1,12 @@
 const express = require("express");
-const { body, query, param } = require("express-validator");
-const authenticator = require("../middlewares/authMiddleware");
+const { body, param } = require("express-validator");
 const { handleValidationErrors } = require("../utils/validationUtils");
+const isUser = require("../middlewares/isUser");
 const upload = require("../utils/multerConfig");
-
 const commentController = require("../controllers/commentControllers");
 
 const router = express.Router();
+router.use(isUser);
 
 const createCommentValidation = [
   body("questionId").notEmpty().withMessage("Question ID is required.").bail().isInt({ gt: 0 }).withMessage("Invalid question ID."),
@@ -27,12 +27,12 @@ const deleteCommentValidation = [
 ];
 
 // create comment
-router.post("/", authenticator, upload.single("attachment"), createCommentValidation, commentController.createComment);
+router.post("/", upload.single("attachment"), createCommentValidation, commentController.createComment);
 
 // update comment by id
-router.put("/:id", authenticator, upload.single("attachment"), updateCommentValidation, commentController.updateComment);
+router.put("/:id", upload.single("attachment"), updateCommentValidation, commentController.updateComment);
 
 // delete comment by id
-router.delete("/:id", authenticator, deleteCommentValidation, commentController.deleteComment);
+router.delete("/:id", deleteCommentValidation, commentController.deleteComment);
 
 module.exports = router;

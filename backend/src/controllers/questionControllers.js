@@ -30,6 +30,13 @@ const getPopularQuestions = async (req, res, next) => {
   }
 };
 
+// get pending questions (facilitator)
+const getPendingQuestions = async (req, res, next) => {
+// query: count, offset
+// response: { questions, total, offset }
+// CODE HERE
+}
+  
 // get question by id
 const getQuestionById = async (req, res, next) => {
   try {
@@ -75,6 +82,14 @@ const updateQuestion = async (req, res, next) => {
   }
 };
 
+// update question status (facilitator)
+const updateQuestionStatus = async (req, res, next) => {
+// params: id
+// body: status
+// response: questionId
+// CODE HERE
+}
+
 // delete question by id
 const deleteQuestion = async (req, res, next) => {
   try {
@@ -90,10 +105,12 @@ const deleteQuestion = async (req, res, next) => {
 };
 
 module.exports = {
-  getQuestionById,
   getRecentQuestions,
   getPopularQuestions,
+  getPendingQuestions,
+  getQuestionById,
   createQuestion,
   updateQuestion,
+  updateQuestionStatus,
   deleteQuestion,
 };

@@ -1,11 +1,11 @@
 const express = require("express");
 const { body, param } = require("express-validator");
-const authenticator = require("../middlewares/authMiddleware");
 const { handleValidationErrors } = require("../utils/validationUtils");
-
+const isUser = require("../middlewares/isUser");
 const notificationController = require("../controllers/notificationControllers");
 
 const router = express.Router();
+router.use(isUser);
 
 const createNotificationsForAllUsersValidation = [
   body("message").notEmpty().withMessage("Message is required."),
@@ -19,12 +19,12 @@ const markNotificationReadValidation = [
 ];
 
 // get all notifications by user id
-router.get("/", authenticator, notificationController.getNotificationsByUserId);
+router.get("/", notificationController.getNotificationsByUserId);
 
 // create notifications for all users
-router.post("/announcement", authenticator, createNotificationsForAllUsersValidation, notificationController.createNotificationsForAllUsers);
+router.post("/announcement", createNotificationsForAllUsersValidation, notificationController.createNotificationsForAllUsers);
 
 // mark notification as read
-router.patch("/:id/mark-read", authenticator, markNotificationReadValidation, notificationController.markNotificationRead);
+router.patch("/:id/mark-read", markNotificationReadValidation, notificationController.markNotificationRead);
 
 module.exports = router;

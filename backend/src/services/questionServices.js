@@ -131,6 +131,11 @@ const getPopularQuestions = async (userId, count = 10, offset = 0) => {
   }
 };
 
+// get pending questions (facilitator)
+// inputs: userId, count, offset
+// outputs: { questions, total, offset }
+// CODE HERE THEN PUT CODE IN module.exports
+
 // get question by id
 const getQuestion = async (userId, questionId) => {
   try {
@@ -277,6 +282,11 @@ const updateQuestion = async (userId, questionId, title, description, attachment
     throw new HttpError(500, "Error updating question");
   }
 };
+
+// update question status (facilitator)
+// inputs: userId, questionId, status
+// outputs: questionId
+// CODE HERE THEN PUT CODE IN module.exports
 
 // delete question by id
 const deleteQuestion = async (userId, questionId) => {

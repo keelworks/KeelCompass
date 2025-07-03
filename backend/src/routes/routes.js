@@ -10,7 +10,6 @@ const userCommentActionRoutes = require("./userCommentActionRoutes");
 const interestRoutes = require("./interestRoutes");
 const notificationRoutes = require("./notificationRoutes");
 
-
 // routes
 router.use("/api/auth", authRoutes);
 router.use("/api/categories", categoryRoutes);
