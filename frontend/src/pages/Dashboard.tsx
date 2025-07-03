@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Interest, QuestionsResponse } from "../utils/types";
 import { getAllCategories, getPopularQuestions, getRecentQuestions, getUserInterests } from "../utils/store";
 import MainLayout from "../components/wrappers/MainLayout";
-import SearchBar from "../features/searchBar/SearchBar";
+import SearchBar from "../features/dashboard/searchBar/SearchBar";
 import QuestionsSection from "../features/dashboard/questions/QuestionsSection";
 import MyInterests from "../features/dashboard/interests/MyInterests";
 
@@ -18,24 +18,11 @@ const Dashboard = () => {
     offset: 0,
   });
   const [interests, setInterests] = useState<Interest[]>([]);
-  const [hasMore, setHasMore] = useState(true);
   const [tab, setTab] = useState<'recent' | 'popular'>('recent');
   const [searchActive, setSearchActive] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
-  const refreshInterests = async () => {
-    setInterests(await getUserInterests());
-  };
-
-  const handleLikeQuestion = (questionId: number, hasLiked: boolean, likeCount: number) => {
-    setQuestions(prev => ({
-      ...prev,
-      questions: prev.questions.map(q =>
-        q.id === questionId ? { ...q, hasLiked, likeCount } : q
-      ),
-    }));
-  };
-
-  const handleQuestionUpdated = (updatedQuestion: Partial<QuestionsResponse> & { id: number }) => {
+  const handleQuestionUpdate = (updatedQuestion: Partial<QuestionsResponse> & { id: number }) => {
     setQuestions(prev => ({
       ...prev,
       questions: prev.questions.map(q =>
@@ -44,12 +31,36 @@ const Dashboard = () => {
     }));
   };
 
-  const handleQuestionDeleted = (deletedId: number) => {
+  const handleQuestionDelete = (deletedId: number) => {
     setQuestions(prev => ({
       ...prev,
       questions: prev.questions.filter(q => q.id !== deletedId),
     }));
   };
+
+  const handleQuestionLike = (questionId: number, hasLiked: boolean, likeCount: number) => {
+    setQuestions(prev => ({
+      ...prev,
+      questions: prev.questions.map(q =>
+        q.id === questionId ? { ...q, hasLiked, likeCount } : q
+      ),
+    }));
+  };
+
+  const handleInterestUpdate = async () => {
+    setInterests(await getUserInterests());
+  };
+
+  const handleCommentCreate = (questionId: number) => {
+    setQuestions(prev => ({
+      ...prev,
+      questions: prev.questions.map(q =>
+        q.id === questionId
+          ? { ...q, commentCount: (q.commentCount ?? 0) + 1 }
+          : q
+      ),
+    }));
+  }
 
   // fetch categories and interest
   useEffect(() => {
@@ -65,7 +76,7 @@ const Dashboard = () => {
       }
     };
     fetchCategories();
-    refreshInterests();
+    handleInterestUpdate();
   }, []);
 
   // exit search mode and fetch questions when tabs change 
@@ -124,16 +135,17 @@ const Dashboard = () => {
             }),
           }}
           setQuestions={setQuestions}
+          onQuestionUpdate={handleQuestionUpdate}
+          onQuestionDelete={handleQuestionDelete}
+          onQuestionLike={handleQuestionLike}
           interests={interests}
           setInterests={setInterests}
-          onInterestsUpdated={refreshInterests}
-          onLikeQuestion={handleLikeQuestion}
-          onQuestionUpdated={handleQuestionUpdated}
-          onQuestionDeleted={handleQuestionDeleted}
-          searchActive={searchActive}
-          setSearchActive={setSearchActive}
+          onInterestUpdate={handleInterestUpdate}
+          onCommentCreate={handleCommentCreate}
           tab={tab}
           setTab={setTab}
+          searchActive={searchActive}
+          setSearchActive={setSearchActive}
           hasMore={hasMore}
           pageSize={PAGE_SIZE}
         />

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { Category, QuestionsResponse } from "../../utils/types";
-import { searchQuestions } from "../../utils/store";
+import { Category, QuestionsResponse } from "../../../utils/types";
+import { searchQuestions } from "../../../utils/store";
 
 type SearchBarProps = {
   pageSize: number;

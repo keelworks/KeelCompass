@@ -1,16 +1,18 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { FaRegThumbsUp, FaRegCommentDots } from 'react-icons/fa';
 import { formatDateTime } from '../../../utils/format';
 import { Comment, UserActionType } from '../../../utils/types';
 import { createUserCommentAction, deleteUserCommentAction, updateComment, deleteComment } from '../../../utils/store';
 import ThreeDotsMenu from '../../../components/ui/ThreeDotsMenu';
 
-function CommentItem({ comment, onCommentDeleted, openMenuId, setOpenMenuId }: {
+interface CommentItemProps {
   comment: Comment,
-  onCommentDeleted?: () => void
+  onCommentDelete?: () => void
   openMenuId: string | null,
   setOpenMenuId: (id: string | null) => void,
-}) {
+}
+
+function CommentItem({ comment, onCommentDelete, openMenuId, setOpenMenuId }: CommentItemProps) {
   const userId = Number(localStorage.getItem('userId'));
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -18,8 +20,46 @@ function CommentItem({ comment, onCommentDeleted, openMenuId, setOpenMenuId }: {
   const [likeCount, setLikeCount] = useState(typeof comment.likeCount === 'number' ? comment.likeCount : 0);
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState({ content: comment.content });
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  const handleLike = async () => {
+  const handleCommentEdit = () => {
+    if (editMode) {
+      setEditMode(false);
+    } else {
+      setEditMode(true);
+      setEditForm({ content: comment.content });
+    }
+    setOpenMenuId(null);
+  };
+
+  const handleCancelCommentEdit = () => {
+    setEditMode(false);
+    setEditForm({ content: comment.content });
+  };
+
+  const handleSubmitCommentEdit = async () => {
+    try {
+      await updateComment({ id: comment.id, content: editForm.content });
+      comment.content = editForm.content;
+      setEditMode(false);
+    } catch (err) {
+      alert('Failed to update comment.');
+    }
+  };
+
+  const handleCommentDelete = async () => {
+    if (!comment) return;
+    try {
+      await deleteComment({ id: comment.id });
+      if (onCommentDelete) onCommentDelete();
+      setOpenMenuId(null);
+    } catch (err) {
+      alert('Failed to delete comment.');
+      setOpenMenuId(null);
+    }
+  };
+
+  const handleCommentLike = async () => {
     const prevLiked = liked;
     setLiked(!prevLiked);
     setLikeCount(prev => prev + (prevLiked ? -1 : 1));
@@ -36,46 +76,24 @@ function CommentItem({ comment, onCommentDeleted, openMenuId, setOpenMenuId }: {
     }
   };
 
-  const handleEditComment = () => {
-    if (editMode) {
-      setEditMode(false);
-    } else {
-      setEditMode(true);
-      setEditForm({ content: comment.content });
-    }
-    setOpenMenuId(null);
-  };
-
-  const handleCancelEdit = () => {
-    setEditMode(false);
-    setEditForm({ content: comment.content });
-  };
-
-  const handleSubmitEdit = async () => {
-    try {
-      await updateComment({ id: comment.id, content: editForm.content });
-      comment.content = editForm.content;
-      setEditMode(false);
-    } catch (err) {
-      alert('Failed to update comment.');
-    }
-  };
-
-  const handleDeleteComment = async () => {
-    try {
-      await deleteComment({ id: comment.id });
-      setOpenMenuId(null);
-      if (onCommentDeleted) onCommentDeleted();
-    } catch (err) {
-      alert('Failed to delete comment.');
-      setOpenMenuId(null);
-    }
-  };
-
   const handleReportComment = () => {
     setOpenMenuId(null);
     alert('Reported!');
   };
+
+  // close ThreeDotsMenu when clicking outside menu but inside QuestionDetails
+  useEffect(() => {
+    if (!openMenuId || openMenuId !== `comment-menu-${comment.id}`) return;
+    function handleDocClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener('mousedown', handleDocClick);
+    return () => {
+      document.removeEventListener('mousedown', handleDocClick);
+    };
+  }, [openMenuId, setOpenMenuId, comment.id]);
 
   return (
     <div className="w-full bg-gray-100 rounded-lg px-4 py-3 mb-3 shadow-sm">
@@ -88,16 +106,16 @@ function CommentItem({ comment, onCommentDeleted, openMenuId, setOpenMenuId }: {
           </div>
 
           {/* Menu */}
-          <div className="relative">
+          <div className="relative" ref={menuRef}>
             <ThreeDotsMenu
               menuRef={menuRef}
+              menuId={`comment-menu-${comment.id}`}
               openMenuId={openMenuId}
               setOpenMenuId={setOpenMenuId}
-              menuId={`comment-menu-${comment.id}`}
-              userId={userId}
               handleReport={handleReportComment}
-              handleEdit={handleEditComment}
-              handleDelete={handleDeleteComment}
+              handleEdit={handleCommentEdit}
+              handleDelete={() => setShowDeleteConfirmation(true)}
+              userId={userId}
               comment={comment}
             />
           </div>
@@ -113,8 +131,8 @@ function CommentItem({ comment, onCommentDeleted, openMenuId, setOpenMenuId }: {
               rows={2}
             />
             <div className="flex gap-2 justify-end">
-              <button className="px-3 py-1 bg-gray-200 rounded" onClick={handleCancelEdit}>Cancel</button>
-              <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={handleSubmitEdit}>Save</button>
+              <button className="px-3 py-1 bg-gray-200 rounded" onClick={handleCancelCommentEdit}>Cancel</button>
+              <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={handleSubmitCommentEdit}>Save</button>
             </div>
           </div>
         ) : (
@@ -125,7 +143,7 @@ function CommentItem({ comment, onCommentDeleted, openMenuId, setOpenMenuId }: {
 
         {/* Likes */}
         <div className="flex items-center justify-end gap-6 mt-3">
-          <div className={`flex items-center text-sm cursor-pointer select-none ${liked ? 'text-blue-600' : 'text-gray-600'}`} onClick={handleLike}>
+          <div className={`flex items-center text-sm cursor-pointer select-none ${liked ? 'text-blue-600' : 'text-gray-600'}`} onClick={handleCommentLike}>
             <FaRegThumbsUp className="mr-1" />
             {typeof likeCount === 'number' && !isNaN(likeCount) ? likeCount : 0} Like
           </div>
@@ -135,6 +153,25 @@ function CommentItem({ comment, onCommentDeleted, openMenuId, setOpenMenuId }: {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50" >
+          <div className="bg-white p-6 rounded shadow-md max-w-sm w-full" >
+            <h2 className="text-lg font-semibold mb-4" >
+              Are you sure you want to delete this comment?
+            </h2>
+            <div className="flex justify-end space-x-2">
+              <button onClick={() => setShowDeleteConfirmation(false)} className="px-3 py-1 bg-gray-200 rounded" >
+                Cancel
+              </button>
+              <button onClick={handleCommentDelete} className="px-3 py-1 bg-red-500 text-white rounded" >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

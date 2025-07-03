@@ -5,21 +5,23 @@ import { Attachment, Interest, QuestionDetail, UserActionType } from '../../../u
 import { getQuestion, createUserQuestionAction, deleteUserQuestionAction, createInterest, deleteInterest, updateQuestion, deleteQuestion } from '../../../utils/store';
 import ThreeDotsMenu from '../../../components/ui/ThreeDotsMenu';
 import CommentItem from './CommentItem';
-import CommentBox from './CommentInput';
+import CommentCreate from './CommentCreate';
 
 interface QuestionDetailsProps {
   questionId: number;
+  onQuestionUpdate?: (updatedQuestion: { id: number; title: string; description: string }) => void;
+  onQuestionDelete?: (deletedId: number) => void;
+  onQuestionLike: (questionId: number, hasLiked: boolean, likeCount: number) => void;
   interests: Interest[];
   setInterests: (interests: Interest[]) => void;
-  onInterestsUpdated: () => void;
-  onLikeQuestion: (questionId: number, hasLiked: boolean, likeCount: number) => void;
-  onQuestionUpdated?: (updatedQuestion: { id: number; title: string; description: string }) => void;
-  onQuestionDeleted?: (deletedId: number) => void;
+  onInterestsUpdate: () => void;
+  onCommentCreate: (questionId: number) => void;
   onClose: () => void;
 }
 
-function QuestionDetails({ questionId, onClose, interests, setInterests, onInterestsUpdated, onLikeQuestion, onQuestionUpdated, onQuestionDeleted }: QuestionDetailsProps) {
+function QuestionDetails({ questionId, onQuestionUpdate, onQuestionDelete, onQuestionLike, interests, setInterests, onInterestsUpdate, onCommentCreate, onClose }: QuestionDetailsProps) {
   const userId = Number(localStorage.getItem('userId'));
+  const modalRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const [question, setQuestion] = useState<QuestionDetail | null>(null);
@@ -60,57 +62,9 @@ function QuestionDetails({ questionId, onClose, interests, setInterests, onInter
       setQuestion(null);
       setAttachment(null);
     }
-  }
+  } 
 
-  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setAttachment(file);
-  };
-
-  const handleLikeQuestion = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!question) return;
-    const newLiked = !question.hasLiked;
-    const newLikes = question.likeCount + (question.hasLiked ? -1 : 1);
-    setQuestion({
-      ...question,
-      hasLiked: newLiked,
-      likeCount: newLikes,
-    });
-    onLikeQuestion(question.id, newLiked, newLikes);
-    try {
-      if (!question.hasLiked) {
-        await createUserQuestionAction({ questionId: question.id, actionType: UserActionType.Like });
-      } else {
-        await deleteUserQuestionAction({ questionId: question.id, actionType: UserActionType.Like });
-      }
-    } catch (error) {
-      alert('Failed to update like status.');
-    }
-  }
-
-  const handleBookmarkQuestion = async (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    if (!isInterested) {
-      try {
-        const newInterest: Interest = await createInterest({ questionId: questionId });
-        setInterests([...interests, newInterest]);
-      } catch (error) {
-        alert("Failed to bookmark question.");
-      }
-    } else {
-      if (interestId == null) return;
-      try {
-        await deleteInterest({ id: interestId });
-        setInterests(interests.filter(i => i.id !== interestId));
-      } catch (error) {
-        alert("Failed to remove bookmark.");
-      }
-    }
-    onInterestsUpdated();
-  }
-
-  const handleEditQuestion = () => {
+  const handleQuestionEdit = () => {
     if (editMode) {
       setEditMode(false);
     } else if (question) {
@@ -119,13 +73,13 @@ function QuestionDetails({ questionId, onClose, interests, setInterests, onInter
     }
   }
 
-  const handleCancelEditQuestion = () => {
+  const handleCancelQuestionEdit= () => {
     setEditMode(false);
     setEditForm({ title: '', description: '' });
     setAttachment(question?.attachment ? attachmentToFile(question.attachment) : null);
   };
 
-  const handleSubmitEditQuestion = async () => {
+  const handleSubmitQuestionEdit = async () => {
     if (!question) return;
     try {
       if (attachment && attachment.size > 10 * 1024 * 1024) {
@@ -143,27 +97,81 @@ function QuestionDetails({ questionId, onClose, interests, setInterests, onInter
       setEditMode(false);
       setAttachment(null);
       fetchQuestion();
-      if (onQuestionUpdated) onQuestionUpdated({ id: question.id, title: editForm.title, description: editForm.description });
+      if (onQuestionUpdate) onQuestionUpdate({ id: question.id, title: editForm.title, description: editForm.description });
     } catch (err) {
       alert('Failed to update question.');
     }
   }
 
-  const handleDeleteQuestion = async () => {
+  const handleQuestionDelete = async () => {
     if (!question) return;
     try {
       await deleteQuestion({ id: question.id });
-      if (onQuestionDeleted) onQuestionDeleted(question.id);
+      if (onQuestionDelete) onQuestionDelete(question.id);
       onClose();
     } catch (err) {
       alert('Failed to delete question.');
     }
   }
 
+  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setAttachment(file);
+  };
+
+  const handleQuestionLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!question) return;
+    const newLiked = !question.hasLiked;
+    const newLikes = question.likeCount + (question.hasLiked ? -1 : 1);
+    setQuestion({
+      ...question,
+      hasLiked: newLiked,
+      likeCount: newLikes,
+    });
+    onQuestionLike(question.id, newLiked, newLikes);
+    try {
+      if (!question.hasLiked) {
+        await createUserQuestionAction({ questionId: question.id, actionType: UserActionType.Like });
+      } else {
+        await deleteUserQuestionAction({ questionId: question.id, actionType: UserActionType.Like });
+      }
+    } catch (error) {
+      alert('Failed to update like status.');
+    }
+  }
+
+  const handleQuestionInterest = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!isInterested) {
+      try {
+        const newInterest: Interest = await createInterest({ questionId: questionId });
+        setInterests([...interests, newInterest]);
+      } catch (error) {
+        alert("Failed to bookmark question.");
+      }
+    } else {
+      if (interestId == null) return;
+      try {
+        await deleteInterest({ id: interestId });
+        setInterests(interests.filter(i => i.id !== interestId));
+      } catch (error) {
+        alert("Failed to remove bookmark.");
+      }
+    }
+    onInterestsUpdate();
+  }
+
+  const handleCommentCreate = (questionId: number) => {
+    fetchQuestion();
+    onCommentCreate(questionId);
+  }
+
   const handleReportQuestion = () => {
     console.log('Report clicked')
   }
 
+  // fetch question on mount
   useEffect(() => {
     if (typeof questionId !== 'number' || isNaN(questionId)) {
       console.warn('QuestionDetails: Invalid questionId', questionId);
@@ -172,10 +180,29 @@ function QuestionDetails({ questionId, onClose, interests, setInterests, onInter
     fetchQuestion();
   }, [questionId]);
 
+  useEffect(() => {
+    if (!openMenuId) return;
+    function handleDocClick(e: MouseEvent) {
+      if (
+        modalRef.current &&
+        modalRef.current.contains(e.target as Node) &&
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node)
+      ) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener('mousedown', handleDocClick);
+    return () => {
+      document.removeEventListener('mousedown', handleDocClick);
+    };
+  }, [openMenuId, setOpenMenuId, menuRef]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black bg-opacity-30 cursor-auto" style={{ zIndex: 49 }} onClick={e => { e.stopPropagation(); onClose(); }}></div>
       <div
+        ref={modalRef}
         className="relative z-50 p-6 flex flex-col items-center space-y-4 overflow-y-auto max-h-[90vh] cursor-auto"
         style={{
           width: '676px',
@@ -183,7 +210,6 @@ function QuestionDetails({ questionId, onClose, interests, setInterests, onInter
           borderRadius: '7px',
           boxShadow: '0px 6px 18px 0px #442756',
         }}
-        onClick={e => e.stopPropagation()}
       >
         {/* Question Header */}
         {question && (
@@ -193,9 +219,9 @@ function QuestionDetails({ questionId, onClose, interests, setInterests, onInter
               menuId={`question-${question.id}`}
               openMenuId={openMenuId}
               setOpenMenuId={setOpenMenuId}
-              handleBookmark={handleBookmarkQuestion}
+              handleInterest={handleQuestionInterest}
               handleReport={handleReportQuestion}
-              handleEdit={handleEditQuestion}
+              handleEdit={handleQuestionEdit}
               handleDelete={() => setShowDeleteConfirmation(true)}
               userId={userId}
               question={question}
@@ -308,10 +334,10 @@ function QuestionDetails({ questionId, onClose, interests, setInterests, onInter
               {/* Question Edit Buttons */}
               {editMode && (
                 <div className="flex justify-end gap-2 mt-2">
-                  <button className="px-3 py-1 bg-gray-200 rounded" onClick={handleCancelEditQuestion} >
+                  <button className="px-3 py-1 bg-gray-200 rounded" onClick={handleCancelQuestionEdit} >
                     Cancel
                   </button>
-                  <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={handleSubmitEditQuestion} >
+                  <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={handleSubmitQuestionEdit} >
                     Save
                   </button>
                 </div>
@@ -331,7 +357,7 @@ function QuestionDetails({ questionId, onClose, interests, setInterests, onInter
                   )}
                 </div>
                 <div className="flex items-center space-x-4">
-                  <div className={`flex items-center text-sm select-none ${question.hasLiked ? 'text-blue-600' : 'text-gray-600'}`} onClick={handleLikeQuestion} style={{ cursor: 'pointer' }} >
+                  <div className={`flex items-center text-sm select-none ${question.hasLiked ? 'text-blue-600' : 'text-gray-600'}`} onClick={handleQuestionLike} style={{ cursor: 'pointer' }} >
                     {question.hasLiked ? <FaThumbsUp className="mr-1" /> : <FaRegThumbsUp className="mr-1" />}
                     {question.likeCount} Likes
                   </div>
@@ -351,7 +377,7 @@ function QuestionDetails({ questionId, onClose, interests, setInterests, onInter
                     comment={comment}
                     openMenuId={openMenuId}
                     setOpenMenuId={setOpenMenuId}
-                    onCommentDeleted={fetchQuestion}
+                    onCommentDelete={fetchQuestion}
                   />
                 ))}
               </div>
@@ -359,9 +385,12 @@ function QuestionDetails({ questionId, onClose, interests, setInterests, onInter
           </>
         )}
 
-        {/* Question Comment Box */}
+        {/* Create Comment */}
         <div className="w-full flex justify-center mt-6">
-          <CommentBox questionId={questionId} onCommentAdded={fetchQuestion} />
+          <CommentCreate
+            questionId={questionId}
+            onCommentCreate={handleCommentCreate}
+          />
         </div>
       </div>
 
@@ -370,13 +399,13 @@ function QuestionDetails({ questionId, onClose, interests, setInterests, onInter
         <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50" >
           <div className="bg-white p-6 rounded shadow-md max-w-sm w-full" >
             <h2 className="text-lg font-semibold mb-4" >
-              Are you sure you want to delete this post?
+              Are you sure you want to delete this question?
             </h2>
             <div className="flex justify-end space-x-2">
               <button onClick={() => setShowDeleteConfirmation(false)} className="px-3 py-1 bg-gray-200 rounded" >
                 Cancel
               </button>
-              <button onClick={handleDeleteQuestion} className="px-3 py-1 bg-red-500 text-white rounded" >
+              <button onClick={handleQuestionDelete} className="px-3 py-1 bg-red-500 text-white rounded" >
                 Delete
               </button>
             </div>

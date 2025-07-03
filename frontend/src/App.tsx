@@ -2,7 +2,7 @@ import { Navigate, Route, Routes, Outlet } from "react-router-dom";
 import Auth from "./pages/Auth";
 import AuthGuard from "./pages/AuthGuard";
 import Dashboard from "./pages/Dashboard";
-import CreateQuestionDashboard from "./pages/CreateQuestion";
+import QuestionCreate from "./pages/QuestionCreate";
 import QnA from "./pages/QnA";
 import Fallback from "./pages/Fallback";
 
@@ -17,7 +17,7 @@ function App() {
       <Route element={<AuthGuard><Outlet /></AuthGuard>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/qna" element={<QnA />} />
-        <Route path="/questions/new" element={<CreateQuestionDashboard />} />
+        <Route path="/questions/new" element={<QuestionCreate />} />
       </Route>
       <Route path="*" element={<Fallback />} />
     </Routes>

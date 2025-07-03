@@ -4,7 +4,7 @@ import { FaFileAlt } from "react-icons/fa";
 import { Category } from "../utils/types";
 import EmojiPicker from "emoji-picker-react";
 
-function CreateQuestion() {
+function QuestionCreate() {
   const navigate = useNavigate();
 
   const emojiPickerRef = useRef<HTMLDivElement | null>(null);
@@ -342,4 +342,4 @@ function CreateQuestion() {
   );
 }
 
-export default CreateQuestion;
+export default QuestionCreate;

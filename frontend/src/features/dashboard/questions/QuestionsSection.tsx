@@ -7,21 +7,22 @@ import QuestionDetails from "./QuestionDetails";
 interface QuestionsSectionProps {
   questions: QuestionsResponse;
   setQuestions: (questions: QuestionsResponse) => void;
+  onQuestionUpdate: (updatedQuestion: Partial<QuestionListItem> & { id: number }) => void;
+  onQuestionDelete: (deletedId: number) => void;
+  onQuestionLike: (questionId: number, hasLiked: boolean, likeCount: number) => void;
   interests: Interest[];
   setInterests: (interests: Interest[]) => void;
-  onInterestsUpdated: () => void;
-  onLikeQuestion: (questionId: number, hasLiked: boolean, likeCount: number) => void;
-  onQuestionUpdated: (updatedQuestion: Partial<QuestionListItem> & { id: number }) => void;
-  onQuestionDeleted: (deletedId: number) => void;
-  searchActive: boolean;
-  setSearchActive: (active: boolean) => void;
+  onInterestUpdate: () => void;
+  onCommentCreate: (questionId: number) => void;
   tab: 'recent' | 'popular';
   setTab: (tab: 'recent' | 'popular') => void;
+  searchActive: boolean;
+  setSearchActive: (active: boolean) => void;
   hasMore: boolean;
   pageSize: number;
 }
 
-function QuestionsSection({ questions, setQuestions, interests, setInterests, onInterestsUpdated, onLikeQuestion, onQuestionUpdated, onQuestionDeleted, searchActive, setSearchActive, tab, setTab, hasMore, pageSize }: QuestionsSectionProps) {
+function QuestionsSection({ questions, setQuestions, onQuestionUpdate, onQuestionDelete, onQuestionLike, interests, setInterests, onInterestUpdate, onCommentCreate, tab, setTab, searchActive, setSearchActive, hasMore, pageSize }: QuestionsSectionProps) {
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(pageSize);
 
@@ -82,14 +83,14 @@ function QuestionsSection({ questions, setQuestions, interests, setInterests, on
         <p>No posts found.</p>
       ) : (
         <div className="space-y-4">
-          {questions.questions.slice(0, visibleCount).map(q => (
+          {questions.questions.slice(0, visibleCount).map(question => (
             <QuestionItem
-              key={q.id}
-              questionItem={q}
+              key={question.id}
+              question={question}
+              onQuestionLike={onQuestionLike}
               interests={interests}
               setInterests={setInterests}
-              onInterestsUpdated={onInterestsUpdated}
-              onLikeQuestion={onLikeQuestion}
+              onInterestUpdate={onInterestUpdate}
               setSelectedQuestionId={setSelectedQuestionId}
             />
           ))}
@@ -110,12 +111,13 @@ function QuestionsSection({ questions, setQuestions, interests, setInterests, on
       {typeof selectedQuestionId === 'number' && !isNaN(selectedQuestionId) && (
         <QuestionDetails
           questionId={selectedQuestionId}
+          onQuestionUpdate={onQuestionUpdate}
+          onQuestionDelete={onQuestionDelete}
+          onQuestionLike={onQuestionLike}
           interests={interests}
           setInterests={setInterests}
-          onInterestsUpdated={onInterestsUpdated}
-          onLikeQuestion={onLikeQuestion}
-          onQuestionUpdated={onQuestionUpdated}
-          onQuestionDeleted={onQuestionDeleted}
+          onInterestsUpdate={onInterestUpdate}
+          onCommentCreate={onCommentCreate}
           onClose={() => setSelectedQuestionId(null)}
         />
       )}

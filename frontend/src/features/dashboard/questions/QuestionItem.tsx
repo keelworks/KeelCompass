@@ -6,19 +6,19 @@ import { UserActionType, QuestionListItem, Interest } from "../../../utils/types
 import { createUserQuestionAction, deleteUserQuestionAction, createInterest, deleteInterest } from "../../../utils/store";
 
 interface QuestionItemProps {
-  questionItem: QuestionListItem;
+  question: QuestionListItem;
+  onQuestionLike: (questionId: number, hasLiked: boolean, likeCount: number) => void;
   interests: Interest[];
   setInterests: (interests: Interest[]) => void;
-  onInterestsUpdated: () => void;
-  onLikeQuestion: (questionId: number, hasLiked: boolean, likeCount: number) => void;
+  onInterestUpdate: () => void;
   setSelectedQuestionId: (id: number | null) => void;
 }
 
-function QuestionItem({ questionItem, interests, setInterests, onInterestsUpdated, onLikeQuestion, setSelectedQuestionId }: QuestionItemProps) {
-  const { id, user, title, description, status, createdAt, hasLiked, likeCount, commentCount } = questionItem;
+function QuestionItem({ question, onQuestionLike, interests, setInterests, onInterestUpdate, setSelectedQuestionId }: QuestionItemProps) {
+  const { id, user, title, description, status, createdAt, hasLiked, likeCount, commentCount } = question;
 
-  const isInterested = questionItem.isInterested;
-  const interestId = questionItem.interestId;
+  const isInterested = question.isInterested;
+  const interestId = question.interestId;
 
   const renderDescription = () => {
     const text = description || '';
@@ -33,7 +33,7 @@ function QuestionItem({ questionItem, interests, setInterests, onInterestsUpdate
     e.stopPropagation();
     const newLiked = !hasLiked;
     const newLikes = likeCount + (hasLiked ? -1 : 1);
-    onLikeQuestion(id, newLiked, newLikes);
+    onQuestionLike(id, newLiked, newLikes);
     try {
       if (!hasLiked) {
         await createUserQuestionAction({ questionId: id, actionType: UserActionType.Like });
@@ -45,7 +45,7 @@ function QuestionItem({ questionItem, interests, setInterests, onInterestsUpdate
     }
   };
 
-  const handleBookmarkQuestion = async (e: React.MouseEvent) => {
+  const handleInterestQuestion = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isInterested) {
       try {
@@ -63,7 +63,7 @@ function QuestionItem({ questionItem, interests, setInterests, onInterestsUpdate
         alert("Failed to remove bookmark.");
       }
     }
-    onInterestsUpdated();
+    onInterestUpdate();
   }
 
   return (
@@ -82,7 +82,7 @@ function QuestionItem({ questionItem, interests, setInterests, onInterestsUpdate
               <span className="text-gray-500 text-xs">In Review</span>
             </span>
           )}
-          <button className="p-1 rounded hover:bg-gray-100" onClick={handleBookmarkQuestion} title="Bookmark" type="button">
+          <button className="p-1 rounded hover:bg-gray-100" onClick={handleInterestQuestion} title="Bookmark" type="button">
             {isInterested
               ? <FaBookmark className="text-blue-500" />
               : <FaRegBookmark className="text-gray-500" />}

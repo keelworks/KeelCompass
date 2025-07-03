@@ -2,7 +2,12 @@ import { useState } from "react";
 import { IoSend } from "react-icons/io5";
 import { createComment } from "../../../utils/store";
 
-function CommentInput({ questionId, onCommentAdded }: { questionId: number; onCommentAdded: () => void }) {
+interface CommentCreateProps {
+  questionId: number,
+  onCommentCreate: (questionId: number) => void
+}
+
+function CommentCreate({ questionId, onCommentCreate }: CommentCreateProps) {
   const [comment, setComment] = useState("");
 
   const handleSubmitComment = async () => {
@@ -10,7 +15,7 @@ function CommentInput({ questionId, onCommentAdded }: { questionId: number; onCo
     try {
       await createComment({ questionId, content: comment });
       setComment("");
-      onCommentAdded();
+      onCommentCreate(questionId);
     } catch (err) {
       alert("Failed to add comment.");
     }
@@ -65,4 +70,4 @@ function CommentInput({ questionId, onCommentAdded }: { questionId: number; onCo
   );
 };
 
-export default CommentInput;
+export default CommentCreate;
