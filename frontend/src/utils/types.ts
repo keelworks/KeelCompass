@@ -70,6 +70,7 @@ export interface Attachment {
 export interface Comment {
   id: number;
   user: { id: number; username: string };
+  parentId: number | null;
   content: string;
   createdAt: string;
   updatedAt?: string;

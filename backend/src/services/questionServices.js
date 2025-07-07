@@ -172,6 +172,7 @@ const getQuestion = async (userId, questionId) => {
       return {
         id: c.id,
         user: { id: c.user?.id, username: c.user?.username },
+        parentId: c.parent_id,
         content: c.content,
         createdAt: c.created_at,
         updatedAt: c.updated_at,

@@ -22,7 +22,7 @@ git clone git@github.com:keelworks/KeelCompass.git
 
 ### Running in Development Environment
 
-In development mode, the app connects to the local MySQL database on your computer.
+In development mode, the app connects to the local MySQL database on your computer. If you are a developer and the backend models have changed, you may need to reset the database to stay in sync (see [`backend/README.md`](backend/README.md) and scroll down to Resetting Database).
 
 1. Open a new terminal and activate the mysql shell using your username and password. If your username is root, the command is:
 
