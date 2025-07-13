@@ -1,17 +1,17 @@
 export enum UserType {
-  User = "user",
-  Facilitator = "facilitator"
+  User = 'user',
+  Facilitator = 'facilitator',
 }
 
 export enum QuestionStatus {
-  Pending = "pending",
-  Approved = "approved",
-  Rejected = "rejected"
+  Pending = 'pending',
+  Approved = 'approved',
+  Rejected = 'rejected',
 }
 
 export enum UserActionType {
-  Like = "like",
-  Report = "report"
+  Like = 'like',
+  Report = 'report',
 }
 
 // response for auth routes
@@ -70,13 +70,14 @@ export interface Attachment {
 export interface Comment {
   id: number;
   user: { id: number; username: string };
-  parentId: number | null;
   content: string;
   createdAt: string;
   updatedAt?: string;
   attachment?: Attachment | null;
   hasLiked: boolean;
   likeCount: number;
+  parent_id?: number | null;
+  replies?: Comment[];
 }
 
 // response for get interests
