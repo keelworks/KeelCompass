@@ -285,22 +285,15 @@ const updateQuestion = async (userId, questionId, title, description, attachment
 };
 
 // update question status (facilitator)
-// inputs: userId, questionId, status
-// outputs: questionId
-// CODE HERE THEN PUT CODE IN module.exports
-
-const updateQuestionStatus = async (userId, questionId, status) => {
+const updateQuestionStatus = async (questionId, status) => {
   try {
-    // Find the question
     const question = await Question.findByPk(questionId);
     if (!question) throw new HttpError(404, "Question not found");
 
-    // Optionally, check facilitator role here if not handled by middleware
-    // Update status
     question.status = status;
     await question.save();
 
-    logger.info(`Question ${questionId} status updated to ${status} by user ${userId}`);
+    logger.info(`Question ${questionId} status updated to ${status}`);
     return question.id;
   } catch (error) {
     logEverything(error, "questionServices");
