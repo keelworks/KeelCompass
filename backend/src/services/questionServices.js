@@ -343,9 +343,22 @@ const updateQuestion = async (userId, questionId, title, description, attachment
 };
 
 // update question status (facilitator)
-// inputs: userId, questionId, status
-// outputs: questionId
-// CODE HERE THEN PUT CODE IN module.exports
+const updateQuestionStatus = async (questionId, status) => {
+  try {
+    const question = await Question.findByPk(questionId);
+    if (!question) throw new HttpError(404, "Question not found");
+
+    question.status = status;
+    await question.save();
+
+    logger.info(`Question ${questionId} status updated to ${status}`);
+    return question.id;
+  } catch (error) {
+    logEverything(error, "questionServices");
+    if (error instanceof HttpError) throw error;
+    throw new HttpError(500, "Error updating question status");
+  }
+};
 
 // delete question by id
 const deleteQuestion = async (userId, questionId) => {
@@ -371,5 +384,6 @@ module.exports = {
   getQuestion,
   createQuestion,
   updateQuestion,
+  updateQuestionStatus,
   deleteQuestion,
 };

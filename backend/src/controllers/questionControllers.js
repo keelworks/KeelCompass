@@ -90,10 +90,16 @@ const updateQuestion = async (req, res, next) => {
 
 // update question status (facilitator)
 const updateQuestionStatus = async (req, res, next) => {
-// params: id
-// body: status
-// response: questionId
-// CODE HERE
+  try {
+    const questionId = req.params.id;
+    const { status } = req.body;
+
+    const updatedId = await questionService.updateQuestionStatus(questionId, status);
+    return res.status(200).json(updatedId);
+  } catch (error) {
+    logger.error(`Caught in updateQuestionStatus controller: ${error.message}`);
+    next(error);
+  }
 }
 
 // delete question by id
