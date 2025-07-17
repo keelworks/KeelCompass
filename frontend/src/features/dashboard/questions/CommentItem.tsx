@@ -48,10 +48,10 @@ function CommentItem({
  const [isReplying, setIsReplying] = useState(false);
  const [replyContent, setReplyContent] = useState('');
  const [showReplies, setShowReplies] = useState(false);
- const [replies, setReplies] = useState<Comment[]>(comment.replies || []);
+ 
  const isAuthor = comment.user.id === userId;
  const canReply = !isAuthor && level < 2; // Can't reply to own comment, max 2 levels
- const replyCount = replies.length;
+ const replyCount = (comment.replies || []).length;
 
 
  const handleCommentEdit = () => {
@@ -121,26 +121,12 @@ function CommentItem({
 
  const handleReply = async () => {
    if (!replyContent.trim()) return;
-   //console.log("inside reply");
-   //console.log('TOKEN:', localStorage.getItem('token'));
-
-
-   /*console.log('DEBUG: Sending reply data:', {
-     questionId: questionId,
-     content: replyContent,
-     parentId: comment.id,
-     commentIdType: typeof comment.id,
-     questionIdType: typeof questionId,
-   });*/
    try {
-     const result = await createReply({
+     await createReply({
        questionId: questionId,
        content: replyContent,
        parentId: comment.id,
      });
-   
-
-
      setReplyContent('');
      setIsReplying(false);
      setShowReplies(true); // Show replies after adding
@@ -245,7 +231,6 @@ function CommentItem({
                handleReport={handleReportComment}
                handleEdit={handleCommentEdit}
                handleDelete={() => setShowDeleteConfirmation(true)}
-               handleReply={canReply ? handleStartReply : undefined} // Add reply option
                userId={userId}
                comment={comment}
              />
@@ -359,6 +344,42 @@ function CommentItem({
        </div>
 
 
+       {/* Nested Replies */}
+       {level === 0 && showReplies && (comment.replies || []).length > 0 && (
+         <div className="space-y-2">
+           {(comment.replies || []).map((reply: Comment) => (
+             <div key={reply.id}>
+               <CommentItem
+                 comment={reply}
+                 openMenuId={openMenuId}
+                 setOpenMenuId={setOpenMenuId}
+                 onCommentDelete={onReplyAdded}
+                 questionId={questionId}
+                 level={1}
+                 onReplyAdded={onReplyAdded}
+               />
+               {/* Second Level Replies */}
+               {(reply.replies || []).length > 0 && (
+                 <div className="space-y-2">
+                   {(reply.replies || []).map((nestedReply: Comment) => (
+                     <CommentItem
+                       key={nestedReply.id}
+                       comment={nestedReply}
+                       openMenuId={openMenuId}
+                       setOpenMenuId={setOpenMenuId}
+                       onCommentDelete={onReplyAdded}
+                       questionId={questionId}
+                       level={2}
+                     />
+                   ))}
+                 </div>
+               )}
+             </div>
+           ))}
+         </div>
+       )}
+
+
        {/* Delete Confirmation Modal */}
        {showDeleteConfirmation && (
          <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
@@ -384,44 +405,6 @@ function CommentItem({
          </div>
        )}
      </div>
-
-
-     {/*  Nested Replies */}
-     {level === 0 && showReplies && replies.length > 0 && (
-       <div className="space-y-2">
-         {replies.map((reply) => (
-           <div key={reply.id}>
-             <CommentItem
-               comment={reply}
-               openMenuId={openMenuId}
-               setOpenMenuId={setOpenMenuId}
-               onCommentDelete={onReplyAdded}
-               questionId={questionId}
-               level={1}
-               onReplyAdded={onReplyAdded}
-             />
-
-
-             {/* Second Level Replies */}
-             {reply.replies && reply.replies.length > 0 && (
-               <div className="space-y-2">
-                 {reply.replies.map((nestedReply) => (
-                   <CommentItem
-                     key={nestedReply.id}
-                     comment={nestedReply}
-                     openMenuId={openMenuId}
-                     setOpenMenuId={setOpenMenuId}
-                     onCommentDelete={onReplyAdded}
-                     questionId={questionId}
-                     level={2}
-                   />
-                 ))}
-               </div>
-             )}
-           </div>
-         ))}
-       </div>
-     )}
    </div>
  );
 }

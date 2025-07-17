@@ -78,7 +78,7 @@ Fetch popular questions.
 - Auth: isUser
 - Request:
     - Params: None
-    - Query: count, offset
+    - Query: count: number, offset: number
     - Body: None
 - Response: 
 ```json
@@ -153,4 +153,69 @@ Fetch all pending questions.
 
 ### Auth
 
+#### POST /api/auth/register
+
+Register a new user.
+
+- Auth: None
+- Request:
+    - Params: None
+    - Query: None
+    - Body:
+```json
+{
+    "username": "string",
+    "email": "string",
+    "password": "string"
+}
+```
+- Response: 
+```json
+{
+    "id": number,
+    "role": "string",
+    "username": "string",
+    "email": "string",
+    "created_at": "string",
+    "updated_at": "string"
+}
+```
+
+<!-- ADD REST OF ENDPOINTS FOR AUTH -->
+
 ### Search
+
+#### POST /api/search
+
+Search for questions based on word matching in title or description.
+
+- Auth: isUser
+- Request:
+    - Params: None
+    - Query: None
+    - Body:
+```json
+{
+    "word": "string",
+    "count": number,
+    "offset": number
+}
+```
+- Response: 
+```json
+{
+  "questions": [
+    {
+      "id": number,
+      "user": { "username": "string" },
+      "title": "string",
+      "description": "string",
+      "status": "string",
+      "createdAt": "string",
+      "updatedAt": "string"
+    }
+  ],
+  "total": number,
+  "offset": number
+}
+```

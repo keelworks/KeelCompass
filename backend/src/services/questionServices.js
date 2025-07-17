@@ -132,10 +132,7 @@ const getPopularQuestions = async (userId, count = 10, offset = 0) => {
 };
 
 // get pending questions (facilitator)
-// inputs: userId, count, offset
-// outputs: { questions, total, offset }
-// CODE HERE THEN PUT CODE IN module.exports
-const getPendingQuestions=async(userId,count=10,offset=0) =>{
+const getPendingQuestions = async (count = 10, offset = 0) => {
   try {
     count = parseInt(count, 10);
     offset = parseInt(offset, 10);
@@ -370,8 +367,8 @@ const deleteQuestion = async (userId, questionId) => {
 module.exports = {
   getRecentQuestions,
   getPopularQuestions,
-  getQuestion,
   getPendingQuestions,
+  getQuestion,
   createQuestion,
   updateQuestion,
   deleteQuestion,

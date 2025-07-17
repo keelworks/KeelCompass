@@ -47,7 +47,6 @@ interface QuestionDetailsProps {
  onClose: () => void;
 }
 
-
 function QuestionDetails({
  questionId,
  onQuestionUpdate,

@@ -32,15 +32,13 @@ const getPopularQuestions = async (req, res, next) => {
 
 // get pending questions (facilitator)
 const getPendingQuestions = async (req, res, next) => {
-// query: count, offset
-// response: { questions, total, offset }
 try {
-    const userId = req.user?.id;
     const { count, offset } = req.query;
-    const result = await questionService.getPendingQuestions(userId, count, offset);
+
+    const result = await questionService.getPendingQuestions(count, offset);
     return res.status(200).json(result);
   } catch (error) {
-    logger.error('Caught in getPendingQuestions controller: ${error.message}');
+    logger.error(`Caught in getPendingQuestions controller: ${error.message}`);
     next(error);
   }
 };
