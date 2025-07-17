@@ -34,8 +34,16 @@ const getPopularQuestions = async (req, res, next) => {
 const getPendingQuestions = async (req, res, next) => {
 // query: count, offset
 // response: { questions, total, offset }
-// CODE HERE
-}
+try {
+    const userId = req.user?.id;
+    const { count, offset } = req.query;
+    const result = await questionService.getPendingQuestions(userId, count, offset);
+    return res.status(200).json(result);
+  } catch (error) {
+    logger.error('Caught in getPendingQuestions controller: ${error.message}');
+    next(error);
+  }
+};
   
 // get question by id
 const getQuestionById = async (req, res, next) => {

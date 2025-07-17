@@ -135,6 +135,67 @@ const getPopularQuestions = async (userId, count = 10, offset = 0) => {
 // inputs: userId, count, offset
 // outputs: { questions, total, offset }
 // CODE HERE THEN PUT CODE IN module.exports
+const getPendingQuestions=async(userId,count=10,offset=0) =>{
+  try {
+    count = parseInt(count, 10);
+    offset = parseInt(offset, 10);
+    if (isNaN(count) || count <= 0) count = 10;
+    if (isNaN(offset) || offset < 0) offset = 0;
+
+    const { count: totalCount, rows: questions } = await Question.findAndCountAll({
+      where: { status: 'pending' },
+      include: [
+        { model: User, as: "user", attributes: ["id", "username"] },
+        { model: UserQuestionAction, as: "userQuestionActions", attributes: ["user_id", "action_type"] },
+        { model: Attachment, as: "attachment", attributes: ["id", "file_name", "mime_type"] },
+        { model: Comment, as: "comments", attributes: ["id"] },
+        { model: Interest, as: "interests", attributes: ["id", "user_id"] },
+      ],
+      order: [["created_at", "DESC"]],
+      limit: count,
+      offset: offset,
+      distinct: true
+    });
+
+    const questionsWithCounts = questions.map(q => {
+      const uqas = Array.isArray(q.userQuestionActions) ? q.userQuestionActions : [];
+      const userInterest = Array.isArray(q.interests) ? q.interests.find(i => i.user_id === userId) : null;
+      const isInterested = !!userInterest;
+      const interestId = isInterested ? userInterest.id : null;
+      const hasLiked = uqas.some(a => a.action_type === "like" && a.user_id === userId);
+      const likeCount = uqas.filter(a => a.action_type === "like").length;
+      const comments = Array.isArray(q.comments) ? q.comments : [];
+      const commentCount = comments.length;
+      return {
+        id: q.id,
+        user: { username: q.user?.username },
+        title: q.title,
+        description: q.description,
+        status: q.status,
+        createdAt: q.created_at,
+        updatedAt: q.updated_at,
+        isInterested,
+        interestId,
+        hasLiked,
+        likeCount,
+        commentCount,
+      };
+    });
+
+    const nextOffset = offset + questionsWithCounts.length;
+    const resOffset = nextOffset >= totalCount ? -1 : nextOffset;
+    logger.info('Fetched ${questionsWithCounts.length} pending questions, totalCount: ${totalCount}, resOffset: ${resOffset}');
+    return {
+      questions: questionsWithCounts,
+      total: totalCount,
+      offset: resOffset,
+    };
+  } catch (error) {
+    logEverything(error, "questionServices");
+    if (error instanceof HttpError) throw error;
+    throw new HttpError(500, "Error fetching pending questions");
+  }
+};
 
 // get question by id
 const getQuestion = async (userId, questionId) => {
@@ -310,6 +371,7 @@ module.exports = {
   getRecentQuestions,
   getPopularQuestions,
   getQuestion,
+  getPendingQuestions,
   createQuestion,
   updateQuestion,
   deleteQuestion,
