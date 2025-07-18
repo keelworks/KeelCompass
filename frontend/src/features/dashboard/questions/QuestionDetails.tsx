@@ -187,7 +187,13 @@ function QuestionDetails({ questionId, onQuestionUpdate, onQuestionDelete, onQue
         modalRef.current &&
         modalRef.current.contains(e.target as Node) &&
         menuRef.current &&
-        !menuRef.current.contains(e.target as Node)
+        menuRef.current.contains(e.target as Node) // This condition was causing issues for clicks outside the menu but inside the modal
+      ) {
+        // Do nothing if click is inside the menu
+      } else if (
+        modalRef.current &&
+        modalRef.current.contains(e.target as Node) &&
+        !(menuRef.current && menuRef.current.contains(e.target as Node))
       ) {
         setOpenMenuId(null);
       }
@@ -197,6 +203,7 @@ function QuestionDetails({ questionId, onQuestionUpdate, onQuestionDelete, onQue
       document.removeEventListener('mousedown', handleDocClick);
     };
   }, [openMenuId, setOpenMenuId, menuRef]);
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -256,7 +263,7 @@ function QuestionDetails({ questionId, onQuestionUpdate, onQuestionDelete, onQue
                 </h3>
               )}
 
-              {/* Question Description */}
+              {/* Question Description - FIXED HERE */}
               {editMode ? (
                 <textarea
                   className="w-full mb-2 p-2 border rounded"
@@ -266,9 +273,10 @@ function QuestionDetails({ questionId, onQuestionUpdate, onQuestionDelete, onQue
                   rows={4}
                 />
               ) : (
-                <p className="text-sm text-[#616161] mb-2 inline">
-                  {question.description}
-                </p>
+                <div
+                  className="text-sm text-[#616161] mb-2 inline"
+                  dangerouslySetInnerHTML={{ __html: question.description }}
+                />
               )}
 
               {/* Question Attachment */}

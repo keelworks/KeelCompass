@@ -16,11 +16,40 @@ export default {
         },
       },
       colors: {
-        "custom-sidebar-hover-bg": "rgba(210, 238, 240, 1)", // Custom color
-        "custom-gradient": "rgba(0, 146, 156, 1)", // Gradient background
+        "custom-sidebar-hover-bg": "rgba(210, 238, 240, 1)",
+        "custom-gradient": "rgba(0, 146, 156, 1)",
       },
-      
+      typography: {
+        DEFAULT: {
+          css: {
+            ul: {
+              listStyleType: 'disc',
+              paddingLeft: '1.5em',
+              marginTop: '0.5em',
+              marginBottom: '0.5em',
+              li: {
+                marginTop: '0',
+                marginBottom: '0',
+                color: '#000000',
+              },
+            },
+            ol: {
+              listStyleType: 'decimal',
+              paddingLeft: '1.5em',
+              marginTop: '0.5em',
+              marginBottom: '0.5em',
+              li: {
+                marginTop: '0',
+                marginBottom: '0',
+                color: '#000000',
+              },
+            },
+          },
+        },
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 }

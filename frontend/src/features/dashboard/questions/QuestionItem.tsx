@@ -1,4 +1,3 @@
-
 import { FaRegThumbsUp, FaRegCommentDots, FaRegBookmark, FaBookmark } from "react-icons/fa";
 import { MdOutlineRateReview } from "react-icons/md";
 import { formatDate } from "../../../utils/format";
@@ -20,14 +19,22 @@ function QuestionItem({ question, onQuestionLike, interests, setInterests, onInt
   const isInterested = question.isInterested;
   const interestId = question.interestId;
 
+  // Function to strip HTML tags (you might need a utility for this, or a simple regex)
+  // For production, consider a more robust library like 'dompurify' for sanitization
+  // but for stripping, a simple regex is often sufficient if you control the input.
+  const stripHtmlTags = (html: string) => {
+    return html.replace(/<[^>]*>/g, '');
+  };
+
   const renderDescription = () => {
-    const text = description || '';
+    const rawText = description || '';
+    const plainText = stripHtmlTags(rawText); // Strip HTML tags
     const maxLen = 100;
-    if (text.length > maxLen) {
-      return text.slice(0, maxLen) + '...';
+    if (plainText.length > maxLen) {
+      return plainText.slice(0, maxLen) + '...';
     }
-    return text;
-  }
+    return plainText;
+  };
 
   const handleLikeQuestion = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -93,7 +100,7 @@ function QuestionItem({ question, onQuestionLike, interests, setInterests, onInt
       {/* Title */}
       <h3 className="text-lg font-semibold text-[#004466] leading-relaxed mb-2">{title}</h3>
 
-      {/* Description */}
+      {/* Description - Render plain text snippet */}
       <p className="text-base text-[#616161] leading-[1.5]">
         {renderDescription()}
       </p>

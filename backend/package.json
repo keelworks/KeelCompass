@@ -11,6 +11,11 @@
     "test": "cross-env NODE_ENV=testing node server.js"
   },
   "dependencies": {
+    "@tiptap/extension-link": "^2.25.0",
+    "@tiptap/extension-placeholder": "^2.25.0",
+    "@tiptap/extension-underline": "^2.25.0",
+    "@tiptap/react": "^2.25.0",
+    "@tiptap/starter-kit": "^2.25.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
@@ -21,7 +26,7 @@
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
     "mysql2": "^3.11.3",
-    "sequelize": "^6.37.3",
+    "sequelize": "^6.37.7",
     "winston": "^3.14.2"
   },
   "devDependencies": {

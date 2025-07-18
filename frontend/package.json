@@ -15,15 +15,18 @@
     "emoji-picker-react": "^4.12.2",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.511.0",
+    "quill": "^2.0.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.3.0",
     "react-markdown": "^10.1.0",
+    "react-quill": "^2.0.0",
     "react-router-dom": "^6.28.0",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
+    "@tailwindcss/typography": "^0.5.16",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
