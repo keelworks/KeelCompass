@@ -70,7 +70,7 @@ function QuestionDetails({
  const [editForm, setEditForm] = useState({ title: '', description: '' });
  const [showAllReplies, setShowAllReplies] = useState(false);
  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-
+  const [refreshKey, setRefreshKey] = useState(0);
 
  const currentInterest = interests.find((i) => i.question_id === questionId);
  const isInterested = !!currentInterest;
@@ -268,7 +268,13 @@ function QuestionDetails({
 
  const handleCommentCreate = (questionId: number) => {
    fetchQuestion();
+   setRefreshKey(prev => prev + 1);
    onCommentCreate(questionId);
+ };
+
+ const handleReplyAdded = () => {
+  fetchQuestion();
+  setRefreshKey(prev => prev + 1);
  };
 
 
@@ -525,13 +531,13 @@ function QuestionDetails({
                  : question.comments.slice(0, 2)
                ).map((comment) => (
                  <CommentItem
-                   key={comment.id}
+                   key={`${comment.id}-${refreshKey}`} 
                    comment={comment}
                    openMenuId={openMenuId}
                    setOpenMenuId={setOpenMenuId}
-                   onCommentDelete={fetchQuestion}
+                   onCommentDelete={handleReplyAdded}
                    questionId={questionId}
-                   onReplyAdded={() => fetchQuestion()}
+                   onReplyAdded={handleReplyAdded} 
                  />
                ))}
              </div>
