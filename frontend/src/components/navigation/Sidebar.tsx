@@ -1,92 +1,118 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { BsHouseDoor } from "react-icons/bs";
 import { FaBook } from "react-icons/fa";
 import { RiQuestionnaireLine } from "react-icons/ri";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import Logo from "../../assets/logo.png";
 
 function Sidebar() {
-  const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
   const menuItems = [
-    { name: "Dashboard", icon: <BsHouseDoor />, path: "/dashboard" },
-    { name: "Q&A Discussion", icon: <RiQuestionnaireLine />, path: "/qna" }
-
+    {
+      name: "Dashboard",
+      icon: <BsHouseDoor />,
+      path: "/dashboard",
+      disabled: false,
+    },
+    {
+      name: "Q&A Discussions",
+      icon: <RiQuestionnaireLine />,
+      path: "/qna",
+      disabled: true, // Disabled for now
+    },
   ];
 
-  // Only remove token on logout; keep userId for app-wide usage
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    navigate("/");
-  };
-
   return (
-    <div className={`flex flex-col ${collapsed ? "w-20" : "w-64"} h-screen bg-white shadow-md transition-all duration-300`}>
-      <div className="flex items-center px-4 py-4">
+    <div
+      className={`relative flex flex-col h-screen transition-all duration-300 bg-white shadow-md ${
+        collapsed ? "w-20" : "w-64"
+      }`}
+    >
+      {/* Collapse/Expand Button */}
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="absolute top-6 -right-3 z-10 bg-white border border-gray-300 rounded-full p-1 shadow"
+        aria-label="Toggle Sidebar"
+      >
+        {collapsed ? <FiChevronRight size={16} /> : <FiChevronLeft size={16} />}
+      </button>
+
+      {/* Logo and Title */}
+      <div
+        className={`flex items-center px-3 ${
+          collapsed ? "justify-center pt-6" : "pt-6 pl-4"
+        }`}
+      >
         <img
           src={Logo}
           alt="Logo"
-          onClick={() => setCollapsed(!collapsed)}
-          className="h-10 w-10 rounded-full flex-shrink-0 cursor-pointer hover:bg-gray-100 p-1 transition"
-          aria-label="Toggle Sidebar"
-        />{" "}
+          className="h-10 w-10 rounded-full cursor-pointer hover:bg-gray-100 p-1"
+        />
         {!collapsed && (
-          <div className="ml-4">
-            <h1 className="font-semibold text-lg">
+          <div className="ml-3">
+            <h1 className="text-[16px] font-semibold leading-5">
               <span className="text-red-950">Keel</span>
               <span className="text-custom-gradient">Compass</span>
             </h1>
-            <p className="text-gray-500 text-sm">Knowledge Base</p>
+            <p className="text-sm text-gray-500 leading-4 mt-1">
+              Knowledge Base
+            </p>
           </div>
         )}
       </div>
 
-      {/* Menu Section */}
-      <div className="flex-1">
-        {menuItems.map((item, index) => (
-          <Link
-            key={index}
-            to={item.path}
-            className={`flex items-center px-4 py-2 rounded-md mb-2 ${collapsed ? "justify-center" : ""
-              } ${location.pathname === item.path
-                ? "bg-custom-gradient text-white"
-                : "text-gray-700 hover:bg-custom-sidebar-hover-bg hover:text-teal-500"
+      {/* Menu Items */}
+      <div className="mt-6 flex-1 px-[12px]">
+        {menuItems.map((item, index) => {
+          const selected = location.pathname === item.path;
+          const isDisabled = item.disabled;
+
+          return (
+            <div
+              key={index}
+              className={`relative flex items-center rounded-md h-[44px] mb-2 transition-all ${
+                selected && !isDisabled
+                  ? "bg-custom-gradient text-white font-medium"
+                  : "text-[#525252] hover:text-teal-600 hover:bg-gray-100"
+              } ${collapsed ? "justify-center px-0" : "px-[12px]"} ${
+                isDisabled ? "opacity-50 pointer-events-none" : ""
               }`}
-          >
-            <span className="text-xl">{item.icon}</span>
-            {!collapsed && (
-              <span className="ml-4 text-sm font-medium">{item.name}</span>
-            )}
-          </Link>
-        ))}
+            >
+              <div
+                className={`flex items-center justify-center min-w-[44px] h-[44px] rounded-md ${
+                  collapsed ? "" : "mr-[8px]"
+                }`}
+              >
+                <span className="text-xl">{item.icon}</span>
+              </div>
+
+              {!collapsed && (
+                <span className="text-sm font-medium">{item.name}</span>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Divider */}
-      <div className="border-t border-gray-200 my-4"></div>
+      <div className="border-t border-gray-200 mx-[12px] my-[12px]" />
 
       {/* KeelLearn Section */}
-      <div className={`flex items-center px-4 py-2 ${collapsed ? "justify-center" : ""} text-gray-600 hover:text-purple-500`}>
-        <span className="text-xl">
-          <FaBook />
-        </span>
-        {!collapsed && (
-          <span className="ml-4 text-sm font-medium">
-            KeelLearn <span className="text-purple-500">↗</span>
-          </span>
-        )}
-      </div>
-
-      {/* Logout Button */}
-      <div className="mt-6 px-4 flex justify-center">
-        <button onClick={handleLogout} className="w-full max-w-[180px] border border-red-500 text-red-500 py-2 rounded-lg shadow-md transition-all duration-300 hover:bg-red-500 hover:text-white hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400">
-          Logout
-        </button>
+      <div className="flex justify-center pb-6 mt-3 mr-4">
+        <div className="flex items-center gap-2 text-gray-600 hover:text-purple-500">
+          <FaBook className="text-xl" />
+          {!collapsed && (
+            <span className="text-sm font-medium">
+              KeelLearn <span className="text-purple-500">↗</span>
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
-};
+}
 
 export default Sidebar;
