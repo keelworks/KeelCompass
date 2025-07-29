@@ -8,7 +8,11 @@ type SearchBarProps = {
   setSearchActive: (active: boolean) => void;
 };
 
-function SearchBar({ pageSize, setQuestions, setSearchActive }: SearchBarProps) {
+function SearchBar({
+  pageSize,
+  setQuestions,
+  setSearchActive,
+}: SearchBarProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -19,9 +23,7 @@ function SearchBar({ pageSize, setQuestions, setSearchActive }: SearchBarProps) 
   const handleCategoryChange = (id: number) => {
     setNoCategory(false);
     setSelectedCategories((prev) =>
-      prev.includes(id)
-        ? prev.filter((catId) => catId !== id)
-        : [...prev, id]
+      prev.includes(id) ? prev.filter((catId) => catId !== id) : [...prev, id]
     );
   };
 
@@ -69,7 +71,10 @@ function SearchBar({ pageSize, setQuestions, setSearchActive }: SearchBarProps) 
   // close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setDropdownOpen(false);
       }
     }
@@ -79,7 +84,13 @@ function SearchBar({ pageSize, setQuestions, setSearchActive }: SearchBarProps) 
 
   return (
     <>
-      <form className="max-w-4xl mx-auto" onSubmit={e => { e.preventDefault(); handleSearch(); }}>
+      <form
+        className="max-w-4xl mx-auto"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSearch();
+        }}
+      >
         <div className="flex w-full">
           <div className="relative items-center w-full bg-white flex px-1 py-1 rounded-lg border mx-auto">
             {/* Category Dropdown */}
@@ -87,50 +98,57 @@ function SearchBar({ pageSize, setQuestions, setSearchActive }: SearchBarProps) 
               <button
                 type="button"
                 onClick={() => setDropdownOpen((open) => !open)}
-                className="ml-2 mr-5 bg-white text-gray-600 text-sm rounded-lg border border-cyan-600 px-2 py-1 flex items-center space-x-2 focus:ring-cyan-600 focus:border-cyan-600"
+                className="ml-2 mr-5 flex items-center justify-between gap-2
+              px-2.5 py-1.5 w-[63px] h-[30px] bg-white border border-[#00929C1A] rounded-[3px]"
               >
-                <span>Categories</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className={`w-4 h-4 transform ${dropdownOpen ? "rotate-180" : ""}`}
-                  viewBox="0 0 10 6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M1 1l4 4 4-4" />
-                </svg>
+                <span className="text-gray-800 text-sm">All</span>
+                <div className="w-[18px] h-[18px] rounded-full bg-[#9BAAAB1A] flex items-center justify-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className={`w-[6.67px] h-[4px] transform ${
+                      dropdownOpen ? "rotate-180" : ""
+                    }`}
+                    viewBox="0 0 10 6"
+                    fill="none"
+                  >
+                    <path
+                      d="M1 1L5 5L9 1"
+                      stroke="#00929C"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
               </button>
 
-              {dropdownOpen && (
-                <div className="absolute mt-2 w-full bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-10">
-                  <label className="flex items-center space-x-2 py-1">
+              {/* {dropdownOpen && (
+              <div className="absolute mt-2 w-full bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-10">
+                <label className="flex items-center space-x-2 py-1">
+                  <input
+                    type="checkbox"
+                    value="no-category"
+                    checked={noCategory}
+                    onChange={handleNoCategoryChange}
+                    className="form-checkbox text-cyan-600 border-gray-300 focus:ring-cyan-600"
+                  />
+                  <span className="text-gray-600 text-sm">No Category</span>
+                </label>
+                {categories.map((category) => (
+                  <label key={category.id} className="flex items-center space-x-2 py-1">
                     <input
                       type="checkbox"
-                      value="no-category"
-                      checked={noCategory}
-                      onChange={handleNoCategoryChange}
+                      value={category.id}
+                      checked={selectedCategories.includes(category.id)}
+                      onChange={() => handleCategoryChange(category.id)}
+                      disabled={noCategory}
                       className="form-checkbox text-cyan-600 border-gray-300 focus:ring-cyan-600"
                     />
-                    <span className="text-gray-600 text-sm">No Category</span>
+                    <span className="text-gray-600 text-sm">{category.name}</span>
                   </label>
-                  {categories.map((category) => (
-                    <label key={category.id} className="flex items-center space-x-2 py-1">
-                      <input
-                        type="checkbox"
-                        value={category.id}
-                        checked={selectedCategories.includes(category.id)}
-                        onChange={() => handleCategoryChange(category.id)}
-                        disabled={noCategory}
-                        className="form-checkbox text-cyan-600 border-gray-300 focus:ring-cyan-600"
-                      />
-                      <span className="text-gray-600 text-sm">{category.name}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
+                ))}
+              </div>
+            )} */}
             </div>
 
             {/* Search input and button */}
@@ -151,7 +169,10 @@ function SearchBar({ pageSize, setQuestions, setSearchActive }: SearchBarProps) 
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
-            <button type="submit" className="bg-gray-200 hover:bg-cyan-600 transition-all text-cyan-600 hover:text-white text-sm rounded-lg px-5 py-2.5">
+            <button
+              type="submit"
+              className="bg-[#EFEFEF] shadow-[0px_1px_2px_0px_#0A0D120D] text-cyan-600 text-sm rounded-lg px-5 py-2.5 transition-all"
+            >
               Search
             </button>
           </div>
