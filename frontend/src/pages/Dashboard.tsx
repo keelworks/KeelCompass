@@ -121,23 +121,17 @@ const Dashboard = () => {
   }, [tab, questions.offset, searchActive]);
 
   return (
-    <MainLayout>
-      {/* <div className="col-span-2 flex flex-col h-full overflow-hidden"> */}
-      <div className="col-span-2 flex flex-col h-full overflow-hidden pt-0">
-        {/* Middle */}
-        <div
-          className="flex items-center justify-between mb-3"
-          style={{ height: "44px" }}
-        >
-          <div className="w-full">
-            <SearchBar
-              pageSize={PAGE_SIZE}
-              setQuestions={setQuestions}
-              setSearchActive={setSearchActive}
-            />
-          </div>
-        </div>
-
+    <MainLayout
+      searchBar={
+        <SearchBar
+          pageSize={PAGE_SIZE}
+          setQuestions={setQuestions}
+          setSearchActive={setSearchActive}
+        />
+      }
+    >
+      {/* Middle Column - Questions */}
+      <div className="col-span-2 flex flex-col h-full overflow-hidden">
         {/* QuestionsSection scrolls internally */}
         <div className="flex-1 overflow-hidden">
           <QuestionsSection
@@ -170,7 +164,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Right */}
+      {/* Right Column - My Interests */}
       <div className="col-span-1 flex flex-col">
         <div className="mb-8">
           <button
