@@ -1,4 +1,3 @@
-
 import { FaRegThumbsUp, FaRegCommentDots, FaRegBookmark, FaBookmark } from "react-icons/fa";
 import { MdOutlineRateReview } from "react-icons/md";
 import { formatDate } from "../../../utils/format";
@@ -67,8 +66,8 @@ function QuestionItem({ question, onQuestionLike, interests, setInterests, onInt
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col gap-2 cursor-pointer" onClick={() => setSelectedQuestionId(id)}>
-      <div className="flex items-center justify-between mb-2">
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-4 cursor-pointer hover:shadow-lg transition-shadow duration-200" onClick={() => setSelectedQuestionId(id)}>
+      <div className="flex items-center justify-between mb-3">
         {/* Username and Date */}
         <div className="flex items-center gap-2">
           <span className="font-semibold text-gray-900">{user.username}</span>
@@ -91,14 +90,14 @@ function QuestionItem({ question, onQuestionLike, interests, setInterests, onInt
       </div>
 
       {/* Title */}
-      <h3 className="text-lg font-semibold text-[#004466] leading-relaxed mb-2">{title}</h3>
+      <h3 className="text-lg font-semibold text-[#004466] leading-relaxed mb-3">{title}</h3>
 
       {/* Description */}
-      <p className="text-base text-[#616161] leading-[1.5]">
+      <p className="text-base text-[#616161] leading-[1.5] mb-4">
         {renderDescription()}
       </p>
 
-      <div className="flex justify-end mt-3 text-gray-600 text-sm">
+      <div className="flex justify-end text-gray-600 text-sm">
         {/* Likes */}
         <div className={`flex items-center mr-4 cursor-pointer select-none text-sm ${hasLiked ? 'text-blue-600' : 'text-gray-600'}`} onClick={handleLikeQuestion}>
           <FaRegThumbsUp className="mr-1" />

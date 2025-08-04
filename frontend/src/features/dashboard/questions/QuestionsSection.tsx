@@ -79,7 +79,7 @@ function QuestionsSection({
   }, [tab, questions.questions]);
 
   return (
-    <div className="shadow-md rounded-lg p-4 mb-6 bg-white w-full h-full flex flex-col overflow-hidden">
+    <div className="shadow-md rounded-lg p-4 mb-6 bg-gray-50 w-full h-full flex flex-col overflow-hidden">
       {/* Fixed Heading + Tabs */}
       <div className="mb-4 flex-shrink-0">
         <div className="flex items-center justify-between">

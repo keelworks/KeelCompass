@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDate } from '../../../utils/format';
 import { Interest } from '../../../utils/types';
-import InterestItem from "./InterestItem";
+import InterestItem from './InterestItem';
 
-interface MyInterstProps  {
+interface MyInterstProps {
   interests: Interest[];
 }
 
@@ -13,16 +13,18 @@ const MyInterests = ({ interests }: MyInterstProps) => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex flex-col h-full p-6 bg-white shadow-md rounded-lg" style={{ height: '680px' }}>
-        <h2 className="text-xl font-medium text-[#4A4A4A] uppercase tracking-wide mb-6">My Interests</h2>
-        
+      <div className="flex flex-col h-full p-6 bg-white shadow-md rounded-lg">
+        <h2 className="text-xl font-medium text-[#4A4A4A] uppercase tracking-wide mb-6">
+          My Interests
+        </h2>
+
         {/* UPDATED: Container with conditional scrolling */}
         <div className={`flex flex-col space-y-4 flex-grow`}>
           {interests.length > 0 ? (
             (showAll ? interests : interests.slice(0, 4)).map((interest) => (
               <InterestItem
-                key={interest.id} 
-                title={interest.question?.title || ""}
+                key={interest.id}
+                title={interest.question?.title || ''}
                 date={formatDate(interest.created_at)}
               />
             ))
@@ -45,9 +47,15 @@ const MyInterests = ({ interests }: MyInterstProps) => {
               </span>
               <div className="transition-transform duration-200 group-hover:scale-110">
                 {showAll ? (
-                  <ChevronUp size={16} className="transition-transform duration-200" />
+                  <ChevronUp
+                    size={16}
+                    className="transition-transform duration-200"
+                  />
                 ) : (
-                  <ChevronDown size={16} className="transition-transform duration-200" />
+                  <ChevronDown
+                    size={16}
+                    className="transition-transform duration-200"
+                  />
                 )}
               </div>
             </button>
