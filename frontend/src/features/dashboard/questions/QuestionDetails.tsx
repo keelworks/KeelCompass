@@ -44,6 +44,7 @@ interface QuestionDetailsProps {
  setInterests: (interests: Interest[]) => void;
  onInterestsUpdate: () => void;
  onCommentCreate: (questionId: number) => void;
+ onCommentDelete:(questionId:number)=>void;
  onClose: () => void;
 }
 
@@ -56,6 +57,7 @@ function QuestionDetails({
  setInterests,
  onInterestsUpdate,
  onCommentCreate,
+ onCommentDelete,
  onClose,
 }: QuestionDetailsProps) {
  const userId = Number(localStorage.getItem('userId'));
@@ -275,6 +277,7 @@ function QuestionDetails({
  const handleReplyAdded = () => {
   fetchQuestion();
   setRefreshKey(prev => prev + 1);
+  onCommentDelete(questionId);
  };
 
 

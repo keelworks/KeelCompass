@@ -38,6 +38,7 @@ function QuestionsSection({
   setInterests,
   onInterestUpdate,
   onCommentCreate,
+  onCommentDelete,
   tab,
   setTab,
   searchActive,
@@ -149,6 +150,7 @@ function QuestionsSection({
           setInterests={setInterests}
           onInterestsUpdate={onInterestUpdate}
           onCommentCreate={onCommentCreate}
+          onCommentDelete={onCommentDelete}
           onClose={() => setSelectedQuestionId(null)}
         />
       )}
