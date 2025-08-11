@@ -19,6 +19,8 @@ function App() {
         <Route path="/qna" element={<QnA />} />
         <Route path="/questions/new" element={<QuestionCreate />} />
       </Route>
+      
+      
       <Route path="*" element={<Fallback />} />
     </Routes>
   );
