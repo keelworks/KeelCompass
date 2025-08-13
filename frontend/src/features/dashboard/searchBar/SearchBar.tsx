@@ -122,33 +122,38 @@ function SearchBar({
                 </div>
               </button>
 
-              {/* {dropdownOpen && (
-              <div className="absolute mt-2 w-full bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-10">
-                <label className="flex items-center space-x-2 py-1">
-                  <input
-                    type="checkbox"
-                    value="no-category"
-                    checked={noCategory}
-                    onChange={handleNoCategoryChange}
-                    className="form-checkbox text-cyan-600 border-gray-300 focus:ring-cyan-600"
-                  />
-                  <span className="text-gray-600 text-sm">No Category</span>
-                </label>
-                {categories.map((category) => (
-                  <label key={category.id} className="flex items-center space-x-2 py-1">
+              {dropdownOpen && (
+                <div className="absolute mt-2 w-55 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-10">
+                  <label className="flex items-center space-x-2 py-1">
                     <input
                       type="checkbox"
-                      value={category.id}
-                      checked={selectedCategories.includes(category.id)}
-                      onChange={() => handleCategoryChange(category.id)}
-                      disabled={noCategory}
+                      value="no-category"
+                      checked={noCategory}
+                      onChange={handleNoCategoryChange}
                       className="form-checkbox text-cyan-600 border-gray-300 focus:ring-cyan-600"
                     />
-                    <span className="text-gray-600 text-sm">{category.name}</span>
+                    <span className="text-gray-600 text-sm">No Category</span>
                   </label>
-                ))}
-              </div>
-            )} */}
+                  {categories.map((category) => (
+                    <label
+                      key={category.id}
+                      className="flex items-center space-x-2 py-1"
+                    >
+                      <input
+                        type="checkbox"
+                        value={category.id}
+                        checked={selectedCategories.includes(category.id)}
+                        onChange={() => handleCategoryChange(category.id)}
+                        disabled={noCategory}
+                        className="form-checkbox text-cyan-600 border-gray-300 focus:ring-cyan-600"
+                      />
+                      <span className="text-gray-600 text-sm">
+                        {category.name}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Search input and button */}

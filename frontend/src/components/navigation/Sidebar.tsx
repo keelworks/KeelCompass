@@ -101,15 +101,24 @@ function Sidebar() {
       <div className="border-t border-gray-200 mx-[12px] my-[12px]" />
 
       {/* KeelLearn Section */}
-      <div className="flex justify-center pb-6 mt-3 mr-4">
-        <div className="flex items-center gap-2 text-gray-600 hover:text-purple-500">
-          <FaBook className="text-xl" />
-          {!collapsed && (
-            <span className="text-sm font-medium">
-              KeelLearn <span className="text-purple-500">↗</span>
-            </span>
-          )}
+      <div
+        className={`relative flex items-center rounded-md h-[44px] mb-2 transition-all text-[#525252]  hover:bg-gray-100 cursor-pointer ${
+          collapsed ? "justify-center px-0" : "px-[12px]"
+        }`}
+      >
+        <div
+          className={`flex items-center justify-center min-w-[44px] h-[44px] rounded-md ${
+            collapsed ? "" : "mr-[8px]"
+          }`}
+        >
+          <FaBook className="text-xl" style={{ color: "#865c90" }} />
         </div>
+
+        {!collapsed && (
+          <span className="text-sm font-medium">
+            KeelLearn <span>↗</span>
+          </span>
+        )}
       </div>
     </div>
   );
