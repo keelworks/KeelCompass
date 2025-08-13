@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Interest, QuestionsResponse } from '../utils/types';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Interest, QuestionsResponse } from "../utils/types";
 import {
   getAllCategories,
   getPopularQuestions,
   getRecentQuestions,
   getUserInterests,
-} from '../utils/store';
-import MainLayout from '../components/wrappers/MainLayout';
-import SearchBar from '../features/dashboard/searchBar/SearchBar';
-import QuestionsSection from '../features/dashboard/questions/QuestionsSection';
-import MyInterests from '../features/dashboard/interests/MyInterests';
+} from "../utils/store";
+import MainLayout from "../components/wrappers/MainLayout";
+import SearchBar from "../features/dashboard/searchBar/SearchBar";
+import QuestionsSection from "../features/dashboard/questions/QuestionsSection";
+import MyInterests from "../features/dashboard/interests/MyInterests";
 
 const PAGE_SIZE = 5;
 
@@ -23,7 +23,7 @@ const Dashboard = () => {
     offset: 0,
   });
   const [interests, setInterests] = useState<Interest[]>([]);
-  const [tab, setTab] = useState<'recent' | 'popular'>('recent');
+  const [tab, setTab] = useState<"recent" | "popular">("recent");
   const [searchActive, setSearchActive] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
@@ -87,13 +87,13 @@ const Dashboard = () => {
   // fetch categories and interest
   useEffect(() => {
     const fetchCategories = async () => {
-      const cached = localStorage.getItem('categories');
+      const cached = localStorage.getItem("categories");
       if (!cached) {
         try {
           const categories = await getAllCategories();
-          localStorage.setItem('categories', JSON.stringify(categories));
+          localStorage.setItem("categories", JSON.stringify(categories));
         } catch (err) {
-          console.error('Failed to fetch categories', err);
+          console.error("Failed to fetch categories", err);
         }
       }
     };
@@ -113,7 +113,7 @@ const Dashboard = () => {
     const fetchQuestions = async () => {
       const offset = questions.offset || 0;
       let data;
-      if (tab === 'popular') {
+      if (tab === "popular") {
         data = await getPopularQuestions({ count: PAGE_SIZE, offset });
       } else {
         data = await getRecentQuestions({ count: PAGE_SIZE, offset });
@@ -181,9 +181,11 @@ const Dashboard = () => {
         <div className="mb-8">
           <button
             className="w-full h-[48px] flex items-center justify-center gap-2 rounded-[8px]
-          bg-[#D2EEF0] text-[#007575] font-medium text-[16px] border border-[#B2E3E6]
-          shadow-[0px_8px_18px_0px_#26767B1A] hover:shadow-[4px_12px_22px_0px_#26767B29] transition-all duration-200"
-            onClick={() => navigate('/questions/new')}
+  bg-[#D2EEF0] text-[#007575] font-medium text-[16px] border border-[#B2E3E6]
+  shadow-[0px_8px_18px_0px_#26767B1A] hover:bg-[#BFE3E6] hover:shadow-[4px_12px_22px_0px_#26767B29]
+  active:bg-[#7ACFD4] active:border-[1.5px] active:border-[#B2E3E6]
+  disabled:bg-[#D2EEF0] disabled:text-[#A5D5D8] disabled:cursor-not-allowed"
+            onClick={() => navigate("/questions/new")}
           >
             <span className="text-[18px]">+</span> Ask Question
           </button>
