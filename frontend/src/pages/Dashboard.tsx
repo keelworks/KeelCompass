@@ -11,6 +11,7 @@ import MainLayout from "../components/wrappers/MainLayout";
 import SearchBar from "../features/dashboard/searchBar/SearchBar";
 import QuestionsSection from "../features/dashboard/questions/QuestionsSection";
 import MyInterests from "../features/dashboard/interests/MyInterests";
+import QuestionCreate from "../pages/QuestionCreate"; // adjust the path to where your file is
 
 const PAGE_SIZE = 5;
 
@@ -26,6 +27,7 @@ const Dashboard = () => {
   const [tab, setTab] = useState<"recent" | "popular">("recent");
   const [searchActive, setSearchActive] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [showAsk, setShowAsk] = useState(false);
 
   const handleQuestionUpdate = (
     updatedQuestion: Partial<QuestionsResponse> & { id: number }
@@ -145,34 +147,48 @@ const Dashboard = () => {
       <div className="col-span-2 flex flex-col h-full overflow-hidden">
         {/* QuestionsSection scrolls internally */}
         <div className="flex-1 overflow-hidden">
-          <QuestionsSection
-            questions={{
-              ...questions,
-              questions: questions.questions.map((q) => {
-                const found = interests.find((i) => i.question_id === q.id);
-                return {
-                  ...q,
-                  isInterested: !!found,
-                  interestId: found ? found.id : null,
-                };
-              }),
-            }}
-            setQuestions={setQuestions}
-            onQuestionUpdate={handleQuestionUpdate}
-            onQuestionDelete={handleQuestionDelete}
-            onQuestionLike={handleQuestionLike}
-            interests={interests}
-            setInterests={setInterests}
-            onInterestUpdate={handleInterestUpdate}
-            onCommentCreate={handleCommentCreate}
-            onCommentDelete={handleCommentDelete}
-            tab={tab}
-            setTab={setTab}
-            searchActive={searchActive}
-            setSearchActive={setSearchActive}
-            hasMore={hasMore}
-            pageSize={PAGE_SIZE}
-          />
+          {showAsk ? (
+            <QuestionCreate
+              // override navigate calls so it doesn't leave dashboard
+              navigate={(path: string) => {
+                if (path === "/dashboard") {
+                  setShowAsk(false);
+                  // optionally reload recent feed
+                  setTab("recent");
+                  setQuestions({ questions: [], count: PAGE_SIZE, offset: 0 });
+                }
+              }}
+            />
+          ) : (
+            <QuestionsSection
+              questions={{
+                ...questions,
+                questions: questions.questions.map((q) => {
+                  const found = interests.find((i) => i.question_id === q.id);
+                  return {
+                    ...q,
+                    isInterested: !!found,
+                    interestId: found ? found.id : null,
+                  };
+                }),
+              }}
+              setQuestions={setQuestions}
+              onQuestionUpdate={handleQuestionUpdate}
+              onQuestionDelete={handleQuestionDelete}
+              onQuestionLike={handleQuestionLike}
+              interests={interests}
+              setInterests={setInterests}
+              onInterestUpdate={handleInterestUpdate}
+              onCommentCreate={handleCommentCreate}
+              onCommentDelete={handleCommentDelete}
+              tab={tab}
+              setTab={setTab}
+              searchActive={searchActive}
+              setSearchActive={setSearchActive}
+              hasMore={hasMore}
+              pageSize={PAGE_SIZE}
+            />
+          )}
         </div>
       </div>
 
@@ -185,7 +201,7 @@ const Dashboard = () => {
   shadow-[0px_8px_18px_0px_#26767B1A] hover:bg-[#BFE3E6] hover:shadow-[4px_12px_22px_0px_#26767B29]
   active:bg-[#7ACFD4] active:border-[1.5px] active:border-[#B2E3E6]
   disabled:bg-[#D2EEF0] disabled:text-[#A5D5D8] disabled:cursor-not-allowed"
-            onClick={() => navigate("/questions/new")}
+            onClick={() => setShowAsk(true)}
           >
             <span className="text-[18px]">+</span> Ask Question
           </button>
