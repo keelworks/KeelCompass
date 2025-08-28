@@ -13,7 +13,6 @@ const QnA = () => {
     "Job Search",
     "Education",
     "KeelWorks",
-    "KCompass Help",
   ];
 
   const subcategories = ["Posted", "Bookmarked", "Drafts"];
