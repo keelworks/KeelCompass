@@ -1,27 +1,43 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaFileAlt } from "react-icons/fa";
 import { Category } from "../utils/types";
 import EmojiPicker from "emoji-picker-react";
+import { FiBold, FiItalic, FiUnderline, FiLink, FiList } from "react-icons/fi";
+import { BsListOl } from "react-icons/bs";
 
 function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
   const defaultNavigate = useNavigate();
   const finalNavigate = navigate || defaultNavigate;
 
+  // Refs
   const emojiPickerRef = useRef<HTMLDivElement | null>(null);
   const formattingPanelRef = useRef<HTMLDivElement | null>(null);
+  const descriptionEditableRef = useRef<HTMLDivElement | null>(null);
+  const savedRangeRef = useRef<Range | null>(null);
 
+  // State
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
-  const [showFormattingPanel, setShowFormattingPanel] =
-    useState<boolean>(false);
+  const [showFormattingPanel, setShowFormattingPanel] = useState<boolean>(false);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentError, setAttachmentError] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [showAllCategories, setShowAllCategories] = useState<boolean>(false);
 
+  // Active states for toolbar highlighting
+  const [activeFormatting, setActiveFormatting] = useState({
+    bold: false,
+    italic: false,
+    underline: false,
+    bullet: false,
+    number: false,
+    link: false,
+  });
+
+  // ---------- File attach ----------
   const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
@@ -38,34 +54,38 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     }
   };
 
+  // ---------- Categories ----------
   const handleCategoryClick = (category: Category) => {
-    setSelectedCategories((selectedCategories) =>
-      selectedCategories.includes(category)
-        ? selectedCategories.filter((c) => c.id !== category.id)
-        : [...selectedCategories, category]
+    setSelectedCategories((prev) =>
+      prev.some((c) => c.id === category.id)
+        ? prev.filter((c) => c.id !== category.id)
+        : [...prev, category]
     );
   };
 
+  // ---------- Cancel ----------
   const handleCancelCreateQuestion = () => {
     setTitle("");
     setDescription("");
+    if (descriptionEditableRef.current) descriptionEditableRef.current.innerHTML = "";
     setAttachment(null);
     setSelectedCategories([]);
     setShowAllCategories(false);
     setShowFormattingPanel(false);
-    navigate("/dashboard");
+    finalNavigate("/dashboard");
   };
 
+  // ---------- Submit ----------
   const handleSubmitCreateQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await import("../utils/store");
       await res.createQuestion({
         title,
-        description,
+        description: descriptionEditableRef.current?.innerHTML || "",
         attachment,
       });
-      navigate("/dashboard");
+      finalNavigate("/dashboard");
     } catch (err: any) {
       setAttachmentError(err?.message || "Failed to post question.");
     }
@@ -82,6 +102,205 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
       }
     }
   }, []);
+
+  // ---------- Initialize editor with an empty paragraph ----------
+  useEffect(() => {
+    const el = descriptionEditableRef.current;
+    if (!el) return;
+    if (!el.innerHTML || el.innerHTML === "<br>") {
+      el.innerHTML = "<p><br></p>";
+      const range = document.createRange();
+      range.selectNodeContents(el.firstChild as Node);
+      range.collapse(true);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+      savedRangeRef.current = range;
+    }
+  }, []);
+
+  function restoreRange() {
+    const sel = window.getSelection();
+    if (!sel || !savedRangeRef.current) return;
+    sel.removeAllRanges();
+    sel.addRange(savedRangeRef.current);
+  }
+
+  // ---------- Helpers for lists ----------
+  function closest<K extends keyof HTMLElementTagNameMap>(
+    el: Node | null,
+    tag: K
+  ): HTMLElementTagNameMap[K] | null {
+    while (el && el !== descriptionEditableRef.current) {
+      if ((el as HTMLElement).nodeName === tag.toUpperCase()) {
+        return el as HTMLElementTagNameMap[K];
+      }
+      el = (el as Node).parentNode as Node | null;
+    }
+    return null;
+  }
+
+  function unwrapList(li: HTMLLIElement) {
+    const list = li.parentElement as HTMLUListElement | HTMLOListElement;
+    const parent = list.parentNode!;
+    const frag = document.createDocumentFragment();
+    Array.from(list.children).forEach((child) => {
+      const p = document.createElement("p");
+      while (child.firstChild) p.appendChild(child.firstChild);
+      frag.appendChild(p);
+    });
+    parent.replaceChild(frag, list);
+  }
+
+  function toggleList(kind: "ul" | "ol") {
+    const host = descriptionEditableRef.current;
+    if (!host) return;
+
+    host.focus();
+    restoreRange();
+
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+
+    // If already inside a list, unwrap it (toggle off)
+    const currentLi = closest(range.startContainer, "LI") as HTMLLIElement | null;
+    const currentUl = closest(range.startContainer, "UL");
+    const currentOl = closest(range.startContainer, "OL");
+    if (currentLi && (currentUl || currentOl)) {
+      unwrapList(currentLi);
+      return;
+    }
+
+    // Otherwise, wrap selection (or caret) into a new list
+    const list = document.createElement(kind);
+    const li = document.createElement("li");
+
+    if (range.collapsed) {
+      li.appendChild(document.createTextNode(""));
+    } else {
+      const contents = range.cloneContents();
+      li.appendChild(contents);
+    }
+
+    list.appendChild(li);
+    range.deleteContents();
+    range.insertNode(list);
+
+    // place caret inside the new li
+    const newRange = document.createRange();
+    newRange.selectNodeContents(li);
+    newRange.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    savedRangeRef.current = newRange;
+  }
+
+  // ---------- Track which formatting is active ----------
+  const updateActiveFormattingOnSelection = useCallback(() => {
+    const res = {
+      bold: false,
+      italic: false,
+      underline: false,
+      bullet: false,
+      number: false,
+      link: false,
+    };
+
+    try {
+      res.bold = document.queryCommandState("bold");
+      res.italic = document.queryCommandState("italic");
+      res.underline = document.queryCommandState("underline");
+    } catch {
+      // ignore deprecated execCommand warnings
+    }
+
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const node = sel.focusNode;
+      res.bullet = !!closest(node, "UL");
+      res.number = !!closest(node, "OL");
+      res.link = !!closest(node, "A");
+    }
+
+    setActiveFormatting((prev) =>
+      JSON.stringify(prev) === JSON.stringify(res) ? prev : res
+    );
+  }, []);
+
+  // ---------- Apply formatting ----------
+  const applyFormatting = useCallback(
+    (
+      type:
+        | "bold"
+        | "italic"
+        | "underline"
+        | "bulletList"
+        | "numberedList"
+        | "link"
+    ) => {
+      const host = descriptionEditableRef.current;
+      if (!host) return;
+
+      host.focus();
+      restoreRange();
+
+      try {
+        switch (type) {
+          case "bulletList":
+            toggleList("ul");
+            break;
+          case "numberedList":
+            toggleList("ol");
+            break;
+          case "bold":
+            document.execCommand("bold");
+            break;
+          case "italic":
+            document.execCommand("italic");
+            break;
+          case "underline":
+            document.execCommand("underline");
+            break;
+          case "link": {
+            const url = prompt("Enter URL:", "https://");
+            if (url) document.execCommand("createLink", false, url);
+            break;
+          }
+        }
+      } catch {
+        // no-op
+      }
+
+      setDescription(host.innerHTML);
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) savedRangeRef.current = sel.getRangeAt(0);
+      updateActiveFormattingOnSelection();
+    },
+    [updateActiveFormattingOnSelection]
+  );
+
+  // ---------- Keep state in sync while typing ----------
+  const handleDescriptionInput = (e: React.FormEvent<HTMLDivElement>) => {
+    setDescription(e.currentTarget.innerHTML);
+  };
+
+  // ---------- Save selection + update active states when selection changes ----------
+  useEffect(() => {
+    function handleSelectionChange() {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        if (descriptionEditableRef.current?.contains(range.startContainer)) {
+          savedRangeRef.current = range;
+        }
+      }
+      updateActiveFormattingOnSelection();
+    }
+    document.addEventListener("selectionchange", handleSelectionChange);
+    return () =>
+      document.removeEventListener("selectionchange", handleSelectionChange);
+  }, [updateActiveFormattingOnSelection]);
 
   // handle outside click for emoji picker and formatting panel
   useEffect(() => {
@@ -135,7 +354,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
               height: "23px",
               opacity: 1,
               fontFamily: "Raleway, sans-serif",
-              fontWeight: 500, // Medium
+              fontWeight: 500,
               fontSize: "20px",
               lineHeight: "100%",
               letterSpacing: "0",
@@ -153,7 +372,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
             <label
               style={{
                 fontFamily: "Lato, sans-serif",
-                fontWeight: 500, // Medium
+                fontWeight: 500,
                 fontSize: "18px",
                 lineHeight: "100%",
                 letterSpacing: "0",
@@ -187,12 +406,12 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
             </div>
           </div>
 
-          {/* Description */}
+          {/* Description (rich text) */}
           <div className="flex flex-col gap-2">
             <label
               style={{
                 fontFamily: "Lato, sans-serif",
-                fontWeight: 500, // Medium
+                fontWeight: 500,
                 fontSize: "18px",
                 lineHeight: "100%",
                 letterSpacing: "0",
@@ -203,26 +422,32 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
               Description
             </label>
 
-            <div className="relative">
-              <textarea
-                id="description"
-                name="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+            <div className="relative" style={{ overflow: "visible" }}>
+              <div
+                id="descriptionEditable"
+                ref={descriptionEditableRef}
+                contentEditable
+                onInput={handleDescriptionInput}
                 className="px-3 py-2 focus:outline-none focus:ring-1"
                 style={{
                   width: "100%",
-                  height: "153px",
-                  fontSize: "16px",
-                  borderRadius: "3px",
+                  height: 153,            // <-- was minHeight: 153
+                  // OR use maxHeight: 300 if you want it to grow a bit first
+                  overflowY: "auto",      // <-- ensure inner scrolling
+                  fontSize: 16,
+                  borderRadius: 3,
                   border: "1px solid #D1DBDD",
                   backgroundColor: "#FFFFFF",
                   color: "#063E53",
-                  paddingBottom: "44px", // space for icon row
+                  paddingBottom: 44,      // keeps text from hiding behind the icon row
+                  whiteSpace: "pre-wrap",
                 }}
               />
 
-              {/* Icons row inside the textarea */}
+            
+
+
+              {/* Icons row inside the editor */}
               <div className="absolute left-0 bottom-0 mb-1 ml-1 flex items-center gap-4 z-10">
                 {/* Hidden file input (placed before label) */}
                 <input
@@ -313,29 +538,131 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                   </svg>
                 </button>
 
+                {/* Emoji picker */}
                 {showEmojiPicker && (
                   <div
                     ref={emojiPickerRef}
                     className="absolute z-20"
-                    style={{ left: "8px", bottom: "52px" }} // above the icon row, inside the container
+                    style={{ left: "8px", bottom: "52px" }}
                   >
                     <EmojiPicker
-                      onEmojiClick={(data: any) =>
-                        setDescription((prev) => prev + data.emoji)
-                      }
+                      onEmojiClick={(data: any) => {
+                        if (!descriptionEditableRef.current) return;
+                        const sel = window.getSelection();
+                        if (!sel || sel.rangeCount === 0) return;
+                        const range = sel.getRangeAt(0);
+                        range.deleteContents();
+                        const node = document.createTextNode(data.emoji);
+                        range.insertNode(node);
+                        range.setStartAfter(node);
+                        range.setEndAfter(node);
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                        setDescription(
+                          descriptionEditableRef.current.innerHTML
+                        );
+                      }}
                     />
                   </div>
                 )}
 
+                {/* Formatting panel */}
                 {showFormattingPanel && (
                   <div
                     ref={formattingPanelRef}
-                    className="absolute z-10 bg-white border border-gray-200 shadow-lg rounded-md p-3"
-                    style={{ bottom: "-60px", right: "0", minWidth: "200px" }}
+                    className="absolute z-10 bg-[#E6EFF2] border border-gray-200 shadow-lg rounded-xl flex items-center gap-2"
+                    style={{ bottom: "-60px", left: "8px", padding: "8px 14px" }}
                   >
-                    <span style={{ color: "#6C9BA6", fontSize: 14 }}>
-                      Formatting options coming soon...
-                    </span>
+                    <button
+                      type="button"
+                      title="Bold"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        applyFormatting("bold");
+                      }}
+                      className={`px-2 py-1 rounded transition ${
+                        activeFormatting.bold
+                          ? "bg-[#CFE8EC] ring-1 ring-[#6C9BA6]"
+                          : "hover:bg-[#DFEDF0]"
+                      }`}
+                    >
+                      <FiBold size={18} color="#6C9BA6" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Italic"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        applyFormatting("italic");
+                      }}
+                      className={`px-2 py-1 rounded transition ${
+                        activeFormatting.italic
+                          ? "bg-[#CFE8EC] ring-1 ring-[#6C9BA6]"
+                          : "hover:bg-[#DFEDF0]"
+                      }`}
+                    >
+                      <FiItalic size={18} color="#6C9BA6" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Underline"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        applyFormatting("underline");
+                      }}
+                      className={`px-2 py-1 rounded transition ${
+                        activeFormatting.underline
+                          ? "bg-[#CFE8EC] ring-1 ring-[#6C9BA6]"
+                          : "hover:bg-[#DFEDF0]"
+                      }`}
+                    >
+                      <FiUnderline size={18} color="#6C9BA6" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Bulleted list"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        applyFormatting("bulletList");
+                      }}
+                      className={`px-2 py-1 rounded transition ${
+                        activeFormatting.bullet
+                          ? "bg-[#CFE8EC] ring-1 ring-[#6C9BA6]"
+                          : "hover:bg-[#DFEDF0]"
+                      }`}
+                    >
+                      <FiList size={18} color="#6C9BA6" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Numbered list"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        applyFormatting("numberedList");
+                      }}
+                      className={`px-2 py-1 rounded transition ${
+                        activeFormatting.number
+                          ? "bg-[#CFE8EC] ring-1 ring-[#6C9BA6]"
+                          : "hover:bg-[#DFEDF0]"
+                      }`}
+                    >
+                      <BsListOl size={18} color="#6C9BA6" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Insert link"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        applyFormatting("link");
+                      }}
+                      className={`px-2 py-1 rounded transition ${
+                        activeFormatting.link
+                          ? "bg-[#CFE8EC] ring-1 ring-[#6C9BA6]"
+                          : "hover:bg-[#DFEDF0]"
+                      }`}
+                    >
+                      <FiLink size={18} color="#6C9BA6" />
+                    </button>
                   </div>
                 )}
               </div>
@@ -348,8 +675,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
               <div className="flex items-center gap-2 mt-1">
                 <FaFileAlt className="mr-2" />
                 <span className="text-sm text-gray-600">
-                  {attachment.name} (
-                  {(attachment.size / 1024 / 1024).toFixed(2)} MB)
+                  {attachment.name} ({(attachment.size / 1024 / 1024).toFixed(2)} MB)
                 </span>
                 {attachment.type.startsWith("image/") && (
                   <img
@@ -376,7 +702,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
           <label
             style={{
               fontFamily: "Lato, sans-serif",
-              fontWeight: 500, // Medium
+              fontWeight: 500,
               fontSize: "18px",
               lineHeight: "100%",
               letterSpacing: "0",
@@ -399,7 +725,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                 >
                   <input
                     type="checkbox"
-                    checked={selectedCategories.includes(category)}
+                    checked={selectedCategories.some((c) => c.id === category.id)}
                     onChange={() => handleCategoryClick(category)}
                     className="w-4 h-4"
                   />
@@ -449,6 +775,15 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                 borderRadius: "12px",
                 fontWeight: 500,
                 fontSize: "16px",
+              }}
+              onClick={() => {
+                const snapshot = {
+                  title,
+                  description: descriptionEditableRef.current?.innerHTML || "",
+                  categories: selectedCategories.map((c) => c.id),
+                  savedAt: new Date().toISOString(),
+                };
+                localStorage.setItem("questionDraft", JSON.stringify(snapshot));
               }}
             >
               Save draft
