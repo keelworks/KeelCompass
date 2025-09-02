@@ -11,18 +11,19 @@ interface MyInterstProps {
 
 const MyInterests = ({ interests, questions }: MyInterstProps) => {
   const [showAll, setShowAll] = useState(false);
-  
+
   const formatLongDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
   };
+
   // Function to get comment count for a specific question ID
   const getCommentCount = (questionId: number): number => {
-    const question = questions.find(q => q.id === questionId);
+    const question = questions.find((q) => q.id === questionId);
     return question?.commentCount || 0;
   };
 
@@ -39,7 +40,16 @@ const MyInterests = ({ interests, questions }: MyInterstProps) => {
         </div>
 
         {/* Container with conditional scrolling */}
-        <div className={`flex flex-col space-y-4 flex-grow`}>
+        <div
+          className={`flex flex-col space-y-4 transition-all duration-300 ${
+            showAll && interests.length > 3
+              ? 'flex-1 overflow-y-auto pr-2'
+              : ''
+          }`}
+          style={{
+            maxHeight: showAll && interests.length > 3 ? 'calc(100vh - 300px)' : 'none'
+          }}
+        >
           {interests.length > 0 ? (
             (showAll ? interests : interests.slice(0, 3)).map((interest) => (
               <InterestItem
@@ -63,9 +73,7 @@ const MyInterests = ({ interests, questions }: MyInterstProps) => {
               onClick={() => setShowAll(!showAll)}
               className="text-[#007575] hover:text-[#005555] font-medium flex items-center gap-1 transition-colors duration-200"
             >
-              <span>
-                {showAll ? 'Show Less' : 'View all My Interests'}
-              </span>
+              <span>{showAll ? 'Show Less' : 'View all My Interests'}</span>
               <span className="text-[#007575]">→</span>
             </button>
           </div>
