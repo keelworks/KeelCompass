@@ -20,6 +20,7 @@ interface QuestionsSectionProps {
   setInterests: (interests: Interest[]) => void;
   onInterestUpdate: () => void;
   onCommentCreate: (questionId: number) => void;
+  onCommentDelete: (commentId: number) => void; // ✅ added
   tab: "recent" | "popular";
   setTab: (tab: "recent" | "popular") => void;
   searchActive: boolean;
@@ -74,10 +75,10 @@ function QuestionsSection({
     }
   };
 
-  // reset visible count when tab or questions change
+  // ✅ reset visible count when tab or question list changes
   useEffect(() => {
-    setVisibleCount(4);
-  }, [tab, questions.questions]);
+    setVisibleCount(pageSize);
+  }, [tab, questions.questions, pageSize]);
 
   return (
     <div className="shadow-md rounded-lg p-4 mb-6 bg-gray-50 w-full h-full flex flex-col overflow-hidden">
@@ -89,7 +90,7 @@ function QuestionsSection({
             {[
               { label: "Most Recent", value: "recent" },
               { label: "Popular", value: "popular" },
-            ].map((tabOption, index) => (
+            ].map((tabOption) => (
               <button
                 key={tabOption.value}
                 onClick={() =>
@@ -107,25 +108,25 @@ function QuestionsSection({
           </div>
         </div>
       </div>
+
       {/* Scrollable Questions List */}
       <div className="flex-1 overflow-y-auto pr-1 space-y-4">
         {questions.questions.length === 0 ? (
           <p>No posts found.</p>
         ) : (
-          questions.questions
-            .slice(0, visibleCount)
-            .map((question) => (
-              <QuestionItem
-                key={question.id}
-                question={question}
-                onQuestionLike={onQuestionLike}
-                interests={interests}
-                setInterests={setInterests}
-                onInterestUpdate={onInterestUpdate}
-                setSelectedQuestionId={setSelectedQuestionId}
-              />
-            ))
+          questions.questions.slice(0, visibleCount).map((question) => (
+            <QuestionItem
+              key={question.id}
+              question={question}
+              onQuestionLike={onQuestionLike}
+              interests={interests}
+              setInterests={setInterests}
+              onInterestUpdate={onInterestUpdate}
+              setSelectedQuestionId={setSelectedQuestionId}
+            />
+          ))
         )}
+
         {/* View More */}
         {(hasMore || visibleCount < questions.questions.length) && (
           <div className="mt-4 text-left">
@@ -139,6 +140,7 @@ function QuestionsSection({
           </div>
         )}
       </div>
+
       {/* Question Details Modal */}
       {typeof selectedQuestionId === "number" && !isNaN(selectedQuestionId) && (
         <QuestionDetails
