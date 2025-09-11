@@ -20,7 +20,8 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
-  const [showFormattingPanel, setShowFormattingPanel] = useState<boolean>(false);
+  const [showFormattingPanel, setShowFormattingPanel] =
+    useState<boolean>(false);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentError, setAttachmentError] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -67,7 +68,8 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
   const handleCancelCreateQuestion = () => {
     setTitle("");
     setDescription("");
-    if (descriptionEditableRef.current) descriptionEditableRef.current.innerHTML = "";
+    if (descriptionEditableRef.current)
+      descriptionEditableRef.current.innerHTML = "";
     setAttachment(null);
     setSelectedCategories([]);
     setShowAllCategories(false);
@@ -164,9 +166,18 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     const range = sel.getRangeAt(0);
 
     // If already inside a list, unwrap it (toggle off)
-    const currentLi = closest(range.startContainer, "LI") as HTMLLIElement | null;
-    const currentUl = closest(range.startContainer, "UL");
-    const currentOl = closest(range.startContainer, "OL");
+    const currentLi = closest(
+      range.startContainer,
+      "LI" as keyof HTMLElementTagNameMap
+    ) as HTMLLIElement | null;
+    const currentUl = closest(
+      range.startContainer,
+      "UL" as keyof HTMLElementTagNameMap
+    );
+    const currentOl = closest(
+      range.startContainer,
+      "OL" as keyof HTMLElementTagNameMap
+    );
     if (currentLi && (currentUl || currentOl)) {
       unwrapList(currentLi);
       return;
@@ -218,9 +229,9 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     const sel = window.getSelection();
     if (sel && sel.rangeCount > 0) {
       const node = sel.focusNode;
-      res.bullet = !!closest(node, "UL");
-      res.number = !!closest(node, "OL");
-      res.link = !!closest(node, "A");
+      res.bullet = !!closest(node, "UL" as keyof HTMLElementTagNameMap);
+      res.number = !!closest(node, "OL" as keyof HTMLElementTagNameMap);
+      res.link = !!closest(node, "A" as keyof HTMLElementTagNameMap);
     }
 
     setActiveFormatting((prev) =>
@@ -431,21 +442,18 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                 className="px-3 py-2 focus:outline-none focus:ring-1"
                 style={{
                   width: "100%",
-                  height: 153,            // <-- was minHeight: 153
+                  height: 153, // <-- was minHeight: 153
                   // OR use maxHeight: 300 if you want it to grow a bit first
-                  overflowY: "auto",      // <-- ensure inner scrolling
+                  overflowY: "auto", // <-- ensure inner scrolling
                   fontSize: 16,
                   borderRadius: 3,
                   border: "1px solid #D1DBDD",
                   backgroundColor: "#FFFFFF",
                   color: "#063E53",
-                  paddingBottom: 44,      // keeps text from hiding behind the icon row
+                  paddingBottom: 44, // keeps text from hiding behind the icon row
                   whiteSpace: "pre-wrap",
                 }}
               />
-
-            
-
 
               {/* Icons row inside the editor */}
               <div className="absolute left-0 bottom-0 mb-1 ml-1 flex items-center gap-4 z-10">
@@ -571,7 +579,11 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                   <div
                     ref={formattingPanelRef}
                     className="absolute z-10 bg-[#E6EFF2] border border-gray-200 shadow-lg rounded-xl flex items-center gap-2"
-                    style={{ bottom: "-60px", left: "8px", padding: "8px 14px" }}
+                    style={{
+                      bottom: "-60px",
+                      left: "8px",
+                      padding: "8px 14px",
+                    }}
                   >
                     <button
                       type="button"
@@ -675,7 +687,8 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
               <div className="flex items-center gap-2 mt-1">
                 <FaFileAlt className="mr-2" />
                 <span className="text-sm text-gray-600">
-                  {attachment.name} ({(attachment.size / 1024 / 1024).toFixed(2)} MB)
+                  {attachment.name} (
+                  {(attachment.size / 1024 / 1024).toFixed(2)} MB)
                 </span>
                 {attachment.type.startsWith("image/") && (
                   <img
@@ -725,7 +738,9 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                 >
                   <input
                     type="checkbox"
-                    checked={selectedCategories.some((c) => c.id === category.id)}
+                    checked={selectedCategories.some(
+                      (c) => c.id === category.id
+                    )}
                     onChange={() => handleCategoryClick(category)}
                     className="w-4 h-4"
                   />
