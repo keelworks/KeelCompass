@@ -11,7 +11,6 @@ module.exports = {
       { id: 2, name: "Job Search" },
       { id: 3, name: "Education" },
       { id: 4, name: "Keelworks" },
-      { id: 5, name: "KCompass Help" },
     ]);
 
     console.log('Seeding Users...');
