@@ -1,17 +1,43 @@
 import { useState } from 'react';
 import { Bookmark } from 'lucide-react';
-//import { formatDate } from '../../../utils/format';
+import QuestionDetails from '../questions/QuestionDetails';
 import { Interest, QuestionListItem } from '../../../utils/types';
 import InterestItem from './InterestItem';
 
 interface MyInterstProps {
   interests: Interest[];
   questions: QuestionListItem[];
+  onQuestionUpdate?: (
+    updatedQuestion: Partial<QuestionListItem> & { id: number }
+  ) => void;
+  onQuestionDelete?: (deletedId: number) => void;
+  onQuestionLike?: (
+    questionId: number,
+    hasLiked: boolean,
+    likeCount: number
+  ) => void;
+  setInterests?: (interests: Interest[]) => void;
+  onInterestUpdate?: () => void;
+  onCommentCreate?: (questionId: number) => void;
+  onCommentDelete?: (commentId: number) => void;
 }
 
-const MyInterests = ({ interests, questions }: MyInterstProps) => {
+const MyInterests = ({
+  interests,
+  questions,
+  onQuestionUpdate,
+  onQuestionDelete,
+  onQuestionLike,
+  setInterests,
+  onInterestUpdate,
+  onCommentCreate,
+  onCommentDelete,
+}: MyInterstProps) => {
   const [showAll, setShowAll] = useState(false);
-
+  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(
+    null
+  );
+  
   const formatLongDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -21,10 +47,58 @@ const MyInterests = ({ interests, questions }: MyInterstProps) => {
     });
   };
 
-  // Function to get comment count for a specific question ID
+  
   const getCommentCount = (questionId: number): number => {
     const question = questions.find((q) => q.id === questionId);
     return question?.commentCount || 0;
+  };
+
+  const handleQuestionUpdateLocal = (
+    updatedQuestion: Partial<QuestionListItem> & { id: number }
+  ) => {
+    if (onQuestionUpdate) {
+      onQuestionUpdate(updatedQuestion);
+    }
+  };
+
+  const handleQuestionDeleteLocal = (deletedId: number) => {
+    if (onQuestionDelete) {
+      onQuestionDelete(deletedId);
+    }
+    setSelectedQuestionId(null);
+  };
+
+  const handleQuestionLikeLocal = (
+    questionId: number,
+    hasLiked: boolean,
+    likeCount: number
+  ) => {
+    if (onQuestionLike) {
+      onQuestionLike(questionId, hasLiked, likeCount);
+    }
+  };
+
+  const handleCommentCreateLocal = (questionId: number) => {
+    if (onCommentCreate) {
+      onCommentCreate(questionId);
+    }
+  };
+
+  const handleCommentDeleteLocal = (questionId: number) => {
+    if (onCommentDelete) {
+      onCommentDelete(questionId);
+    }
+  };
+
+  const handleInterestUpdateLocal = () => {
+    if (onInterestUpdate) {
+      onInterestUpdate();
+    }
+  };
+
+
+  const handleInterestItemClick = (questionId: number) => {
+    setSelectedQuestionId(questionId);
   };
 
   return (
@@ -39,26 +113,34 @@ const MyInterests = ({ interests, questions }: MyInterstProps) => {
           </div>
         </div>
 
-        {/* Container with conditional scrolling */}
         <div
           className={`flex flex-col space-y-4 transition-all duration-300 ${
-            showAll && interests.length > 3
-              ? 'flex-1 overflow-y-auto pr-2'
-              : ''
+            showAll && interests.length > 3 ? 'flex-1 overflow-y-auto pr-2' : ''
           }`}
           style={{
-            maxHeight: showAll && interests.length > 3 ? 'calc(100vh - 300px)' : 'none'
+            maxHeight:
+              showAll && interests.length > 3 ? 'calc(100vh - 300px)' : 'none',
           }}
         >
           {interests.length > 0 ? (
-            (showAll ? interests : interests.slice(0, 3)).map((interest) => (
-              <InterestItem
-                key={interest.id}
-                title={interest.question?.title || ''}
-                date={formatLongDate(interest.created_at)}
-                commentCount={getCommentCount(interest.question_id || 0)}
-              />
-            ))
+            (showAll ? interests : interests.slice(0, 3)).map((interest) => {
+              // 🔥 CHANGED: Always use live question data (no fallback to cached data)
+              const liveQuestion = questions.find(q => q.id === interest.question_id);
+              
+              return (
+                <InterestItem
+                  key={interest.id}
+                 
+                  title={liveQuestion?.title || ''}
+                  date={formatLongDate(interest.created_at)}
+
+                  commentCount={liveQuestion?.commentCount || 0}
+                  onClick={() =>
+                    handleInterestItemClick(interest.question_id || 0)
+                  }
+                />
+              );
+            })
           ) : (
             <div className="flex justify-center items-center flex-grow">
               <p className="text-gray-500">No interests found</p>
@@ -66,7 +148,6 @@ const MyInterests = ({ interests, questions }: MyInterstProps) => {
           )}
         </div>
 
-        {/* Simple View All Link - matching the design */}
         {interests.length > 3 && (
           <div className="mt-6">
             <button
@@ -79,6 +160,24 @@ const MyInterests = ({ interests, questions }: MyInterstProps) => {
           </div>
         )}
       </div>
+      
+      {/* Modal */}
+      {typeof selectedQuestionId === 'number' &&
+        !isNaN(selectedQuestionId) &&
+        selectedQuestionId > 0 && (
+          <QuestionDetails
+            questionId={selectedQuestionId}
+            onQuestionUpdate={handleQuestionUpdateLocal}
+            onQuestionDelete={handleQuestionDeleteLocal}
+            onQuestionLike={handleQuestionLikeLocal}
+            interests={interests}
+            setInterests={setInterests || (() => {})} 
+            onInterestsUpdate={handleInterestUpdateLocal}
+            onCommentCreate={handleCommentCreateLocal}
+            onCommentDelete={handleCommentDeleteLocal}
+            onClose={() => setSelectedQuestionId(null)}
+          />
+        )}
     </div>
   );
 };
