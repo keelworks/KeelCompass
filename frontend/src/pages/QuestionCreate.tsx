@@ -15,13 +15,13 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
   const formattingPanelRef = useRef<HTMLDivElement | null>(null);
   const descriptionEditableRef = useRef<HTMLDivElement | null>(null);
   const savedRangeRef = useRef<Range | null>(null);
+  const formattingToggleRef = useRef<HTMLButtonElement | null>(null); // NEW
 
   // State
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
-  const [showFormattingPanel, setShowFormattingPanel] =
-    useState<boolean>(false);
+  const [showFormattingPanel, setShowFormattingPanel] = useState<boolean>(false);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentError, setAttachmentError] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -68,8 +68,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
   const handleCancelCreateQuestion = () => {
     setTitle("");
     setDescription("");
-    if (descriptionEditableRef.current)
-      descriptionEditableRef.current.innerHTML = "";
+    if (descriptionEditableRef.current) descriptionEditableRef.current.innerHTML = "";
     setAttachment(null);
     setSelectedCategories([]);
     setShowAllCategories(false);
@@ -166,18 +165,9 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     const range = sel.getRangeAt(0);
 
     // If already inside a list, unwrap it (toggle off)
-    const currentLi = closest(
-      range.startContainer,
-      "LI" as keyof HTMLElementTagNameMap
-    ) as HTMLLIElement | null;
-    const currentUl = closest(
-      range.startContainer,
-      "UL" as keyof HTMLElementTagNameMap
-    );
-    const currentOl = closest(
-      range.startContainer,
-      "OL" as keyof HTMLElementTagNameMap
-    );
+    const currentLi = closest(range.startContainer, "LI" as keyof HTMLElementTagNameMap) as HTMLLIElement | null;
+    const currentUl = closest(range.startContainer, "UL" as keyof HTMLElementTagNameMap);
+    const currentOl = closest(range.startContainer, "OL" as keyof HTMLElementTagNameMap);
     if (currentLi && (currentUl || currentOl)) {
       unwrapList(currentLi);
       return;
@@ -242,13 +232,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
   // ---------- Apply formatting ----------
   const applyFormatting = useCallback(
     (
-      type:
-        | "bold"
-        | "italic"
-        | "underline"
-        | "bulletList"
-        | "numberedList"
-        | "link"
+      type: "bold" | "italic" | "underline" | "bulletList" | "numberedList" | "link"
     ) => {
       const host = descriptionEditableRef.current;
       if (!host) return;
@@ -313,28 +297,46 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
       document.removeEventListener("selectionchange", handleSelectionChange);
   }, [updateActiveFormattingOnSelection]);
 
-  // handle outside click for emoji picker and formatting panel
+  // --- Outside click/keyboard close handling (UPDATED to keep panel open while working) ---
   useEffect(() => {
     if (!showEmojiPicker && !showFormattingPanel) return;
+
     function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+
+      // Emoji picker close
       if (
         showEmojiPicker &&
         emojiPickerRef.current &&
-        !emojiPickerRef.current.contains(event.target as Node)
+        !emojiPickerRef.current.contains(target)
       ) {
         setShowEmojiPicker(false);
       }
-      if (
-        showFormattingPanel &&
-        formattingPanelRef.current &&
-        !formattingPanelRef.current.contains(event.target as Node)
-      ) {
-        setShowFormattingPanel(false);
+
+      // Formatting panel close (only on true outside click)
+      if (showFormattingPanel) {
+        const inPanel = !!formattingPanelRef.current?.contains(target);
+        const inToggle = !!formattingToggleRef.current?.contains(target);
+        const inEditor = !!descriptionEditableRef.current?.contains(target);
+
+        if (!inPanel && !inToggle && !inEditor) {
+          setShowFormattingPanel(false);
+        }
       }
     }
+
+    function handleKeydown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        if (showEmojiPicker) setShowEmojiPicker(false);
+        if (showFormattingPanel) setShowFormattingPanel(false);
+      }
+    }
+
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeydown);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeydown);
     };
   }, [showEmojiPicker, showFormattingPanel]);
 
@@ -355,10 +357,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
           marginLeft: "-60px",
         }}
       >
-        <form
-          className="flex flex-col gap-6 w-full"
-          onSubmit={handleSubmitCreateQuestion}
-        >
+        <form className="flex flex-col gap-6 w-full" onSubmit={handleSubmitCreateQuestion}>
           <h1
             style={{
               width: "251px",
@@ -379,7 +378,6 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
 
           {/* Title */}
           <div className="flex flex-col gap-2">
-            {/* Question */}
             <label
               style={{
                 fontFamily: "Lato, sans-serif",
@@ -442,9 +440,8 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                 className="px-3 py-2 focus:outline-none focus:ring-1"
                 style={{
                   width: "100%",
-                  height: 153, // <-- was minHeight: 153
-                  // OR use maxHeight: 300 if you want it to grow a bit first
-                  overflowY: "auto", // <-- ensure inner scrolling
+                  height: 153, // fixed height with inner scrolling
+                  overflowY: "auto",
                   fontSize: 16,
                   borderRadius: 3,
                   border: "1px solid #D1DBDD",
@@ -518,10 +515,13 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                 {/* Rich text icon */}
                 <button
                   type="button"
-                  onClick={() => setShowFormattingPanel(!showFormattingPanel)}
+                  ref={formattingToggleRef}
+                  onClick={() => setShowFormattingPanel((s) => !s)}
                   title="Formatting options"
-                  className="hover:opacity-80"
+                  className={`hover:opacity-80 ${showFormattingPanel ? "ring-1 ring-[#6C9BA6] rounded" : ""}`}
                   aria-label="Formatting options"
+                  aria-pressed={showFormattingPanel}
+                  aria-expanded={showFormattingPanel}
                 >
                   <svg
                     width="45"
@@ -566,9 +566,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                         range.setEndAfter(node);
                         sel.removeAllRanges();
                         sel.addRange(range);
-                        setDescription(
-                          descriptionEditableRef.current.innerHTML
-                        );
+                        setDescription(descriptionEditableRef.current.innerHTML);
                       }}
                     />
                   </div>
@@ -687,8 +685,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
               <div className="flex items-center gap-2 mt-1">
                 <FaFileAlt className="mr-2" />
                 <span className="text-sm text-gray-600">
-                  {attachment.name} (
-                  {(attachment.size / 1024 / 1024).toFixed(2)} MB)
+                  {attachment.name} ({(attachment.size / 1024 / 1024).toFixed(2)} MB)
                 </span>
                 {attachment.type.startsWith("image/") && (
                   <img
@@ -733,14 +730,12 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                   key={index}
                   className="flex items-center gap-2 px-4 py-2 rounded-full cursor-pointer"
                   style={{
-                    backgroundColor: "#D9EFF2", // matches screenshot light teal
+                    backgroundColor: "#D9EFF2",
                   }}
                 >
                   <input
                     type="checkbox"
-                    checked={selectedCategories.some(
-                      (c) => c.id === category.id
-                    )}
+                    checked={selectedCategories.some((c) => c.id === category.id)}
                     onChange={() => handleCategoryClick(category)}
                     className="w-4 h-4"
                   />
@@ -759,7 +754,6 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
 
           {/* Submit and Cancel Buttons */}
           <div className="flex items-center gap-4">
-            {/* Post button */}
             <button
               type="submit"
               className="px-4 py-2 font-medium rounded-md"
@@ -777,7 +771,6 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
               Post
             </button>
 
-            {/* Save draft button */}
             <button
               type="button"
               className="px-4 py-2 font-medium"
@@ -804,7 +797,6 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
               Save draft
             </button>
 
-            {/* Discard button */}
             <button
               onClick={handleCancelCreateQuestion}
               type="button"
