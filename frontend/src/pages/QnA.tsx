@@ -1,24 +1,47 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../components/wrappers/MainLayout";
 import CategoryFilter from "../features/qna/CategoryFilter";
 import QnACard2 from "../features/qna/QnACard";
 import FilterTab from "../features/qna/FilterTab";
+import api from "../utils/api";
 
 const QnA = () => {
   const navigate = useNavigate();
 
-  const categories = [
+  const defaultCategories = [
     "Career Development",
     "Job Search",
     "Education",
     "KeelWorks",
-    "KCompass Help",
   ];
+
+  const [categories, setCategories] = useState<string[]>(defaultCategories);
 
   const subcategories = ["Posted", "Bookmarked", "Drafts"];
 
   const [selectedMainCategory, setSelectedMainCategory] = useState<string>(categories[0]);
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const res = await api.get("/api/categories");
+        const names: string[] = Array.isArray(res.data)
+          ? res.data.map((c: { id: number; name: string }) => c.name)
+          : [];
+        if (isMounted && names.length > 0) {
+          setCategories(names);
+          setSelectedMainCategory(names[0]);
+        }
+      } catch (_) {
+        // keep defaultCategories as fallback
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleFilterChange = (mainCategory: string) => {
     setSelectedMainCategory(mainCategory);
