@@ -112,7 +112,7 @@ module.exports = {
       { question_id: 8, category_id: 2 },
       { question_id: 8, category_id: 4 },
       // question 9 → no category
-      { question_id: 10, category_id: 5 },
+      { question_id: 10, category_id: 1 },
     ]);
 
     console.log('Seeding UserQuestionActions...');
