@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import { Interest } from "../../../utils/types";
-import { QuestionListItem, QuestionsResponse } from "../../../utils/types";
-import QuestionItem from "./QuestionItem";
-import QuestionDetails from "./QuestionDetails";
+import { useEffect, useState } from 'react';
+import { Interest } from '../../../utils/types';
+import { QuestionListItem, QuestionsResponse } from '../../../utils/types';
+import QuestionItem from './QuestionItem';
+import QuestionDetails from './QuestionDetails';
 
 interface QuestionsSectionProps {
   questions: QuestionsResponse;
@@ -21,8 +21,8 @@ interface QuestionsSectionProps {
   onInterestUpdate: () => void;
   onCommentCreate: (questionId: number) => void;
   onCommentDelete: (commentId: number) => void; // ✅ added
-  tab: "recent" | "popular";
-  setTab: (tab: "recent" | "popular") => void;
+  tab: 'recent' | 'popular';
+  setTab: (tab: 'recent' | 'popular') => void;
   searchActive: boolean;
   setSearchActive: (active: boolean) => void;
   hasMore: boolean;
@@ -52,7 +52,7 @@ function QuestionsSection({
   );
   const [visibleCount, setVisibleCount] = useState(pageSize);
 
-  const handleTabChange = (newTab: "recent" | "popular") => {
+  const handleTabChange = (newTab: 'recent' | 'popular') => {
     if (tab !== newTab) {
       setTab(newTab);
       setQuestions({ questions: [], offset: 0, count: pageSize });
@@ -88,18 +88,18 @@ function QuestionsSection({
           <h2 className="text-xl font-medium uppercase tracking-wide">Posts</h2>
           <div className="flex items-center bg-gray-100 rounded-md w-fit p-0.5 border border-gray-300">
             {[
-              { label: "Most Recent", value: "recent" },
-              { label: "Popular", value: "popular" },
+              { label: 'Most Recent', value: 'recent' },
+              { label: 'Popular', value: 'popular' },
             ].map((tabOption) => (
               <button
                 key={tabOption.value}
                 onClick={() =>
-                  handleTabChange(tabOption.value as "recent" | "popular")
+                  handleTabChange(tabOption.value as 'recent' | 'popular')
                 }
                 className={`px-6 py-[6px] text-[14px] font-medium leading-6 font-sans rounded-md transition duration-200 ${
                   tab === tabOption.value
-                    ? "bg-white text-[#007575] shadow-md"
-                    : "bg-transparent text-[#5F6C7B] hover:bg-[#E5E7EB]"
+                    ? 'bg-white text-[#007575] shadow-md'
+                    : 'bg-transparent text-[#5F6C7B] hover:bg-[#E5E7EB]'
                 }`}
               >
                 {tabOption.label}
@@ -114,35 +114,37 @@ function QuestionsSection({
         {questions.questions.length === 0 ? (
           <p>No posts found.</p>
         ) : (
-          questions.questions.slice(0, visibleCount).map((question) => (
-            <QuestionItem
-              key={question.id}
-              question={question}
-              onQuestionLike={onQuestionLike}
-              interests={interests}
-              setInterests={setInterests}
-              onInterestUpdate={onInterestUpdate}
-              setSelectedQuestionId={setSelectedQuestionId}
-            />
-          ))
+          questions.questions
+            .slice(0, visibleCount)
+            .map((question) => (
+              <QuestionItem
+                key={question.id}
+                question={question}
+                onQuestionLike={onQuestionLike}
+                interests={interests}
+                setInterests={setInterests}
+                onInterestUpdate={onInterestUpdate}
+                setSelectedQuestionId={setSelectedQuestionId}
+              />
+            ))
         )}
 
-        {/* View More */}
+        {/* VIEW MORE */}
         {(hasMore || visibleCount < questions.questions.length) && (
-          <div className="mt-4 text-left">
+          <div className="mt-4 w-full flex justify-center p-4 box-border">
             <button
               onClick={handleViewMore}
-              className="bg-custom-gradient bg-clip-text cursor-pointer text-transparent transition hover:opacity-80"
+              className="flex items-center justify-center gap-2 min-w-[160px] px-6 py-3 text-teal-600 hover:text-teal-800 transition-colors text-sm font-medium whitespace-nowrap border border-transparent"
             >
-              View more posts
-              <span className="inline-block w-0 h-0 ml-1 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent border-t-teal-500"></span>
+              <span>View more posts</span>
+              <span className="inline-block w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent border-t-teal-500"></span>
             </button>
           </div>
         )}
       </div>
 
       {/* Question Details Modal */}
-      {typeof selectedQuestionId === "number" && !isNaN(selectedQuestionId) && (
+      {typeof selectedQuestionId === 'number' && !isNaN(selectedQuestionId) && (
         <QuestionDetails
           questionId={selectedQuestionId}
           onQuestionUpdate={onQuestionUpdate}
