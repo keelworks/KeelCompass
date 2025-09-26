@@ -57,28 +57,24 @@ function QuestionItem({
   const interestId = question.interestId;
 
   // Sanitize description HTML and ensure links open in new tab
-  const cleanHtml =
-    DOMPurify.sanitize(description || "", {
-      ALLOWED_TAGS: [
-        "b",
-        "strong",
-        "i",
-        "em",
-        "u",
-        "a",
-        "p",
-        "br",
-        "ul",
-        "ol",
-        "li",
-        "div",
-        "span",
-      ],
-      ALLOWED_ATTR: ["href", "target", "rel"],
-    }).replace(
-      /<a\s/gi,
-      '<a target="_blank" rel="noopener noreferrer" '
-    );
+  const cleanHtml = DOMPurify.sanitize(description || "", {
+    ALLOWED_TAGS: [
+      "b",
+      "strong",
+      "i",
+      "em",
+      "u",
+      "a",
+      "p",
+      "br",
+      "ul",
+      "ol",
+      "li",
+      "div",
+      "span",
+    ],
+    ALLOWED_ATTR: ["href", "target", "rel"],
+  }).replace(/<a\s/gi, '<a target="_blank" rel="noopener noreferrer" ');
 
   const handleLikeQuestion = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -131,9 +127,13 @@ function QuestionItem({
       <div className="flex items-center justify-between mb-3">
         {/* Username and Date */}
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-gray-900">
-            {user.username}
-          </span>
+          {/* Profile Picture */}
+          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 font-bold">
+            {user.username.charAt(0).toUpperCase()}
+          </div>
+
+          {/* Username and date */}
+          <span className="font-semibold text-gray-900">{user.username}</span>
           <span className="text-xs text-gray-400">
             • {formatDate(createdAt)}
           </span>
