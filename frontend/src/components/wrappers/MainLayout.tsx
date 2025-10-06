@@ -47,14 +47,12 @@ const MainLayout = ({ children, searchBar }: MainLayoutProps) => {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden py-4 px-6 max-w-7xl mx-auto w-full">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden py-4 pl-8 px-6 max-w-7xl mx-auto w-full">
         {/* Top Row: SearchBar + Profile Header */}
         <div className="mb-4">
           <div className="grid grid-cols-3 gap-6 items-center">
             {/* SearchBar spans 2 columns to match posts */}
-            <div className="col-span-2">
-              {searchBar}
-            </div>
+            <div className="col-span-2">{searchBar}</div>
             {/* Profile Header in the right column */}
             <div className="flex items-center justify-end space-x-4 pr-1 relative">
               {/* Bell Icon */}
@@ -117,7 +115,7 @@ const MainLayout = ({ children, searchBar }: MainLayoutProps) => {
         </div>
 
         {/* Main Content Grid */}
-        <div className="mt-0 grid grid-cols-3 gap-6 flex-1 overflow-hidden">
+        <div className="mt-0 grid grid-cols-3 gap-8 flex-1 overflow-hidden">
           {children}
         </div>
       </div>

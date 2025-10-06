@@ -28,7 +28,7 @@ function Sidebar() {
   return (
     <div
       className={`relative flex flex-col h-screen transition-all duration-300 bg-white shadow-md ${
-        collapsed ? "w-20" : "w-64"
+        collapsed ? "w-[76px]" : "w-[240px]"
       }`}
     >
       {/* Collapse/Expand Button */}
@@ -43,7 +43,7 @@ function Sidebar() {
       {/* Logo and Title */}
       <div
         className={`flex items-center px-3 ${
-          collapsed ? "justify-center pt-6" : "pt-6 pl-4"
+          collapsed ? "justify-center pt-6" : "pt-6"
         }`}
       >
         <img
@@ -65,7 +65,7 @@ function Sidebar() {
       </div>
 
       {/* Menu Items */}
-      <div className="mt-6 flex-1 px-[12px]">
+      <div className="mt-8 flex-1 px-[12px]">
         {menuItems.map((item, index) => {
           const selected = location.pathname === item.path;
           const isDisabled = item.disabled;
