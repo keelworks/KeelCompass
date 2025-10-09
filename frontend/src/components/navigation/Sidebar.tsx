@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { BsHouseDoor } from "react-icons/bs";
-import { FaBook } from "react-icons/fa";
-import { RiQuestionnaireLine } from "react-icons/ri";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { BsChevronBarLeft, BsChevronBarRight } from "react-icons/bs";
 import Logo from "../../assets/logo.png";
+import homelogo from "../../assets/homelogo.png";
+
+const HOME_PURPLE = "#53385A";   // home color (icon + text)
+const TOGGLE_TEAL = "#0E8B87";   // chevron color
 
 function Sidebar() {
   const location = useLocation();
@@ -12,115 +13,112 @@ function Sidebar() {
 
   const menuItems = [
     {
-      name: "Dashboard",
-      icon: <BsHouseDoor />,
+      name: "Home",
+      icon: (
+        <span
+          className="inline-block w-[20px] h-[20px] mr-[8px] bg-[#53385A]"
+          style={{
+            WebkitMaskImage: `url(${homelogo})`,
+            maskImage: `url(${homelogo})`,
+            WebkitMaskRepeat: "no-repeat",
+            maskRepeat: "no-repeat",
+            WebkitMaskSize: "contain",
+            maskSize: "contain",
+            WebkitMaskPosition: "center",
+            maskPosition: "center",
+          }}
+        />
+      ),
       path: "/dashboard",
       disabled: false,
-    },
-    {
-      name: "Q&A Discussions",
-      icon: <RiQuestionnaireLine />,
-      path: "/qna",
-      disabled: true, // Disabled for now
     },
   ];
 
   return (
-    <div
-      className={`relative flex flex-col h-screen transition-all duration-300 bg-white shadow-md ${
+    <aside
+      className={`relative overflow-visible flex flex-col h-screen transition-all duration-300 bg-[#EFEFEF] shadow-md ${
         collapsed ? "w-[76px]" : "w-[240px]"
       }`}
     >
-      {/* Collapse/Expand Button */}
+      {/* === Chevron Toggle === */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute top-6 -right-3 z-10 bg-white border border-gray-300 rounded-full p-1 shadow"
-        aria-label="Toggle Sidebar"
+        aria-label="Toggle sidebar"
+        className="
+          absolute top-[15px] right-[-15px] z-10
+          flex items-center justify-center
+          w-[26px] h-[26px]
+          rounded-full bg-white border border-[#F4F4F4]
+          shadow-sm hover:shadow-[0_2px_6px_rgba(0,0,0,0.08)]
+          transition-all duration-300
+        "
       >
-        {collapsed ? <FiChevronRight size={16} /> : <FiChevronLeft size={16} />}
+        {collapsed ? (
+          <BsChevronBarRight size={14} color={TOGGLE_TEAL} />
+        ) : (
+          <BsChevronBarLeft size={14} color={TOGGLE_TEAL} />
+        )}
       </button>
 
-      {/* Logo and Title */}
+      {/* === Logo Section === */}
       <div
-        className={`flex items-center px-3 ${
-          collapsed ? "justify-center pt-6" : "pt-6"
-        }`}
+        className={`flex items-center ${
+          collapsed ? "justify-center" : "px-[12px]"
+        } pt-[24px]`}
       >
         <img
           src={Logo}
           alt="Logo"
-          className="h-10 w-10 rounded-full cursor-pointer hover:bg-gray-100 p-1"
+          className={`${
+            collapsed ? "h-[40px] w-[40px]" : "h-[48px] w-[48px]"
+          } shrink-0 object-contain`}
         />
         {!collapsed && (
-          <div className="ml-3">
-            <h1 className="text-[16px] font-semibold leading-5">
-              <span className="text-red-950">Keel</span>
-              <span className="text-custom-gradient">Compass</span>
-            </h1>
-            <p className="text-sm text-gray-500 leading-4 mt-1">
-              Knowledge Base
-            </p>
+          <div className="ml-[8px] leading-tight">
+            <h1 className="text-[18px] font-semibold text-[#212121]">KCompass</h1>
+            <p className="text-[13px] text-[#8B8B8B]">Knowledge Base</p>
           </div>
         )}
       </div>
 
-      {/* Menu Items */}
-      <div className="mt-8 flex-1 px-[12px]">
-        {menuItems.map((item, index) => {
+      {/* === Menu Section === */}
+      <nav className="mt-[32px] flex-1 px-[12px]">
+        {menuItems.map((item, i) => {
           const selected = location.pathname === item.path;
           const isDisabled = item.disabled;
 
           return (
             <div
-              key={index}
-              className={`relative flex items-center rounded-md h-[44px] mb-2 transition-all ${
-                selected && !isDisabled
-                  ? "bg-custom-gradient text-white font-medium"
-                  : "text-[#525252] hover:text-teal-600 hover:bg-gray-100"
-              } ${collapsed ? "justify-center px-0" : "px-[12px]"} ${
-                isDisabled ? "opacity-50 pointer-events-none" : ""
-              }`}
+              key={i}
+              className={`group relative flex items-center rounded-md h-[44px] mb-[8px] transition-all
+                ${selected && !isDisabled ? "bg-[#D9F3F0]" : "hover:bg-gray-100"}
+                ${collapsed ? "justify-center px-0" : "px-[12px]"}
+                ${isDisabled ? "opacity-50 pointer-events-none" : ""}
+              `}
             >
+              {/* Icon */}
               <div
-                className={`flex items-center justify-center min-w-[44px] h-[44px] rounded-md ${
+                className={`flex items-center justify-center min-w-[20px] h-[20px] ${
                   collapsed ? "" : "mr-[8px]"
                 }`}
               >
-                <span className="text-xl">{item.icon}</span>
+                {item.icon}
               </div>
 
+              {/* Text */}
               {!collapsed && (
-                <span className="text-sm font-medium">{item.name}</span>
+                <span
+                  className="text-[15px] font-medium leading-[20px]"
+                  style={{ color: HOME_PURPLE }}
+                >
+                  {item.name}
+                </span>
               )}
             </div>
           );
         })}
-      </div>
-
-      {/* Divider */}
-      <div className="border-t border-gray-200 mx-[12px] my-[12px]" />
-
-      {/* KeelLearn Section */}
-      <div
-        className={`relative flex items-center rounded-md h-[44px] mb-2 transition-all text-[#525252]  hover:bg-gray-100 cursor-pointer ${
-          collapsed ? "justify-center px-0" : "px-[12px]"
-        }`}
-      >
-        <div
-          className={`flex items-center justify-center min-w-[44px] h-[44px] rounded-md ${
-            collapsed ? "" : "mr-[8px]"
-          }`}
-        >
-          <FaBook className="text-xl" style={{ color: "#865c90" }} />
-        </div>
-
-        {!collapsed && (
-          <span className="text-sm font-medium">
-            KeelLearn <span>↗</span>
-          </span>
-        )}
-      </div>
-    </div>
+      </nav>
+    </aside>
   );
 }
 
