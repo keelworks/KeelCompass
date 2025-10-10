@@ -20,19 +20,20 @@ function Sidebar() {
       name: "Home",
       icon: (
         <span
-          className="inline-block w-[20px] h-[20px] mr-[8px] bg-[#53385A]"
+          className="inline-block w-[20px] h-[20px] bg-[#53385A]" // removed mr-[8px]
           style={{
             WebkitMaskImage: `url(${homelogo})`,
             maskImage: `url(${homelogo})`,
             WebkitMaskRepeat: "no-repeat",
             maskRepeat: "no-repeat",
-            WebkitMaskSize: "contain",
-            maskSize: "contain",
+            WebkitMaskSize: "100% 100%", // was "contain"
+            maskSize: "100% 100%", // was "contain"
             WebkitMaskPosition: "center",
             maskPosition: "center",
           }}
         />
       ),
+
       path: "/dashboard",
       disabled: false,
     },
@@ -89,7 +90,9 @@ function Sidebar() {
             <h1 className="text-[18px] font-semibold text-[#212121]">
               KCompass
             </h1>
-            <p className="text-[13px] text-[#8B8B8B]">Knowledge Base</p>
+            <p className="text-[13px]" style={{ color: "#825E8C" }}>
+              Knowledge Base
+            </p>
           </div>
         )}
       </div>
@@ -148,7 +151,7 @@ function Sidebar() {
                   <div
                     className="
     absolute top-1/2 -translate-y-1/2
-    + left-[calc(100%+22px)]   /* ⬅️ was left-[calc(100%+4px)] */
+    + left-[calc(100%+26px)]   /* ⬅️ was left-[calc(100%+4px)] */
     z-50 flex items-center justify-center gap-[10px]
     w-[54px] h-[26px] px-[8px] py-[8px]
     rounded-[4px] opacity-100 whitespace-nowrap
