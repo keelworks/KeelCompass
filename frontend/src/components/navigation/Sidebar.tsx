@@ -26,8 +26,8 @@ function Sidebar() {
             maskImage: `url(${homelogo})`,
             WebkitMaskRepeat: "no-repeat",
             maskRepeat: "no-repeat",
-            WebkitMaskSize: "100% 100%", // was "contain"
-            maskSize: "100% 100%", // was "contain"
+            WebkitMaskSize: "contain",
+            maskSize: "contain",
             WebkitMaskPosition: "center",
             maskPosition: "center",
           }}
@@ -43,7 +43,7 @@ function Sidebar() {
     <aside
       className={`relative overflow-visible flex flex-col h-screen transition-all duration-300 bg-[#EFEFEF] shadow-md ${
         collapsed ? "w-[76px]" : "w-[240px]"
-      }`}
+      } font-[Lato]`}
     >
       {/* === Chevron Toggle === */}
       <button
@@ -150,8 +150,7 @@ function Sidebar() {
                 {isHome && showHomeTip && collapsed && (
                   <div
                     className="
-    absolute top-1/2 -translate-y-1/2
-    + left-[calc(100%+26px)]   /* ⬅️ was left-[calc(100%+4px)] */
+absolute top-1/2 -translate-y-1/2 left-[calc(100%+25px)] /* ⬅️ was left-[calc(100%+4px)] */
     z-50 flex items-center justify-center gap-[10px]
     w-[54px] h-[26px] px-[8px] py-[8px]
     rounded-[4px] opacity-100 whitespace-nowrap
