@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'lato': ['Lato', 'sans-serif'],
+      },
       animation: {
         'slide-in': 'slide-in 0.3s ease-out',
       },

@@ -40,7 +40,7 @@ const MainLayout = ({ children, searchBar }: MainLayoutProps) => {
   }, [showDropdown]);
 
   return (
-    <div className="flex min-h-screen bg-[#F0F0F0]">
+    <div className="flex min-h-screen bg-[#F0F0F0] font-lato">
       {/* Sidebar */}
       <div className="flex-none transition-all duration-300">
         <Navigation />
