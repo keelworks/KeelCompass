@@ -22,15 +22,22 @@ function InterestItem({
       </h3>
 
       {/* Date and Comments below title */}
-      <div className="flex items-center text-sm text-gray-500">
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          width: "300px",
+          height: "10px",
+          opacity: 1,
+          alignItems: "center",
+        }}
+        className="text-sm text-gray-500"
+      >
         <span>{date}</span>
         {commentCount !== undefined && (
-          <>
-            <span className="mx-2">•</span>
-            <span>
-              {commentCount} comment{commentCount !== 1 ? 's' : ''}
-            </span>
-          </>
+          <span>
+            {commentCount} comment{commentCount !== 1 ? "s" : ""}
+          </span>
         )}
       </div>
     </div>
