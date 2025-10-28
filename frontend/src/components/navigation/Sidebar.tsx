@@ -43,7 +43,7 @@ function Sidebar() {
     <aside
       className={`relative overflow-visible flex flex-col h-screen transition-all duration-300 bg-[#EFEFEF] shadow-md ${
         collapsed ? "w-[76px]" : "w-[240px]"
-      } font-[Lato]`}
+      } font-lato`}
     >
       {/* === Chevron Toggle === */}
       <button
