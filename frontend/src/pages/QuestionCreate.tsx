@@ -16,12 +16,12 @@ const MAX_TITLE = 250;
 
 // Exact categories requested
 const DEFAULT_CATEGORIES: Category[] = [
-  { id: "education", name: "Education" },
-  { id: "pd-management", name: "Pd Management" },
-  { id: "performance", name: "Performance" },
-  { id: "sre", name: "SRE" },
-  { id: "unemployment", name: "Unemployment" },
-  { id: "ux", name: "UX" },
+  { id: 1, name: "Education" },
+  { id: 2, name: "Pd Management" },
+  { id: 3, name: "Performance" },
+  { id: 4, name: "SRE" },
+  { id: 5, name: "Unemployment" },
+  { id: 6, name: "UX" },
 ];
 
 function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
@@ -79,7 +79,8 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
   const handleCancelCreateQuestion = () => {
     setTitle("");
     setDescription("");
-    if (descriptionEditableRef.current) descriptionEditableRef.current.innerHTML = "";
+    if (descriptionEditableRef.current)
+      descriptionEditableRef.current.innerHTML = "";
     setAttachment(null);
     setShowFormattingPanel(false);
     setSelectedCategoryIds([]);
@@ -187,7 +188,10 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     if (!sel || sel.rangeCount === 0) return;
     const range = sel.getRangeAt(0);
 
-    const currentLi = closest(range.startContainer, "LI" as any) as HTMLLIElement | null;
+    const currentLi = closest(
+      range.startContainer,
+      "LI" as any
+    ) as HTMLLIElement | null;
     const currentUl = closest(range.startContainer, "UL" as any);
     const currentOl = closest(range.startContainer, "OL" as any);
     if (currentLi && (currentUl || currentOl)) {
@@ -214,7 +218,14 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
 
   // ----- Active formatting tracking -----
   const updateActiveFormattingOnSelection = useCallback(() => {
-    const res = { bold: false, italic: false, underline: false, bullet: false, number: false, link: false };
+    const res = {
+      bold: false,
+      italic: false,
+      underline: false,
+      bullet: false,
+      number: false,
+      link: false,
+    };
     try {
       res.bold = document.queryCommandState("bold");
     } catch {}
@@ -232,12 +243,22 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
       res.number = !!closest(node, "OL" as any);
       res.link = !!closest(node, "A" as any);
     }
-    setActiveFormatting((prev) => (JSON.stringify(prev) === JSON.stringify(res) ? prev : res));
+    setActiveFormatting((prev) =>
+      JSON.stringify(prev) === JSON.stringify(res) ? prev : res
+    );
   }, []);
 
   // ----- Apply formatting -----
   const applyFormatting = useCallback(
-    (type: "bold" | "italic" | "underline" | "bulletList" | "numberedList" | "link") => {
+    (
+      type:
+        | "bold"
+        | "italic"
+        | "underline"
+        | "bulletList"
+        | "numberedList"
+        | "link"
+    ) => {
       const host = descriptionEditableRef.current;
       if (!host) return;
 
@@ -293,7 +314,8 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
       updateActiveFormattingOnSelection();
     }
     document.addEventListener("selectionchange", handleSelectionChange);
-    return () => document.removeEventListener("selectionchange", handleSelectionChange);
+    return () =>
+      document.removeEventListener("selectionchange", handleSelectionChange);
   }, [updateActiveFormattingOnSelection]);
 
   // ----- Category helpers -----
@@ -315,7 +337,9 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     <div className="w-full min-h-screen" style={{ backgroundColor: "#F9F9F9" }}>
       {/* No white card wrapper; just padding */}
       <div className="p-8">
-        <h1 className="text-2xl font-semibold text-[#111] mb-10">Ask Question</h1>
+        <h1 className="text-2xl font-semibold text-[#111] mb-10">
+          Ask Question
+        </h1>
 
         <form onSubmit={handleSubmitCreateQuestion}>
           {/* Question */}
@@ -342,14 +366,16 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
 
           {/* Description */}
           <div style={{ marginBottom: SPACING.sectionY }}>
-            <label className="block mb-4 text-gray-700 font-medium">Description</label>
+            <label className="block mb-4 text-gray-700 font-medium">
+              Description
+            </label>
             <p className="text-sm text-gray-500 mb-4">
               Provide more details and context to help others answer.
             </p>
 
-          {/* Unified border (same as Question) */}
-          <div
-            className="
+            {/* Unified border (same as Question) */}
+            <div
+              className="
               relative rounded-md border bg-white
               transition
               border-[#D1DBDD]
@@ -357,31 +383,40 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
               focus-within:border-[#7350B7]
               focus-within:[box-shadow:0_0_0_2px_#7350B733]
             "
-          >
-            {/* Editable area */}
-            <div
-              id="descriptionEditable"
-              ref={descriptionEditableRef}
-              contentEditable
-              role="textbox"
-              aria-label="Description"
-              tabIndex={0}                         /* <-- important so focus-within triggers */
-              onInput={handleDescriptionInput}
-              className="px-3 py-3 outline-none min-h-[153px] text-[#063E53]"
-              style={{ backgroundColor: "#FFFFFF", paddingBottom: 56 }}
-            />
+            >
+              {/* Editable area */}
+              <div
+                id="descriptionEditable"
+                ref={descriptionEditableRef}
+                contentEditable
+                role="textbox"
+                aria-label="Description"
+                tabIndex={0} /* <-- important so focus-within triggers */
+                onInput={handleDescriptionInput}
+                className="px-3 py-3 outline-none min-h-[153px] text-[#063E53]"
+                style={{ backgroundColor: "#FFFFFF", paddingBottom: 56 }}
+              />
 
-            {/* icon row ... keep as you have (absolute, no divider) */}
-            <div className="absolute left-3 bottom-2 flex items-center gap-4 z-10">
+              {/* icon row ... keep as you have (absolute, no divider) */}
+              <div className="absolute left-3 bottom-2 flex items-center gap-4 z-10">
                 {/* Attach */}
                 <label
                   htmlFor="attachment"
                   className="cursor-pointer hover:opacity-80 focus:outline-none flex items-center justify-center w-11 h-11"
                   title="Attach file"
                 >
-                  <img src={FileIcon} alt="Attach file" className="w-11 h-11 select-none" />
+                  <img
+                    src={FileIcon}
+                    alt="Attach file"
+                    className="w-11 h-11 select-none"
+                  />
                 </label>
-                <input id="attachment" type="file" onChange={handleAttachmentChange} className="hidden" />
+                <input
+                  id="attachment"
+                  type="file"
+                  onChange={handleAttachmentChange}
+                  className="hidden"
+                />
 
                 {/* Emoji */}
                 <button
@@ -390,7 +425,11 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                   className="hover:opacity-80 focus:outline-none flex items-center justify-center w-11 h-11"
                   title="Add emoji"
                 >
-                  <img src={EmojiIcon} alt="Add emoji" className="w-11 h-11 select-none" />
+                  <img
+                    src={EmojiIcon}
+                    alt="Add emoji"
+                    className="w-11 h-11 select-none"
+                  />
                 </button>
 
                 {/* Formatting */}
@@ -399,12 +438,18 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                     type="button"
                     onClick={() => setShowFormattingPanel((s) => !s)}
                     className={`flex items-center justify-center w-11 h-11 rounded-md transition hover:opacity-80 focus:outline-none ${
-                      showFormattingPanel ? "bg-[#4960646f] ring-1 ring-[#9CA3AF]" : ""
+                      showFormattingPanel
+                        ? "bg-[#4960646f] ring-1 ring-[#9CA3AF]"
+                        : ""
                     }`}
                     title="Formatting"
                     aria-expanded={showFormattingPanel}
                   >
-                    <img src={FormattingIcon} alt="Formatting" className="w-11 h-11 select-none" />
+                    <img
+                      src={FormattingIcon}
+                      alt="Formatting"
+                      className="w-11 h-11 select-none"
+                    />
                   </button>
 
                   {showFormattingPanel && (
@@ -489,12 +534,13 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                       </div>
                     </div>
                   )}
-      
-
-
 
                   {showEmojiPicker && (
-                    <div ref={emojiPickerRef} className="absolute z-20" style={{ left: 0, bottom: 50 }}>
+                    <div
+                      ref={emojiPickerRef}
+                      className="absolute z-20"
+                      style={{ left: 0, bottom: 50 }}
+                    >
                       <EmojiPicker
                         onEmojiClick={(data: any) => {
                           if (!descriptionEditableRef.current) return;
@@ -519,20 +565,28 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
 
           {/* Category (custom multi-select with checkboxes) */}
           <div className="mb-12">
-            <label className="block mb-4 font-medium text-gray-800">Category</label>
+            <label className="block mb-4 font-medium text-gray-800">
+              Category
+            </label>
             <p className="text-sm text-gray-500 mb-4">
-              Select one or more categories to get your question better visibility.
+              Select one or more categories to get your question better
+              visibility.
             </p>
 
-            <div className="relative inline-block" ref={catMenuRef} style={{ width: 280 }}>
+            <div
+              className="relative inline-block"
+              ref={catMenuRef}
+              style={{ width: 280 }}
+            >
               {/* Control */}
               <button
                 type="button"
                 onClick={() => setCatOpen((s) => !s)}
                 className="w-full flex items-center justify-between px-3 py-2 rounded-[6px] border outline-none  hover:border-gray-500 focus-within:border-[#7350B7]  bg-white text-[#063E53]"
-                
               >
-                <span className={selectedLabel ? "text-[#063E53]" : "text-gray-400"}>
+                <span
+                  className={selectedLabel ? "text-[#063E53]" : "text-gray-400"}
+                >
                   {selectedLabel || "Select categories"}
                 </span>
                 <span className="ml-2 text-[#6C9BA6]" aria-hidden>
@@ -552,7 +606,9 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
                 >
                   <div className="max-h-72 overflow-auto py-2">
                     {categories.map((c) => {
-                      const checked = selectedCategoryIds.includes(String(c.id));
+                      const checked = selectedCategoryIds.includes(
+                        String(c.id)
+                      );
                       return (
                         <label
                           key={c.id}
@@ -613,11 +669,14 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
               <div className="flex items-center gap-2">
                 <FaFileAlt className="mr-1" />
                 <span className="text-sm text-gray-600">
-                  {attachment.name} ({(attachment.size / 1024 / 1024).toFixed(2)} MB)
+                  {attachment.name} (
+                  {(attachment.size / 1024 / 1024).toFixed(2)} MB)
                 </span>
               </div>
             )}
-            {attachmentError && <div className="mt-1 text-xs text-red-600">{attachmentError}</div>}
+            {attachmentError && (
+              <div className="mt-1 text-xs text-red-600">{attachmentError}</div>
+            )}
           </div>
         </form>
       </div>
