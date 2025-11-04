@@ -7,9 +7,15 @@ import { FiChevronDown, FiLogOut } from "react-icons/fi";
 
 interface MainLayoutProps {
   children: React.ReactNode;
+  searchBar?: React.ReactNode;
+  showAsk?: boolean;
 }
 
-const MainLayout = ({ children }: MainLayoutProps) => {
+const MainLayout = ({
+  children,
+  searchBar,
+  showAsk = false,
+}: MainLayoutProps) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -41,7 +47,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     <div className="flex min-h-screen bg-[#F9F9F9]">
       {/* Sidebar */}
       <div className="flex-none transition-all duration-300">
-        <Navigation />
+        <Navigation showAsk={showAsk} />
       </div>
 
       {/* Content Area */}

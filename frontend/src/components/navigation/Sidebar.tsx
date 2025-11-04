@@ -1,35 +1,31 @@
 import { useState, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { BsChevronBarLeft, BsChevronBarRight } from "react-icons/bs";
 import Logo from "../../assets/logo.png";
-import homelogo from "../../assets/homelogo.png";
+import homelogo from "../../assets/homelogo.svg";
 
 const HOME_PURPLE = "#53385A";
 const TOGGLE_TEAL = "#0E8B87";
 const TIP_BG = "#825E8B";
 
-function Sidebar() {
+function Sidebar({ showAsk }: { showAsk?: boolean }) {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
   const [showHomeTip, setShowHomeTip] = useState(false);
   const tipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navigate = useNavigate();
 
   const menuItems = [
     {
       name: "Home",
       icon: (
-        <span
-          className="inline-block w-[20px] h-[20px] bg-[#53385A]" // removed mr-[8px]
+        <img
+          src={homelogo}
+          alt="Home"
+          className="w-[20px] h-[20px]"
           style={{
-            WebkitMaskImage: `url(${homelogo})`,
-            maskImage: `url(${homelogo})`,
-            WebkitMaskRepeat: "no-repeat",
-            maskRepeat: "no-repeat",
-            WebkitMaskSize: "contain",
-            maskSize: "contain",
-            WebkitMaskPosition: "center",
-            maskPosition: "center",
+            filter: `invert(17%) sepia(9%) saturate(1462%) hue-rotate(257deg) brightness(94%) contrast(90%)`,
           }}
         />
       ),
@@ -100,88 +96,131 @@ function Sidebar() {
       {/* === Menu Section === */}
       <nav className="mt-[32px] flex-1 px-[12px]">
         {menuItems.map((item, i) => {
-          const selected = location.pathname === item.path;
+          const selected = location.pathname === item.path && !showAsk;
           const isDisabled = item.disabled;
-
           const isHome = item.name === "Home";
+          const [isHovered, setIsHovered] = useState(false);
+          const [isPressed, setIsPressed] = useState(false);
+          const [isFocused, setIsFocused] = useState(false);
+
+          // === Dynamic colors per state ===
+          const getStateStyles = () => {
+            if (isFocused)
+              return {
+                bg: "#C8E9E9",
+                border: "1.5px solid #007C88",
+                text: "#414141",
+                iconBorder: "#414141",
+                fontWeight: 600,
+              };
+            if (selected)
+              return {
+                bg: "#C8E9E9",
+                border: "none",
+                text: "#53385A",
+                iconBorder: "#53385A",
+                fontWeight: 600,
+              };
+            if (isPressed)
+              return {
+                bg: "#DCF1F1",
+                border: "1px solid #D3EEEE",
+                text: "#404955",
+                iconBorder: "#404955",
+                fontWeight: 400,
+              };
+            if (isHovered)
+              return {
+                bg: "#DFE6E6",
+                border: "1px solid #E8F0F0",
+                text: "#007C88",
+                iconBorder: "#007C88",
+                fontWeight: 500,
+                boxShadow: "0px 0px 2px 0px #21212114",
+              };
+
+            return {
+              bg: "transparent",
+              border: "none",
+              text: "#404955",
+              iconBorder: "#404955",
+              fontWeight: 400,
+            };
+          };
+
+          const state = getStateStyles();
 
           return (
             <div
               key={i}
-              /* make the item focusable for keyboard users */
               tabIndex={isDisabled ? -1 : 0}
               aria-current={selected ? "page" : undefined}
-              className={`group relative flex items-center rounded-md h-[44px] mb-[8px] transition-all
-    ${selected && !isDisabled ? "bg-[#D9F3F0]" : "hover:bg-gray-100"}
-    ${collapsed ? "justify-center px-0" : "px-[12px]"}
-    ${isDisabled ? "opacity-50 pointer-events-none" : ""}
-    /* === Focused state (from Figmas): bg #C8E9E9 + teal border === */
-    focus:outline-none
-    focus:bg-[#C8E9E9]
-    focus:shadow-[0_0_0_2px_#007C88]
-    focus-visible:outline-none
-    focus-visible:bg-[#C8E9E9]
-    focus-visible:shadow-[0_0_0_2px_#007C88]
-  `}
-              onMouseEnter={() => {
-                if (isHome && collapsed) {
-                  tipTimer.current = setTimeout(
-                    () => setShowHomeTip(true),
-                    300
-                  );
-                }
+              className={`group relative flex items-center rounded-[6px] h-[44px] mb-[8px] transition-all duration-150 cursor-pointer
+                ${collapsed ? "justify-center px-0" : "px-[12px]"}
+                ${isDisabled ? "opacity-50 pointer-events-none" : ""}
+                ${selected ? "bg-[#C8E9E9]" : "hover:bg-[#DFE6E6]"}
+              `}
+              style={{
+                background: state.bg,
+                border: state.border,
+                boxShadow: state.boxShadow || "none",
               }}
+              onClick={() => !isDisabled && navigate(item.path)}
+              onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => {
-                if (isHome) {
-                  if (tipTimer.current) clearTimeout(tipTimer.current);
-                  setShowHomeTip(false);
+                setIsHovered(false);
+                setIsPressed(false);
+              }}
+              onMouseDown={() => setIsPressed(true)}
+              onMouseUp={() => setIsPressed(false)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  !isDisabled && navigate(item.path);
                 }
               }}
             >
-              {/* Icon*/}
+              {/* === Icon === */}
               <div
                 className={`relative flex items-center justify-center min-w-[20px] h-[20px] ${
                   collapsed ? "" : "mr-[8px]"
                 }`}
               >
-                {item.icon}
-
-                {/* === Tooltip for Home === */}
-                {isHome && showHomeTip && collapsed && (
-                  <div
-                    className="
-absolute top-1/2 -translate-y-1/2 left-[calc(100%+25px)] /* ⬅️ was left-[calc(100%+4px)] */
-    z-50 flex items-center justify-center gap-[10px]
-    w-[54px] h-[26px] px-[8px] py-[8px]
-    rounded-[4px] opacity-100 whitespace-nowrap
-  "
-                    style={{ background: TIP_BG }}
-                  >
-                    <span className="text-white text-[13px] leading-[14px] font-medium">
-                      Home
-                    </span>
-
-                    {/* Carrot (centered to icon; 4px gap is set by bottom calc above) */}
-                    <span
-                      className="absolute top-1/2 -translate-y-1/2"
-                      style={{
-                        right: "100%", // ⬅️ was right: "100%"
-                        width: 0,
-                        height: 0,
-                        borderTop: "6px solid transparent",
-                        borderBottom: "6px solid transparent",
-                        borderRight: `6px solid ${TIP_BG}`, // ⬅️ was borderRight
-                      }}
-                    />
-                  </div>
-                )}
+                <img
+                  src={homelogo}
+                  alt="Home"
+                  style={{
+                    width: "16.4px",
+                    height: "18px",
+                    opacity: 1,
+                    filter: selected
+                      ? "invert(17%) sepia(9%) saturate(1462%) hue-rotate(257deg) brightness(94%) contrast(90%)"
+                      : isHovered
+                      ? "brightness(0) saturate(100%) invert(34%) sepia(69%) saturate(1573%) hue-rotate(136deg) brightness(92%) contrast(101%)"
+                      : "brightness(0) saturate(100%) invert(26%) sepia(6%) saturate(586%) hue-rotate(174deg) brightness(96%) contrast(88%)",
+                  }}
+                />
               </div>
 
-              {/* Text */}
+              {/* === Text === */}
               {!collapsed && (
                 <span
-                  className="text-[15px] font-medium leading-[20px]"
-                  style={{ color: HOME_PURPLE }}
+                  style={{
+                    color: selected
+                      ? "#53385A"
+                      : isHovered
+                      ? "#007C88"
+                      : "#404955",
+                    fontFamily: "Lato",
+                    fontWeight: selected ? 600 : isHovered ? 500 : 400,
+                    fontSize: "18px",
+                    lineHeight: "10px",
+                    letterSpacing: isHovered ? "1%" : "normal",
+                    opacity: 1,
+                    transition: "all 0.15s ease-in-out",
+                  }}
                 >
                   {item.name}
                 </span>

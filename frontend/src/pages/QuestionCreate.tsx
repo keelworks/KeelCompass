@@ -16,12 +16,12 @@ const SPACING = { sectionY: 48, labelGap: 16, helperGap: 16 };
 const MAX_TITLE = 250;
 
 const DEFAULT_CATEGORIES: Category[] = [
-  { id: "education", name: "Education" },
-  { id: "pd-management", name: "Pd Management" },
-  { id: "performance", name: "Performance" },
-  { id: "sre", name: "SRE" },
-  { id: "unemployment", name: "Unemployment" },
-  { id: "ux", name: "UX" },
+  { id: 1, name: "Education" },
+  { id: 2, name: "Pd Management" },
+  { id: 3, name: "Performance" },
+  { id: 4, name: "SRE" },
+  { id: 5, name: "Unemployment" },
+  { id: 6, name: "UX" },
 ];
 
 /** Chevron – ORIGINAL teal, untouched */
@@ -719,7 +719,9 @@ function IconButton({
                 >
                   <div className="max-h-72 overflow-auto py-2">
                     {categories.map((c) => {
-                      const checked = selectedCategoryIds.includes(String(c.id));
+                      const checked = selectedCategoryIds.includes(
+                        String(c.id)
+                      );
                       return (
                         <label
                           key={c.id}
