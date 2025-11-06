@@ -29,56 +29,21 @@ All model definitions in this file are derived directly from the source code in 
 
 ### Category
 
-#### Fields
-
-#### Relationships
-
 ### Question
-
-#### Fields
-
-#### Relationships
 
 ### UserQuestionAction
 
-#### Fields
-
-#### Relationships
-
 ### Comment
-
-#### Fields
-
-#### Relationships
 
 ### UserCommentAction
 
-#### Fields
-
-#### Relationships
-
 ### Attachment
-
-#### Fields
-
-#### Relationships
 
 ### Interest
 
-#### Fields
-
-#### Relationships
-
 ### Notification
-
-#### Fields
-
-#### Relationships
 
 ## Join Tables
 
 ### QuestionCategory
 
-#### Fields
-
-#### Relationships
