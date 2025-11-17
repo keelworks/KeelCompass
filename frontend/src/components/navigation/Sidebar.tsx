@@ -8,7 +8,15 @@ const HOME_PURPLE = "#53385A";
 const TOGGLE_TEAL = "#0E8B87";
 const TIP_BG = "#825E8B";
 
-function Sidebar({ showAsk }: { showAsk?: boolean }) {
+function Sidebar({
+  showAsk,
+  questionTitle,
+  onHomeClick,
+}: {
+  showAsk?: boolean;
+  questionTitle?: string;
+  onHomeClick?: () => void;
+}) {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -165,7 +173,16 @@ function Sidebar({ showAsk }: { showAsk?: boolean }) {
                 border: state.border,
                 boxShadow: state.boxShadow || "none",
               }}
-              onClick={() => !isDisabled && navigate(item.path)}
+              onClick={() => {
+                if (!isDisabled) {
+                  if (isHome && showAsk && onHomeClick) {
+                    // If on QuestionCreate and Home is clicked, use custom handler
+                    onHomeClick();
+                  } else {
+                    navigate(item.path);
+                  }
+                }
+              }}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => {
                 setIsHovered(false);
@@ -178,7 +195,13 @@ function Sidebar({ showAsk }: { showAsk?: boolean }) {
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  !isDisabled && navigate(item.path);
+                  if (!isDisabled) {
+                    if (isHome && showAsk && onHomeClick) {
+                      onHomeClick();
+                    } else {
+                      navigate(item.path);
+                    }
+                  }
                 }
               }}
             >
