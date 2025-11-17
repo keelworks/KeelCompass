@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Interest, QuestionsResponse } from '../utils/types';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Interest, QuestionsResponse } from "../utils/types";
 import {
   getAllCategories,
   getPopularQuestions,
   getRecentQuestions,
   getUserInterests,
-} from '../utils/store';
-import MainLayout from '../components/wrappers/MainLayout';
-import SearchBar from '../features/dashboard/searchBar/SearchBar';
-import QuestionsSection from '../features/dashboard/questions/QuestionsSection';
-import MyInterests from '../features/dashboard/interests/MyInterests';
-import QuestionCreate from '../pages/QuestionCreate'; // adjust the path to where your file is
+} from "../utils/store";
+import MainLayout from "../components/wrappers/MainLayout";
+import SearchBar from "../features/dashboard/searchBar/SearchBar";
+import QuestionsSection from "../features/dashboard/questions/QuestionsSection";
+import MyInterests from "../features/dashboard/interests/MyInterests";
+import QuestionCreate from "../pages/QuestionCreate"; // adjust the path to where your file is
 
 const PAGE_SIZE = 5;
 
@@ -24,7 +24,7 @@ const Dashboard = () => {
     offset: 0,
   });
   const [interests, setInterests] = useState<Interest[]>([]);
-  const [tab, setTab] = useState<'recent' | 'popular'>('recent');
+  const [tab, setTab] = useState<"recent" | "popular">("recent");
   const [searchActive, setSearchActive] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [showAsk, setShowAsk] = useState(false);
@@ -89,13 +89,13 @@ const Dashboard = () => {
   // fetch categories and interest
   useEffect(() => {
     const fetchCategories = async () => {
-      const cached = localStorage.getItem('categories');
+      const cached = localStorage.getItem("categories");
       if (!cached) {
         try {
           const categories = await getAllCategories();
-          localStorage.setItem('categories', JSON.stringify(categories));
+          localStorage.setItem("categories", JSON.stringify(categories));
         } catch (err) {
-          console.error('Failed to fetch categories', err);
+          console.error("Failed to fetch categories", err);
         }
       }
     };
@@ -115,7 +115,7 @@ const Dashboard = () => {
     const fetchQuestions = async () => {
       const offset = questions.offset || 0;
       let data;
-      if (tab === 'popular') {
+      if (tab === "popular") {
         data = await getPopularQuestions({ count: PAGE_SIZE, offset });
       } else {
         data = await getRecentQuestions({ count: PAGE_SIZE, offset });
@@ -151,10 +151,10 @@ const Dashboard = () => {
             <QuestionCreate
               // override navigate calls so it doesn't leave dashboard
               navigate={(path: string) => {
-                if (path === '/dashboard') {
+                if (path === "/dashboard") {
                   setShowAsk(false);
                   // optionally reload recent feed
-                  setTab('recent');
+                  setTab("recent");
                   setQuestions({ questions: [], count: PAGE_SIZE, offset: 0 });
                 }
               }}
