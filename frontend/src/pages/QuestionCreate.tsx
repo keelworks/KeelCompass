@@ -5,12 +5,15 @@ import { Category } from "../utils/types";
 import EmojiPicker from "emoji-picker-react";
 import { FiBold, FiItalic, FiUnderline, FiLink, FiList } from "react-icons/fi";
 import { BsListOl } from "react-icons/bs";
+import DiscardModal from "../components/DiscardModal";
+import Snackbar from "../components/Snackbar";
 
 /* SVG assets */
 import EmojiIcon from "../assets/Emojiicon.svg";
 import FileIcon from "../assets/Fileicon.svg";
 import FormattingIcon from "../assets/Formatingicon.svg";
 import FormattingIconLeft from "../assets/Formatingiconleft.svg"; // ⬅️ new active icon
+import ErrorIcon from "../../src/assets/ErrorIcon.svg";
 
 const SPACING = { sectionY: 48, labelGap: 16, helperGap: 16 };
 const MAX_TITLE = 250;
@@ -29,8 +32,8 @@ function Chevron({ open }: { open: boolean }) {
   return (
     <span
       className={`ml-2 inline-flex items-center justify-center
-        rounded-full w-6 h-6 bg-[#F2F4F5]
-        transition-transform duration-200 ${open ? "rotate-180" : "rotate-0"}`}
+      rounded-full w-6 h-6 bg-[#F2F4F5]
+      transition-transform duration-200 ${open ? "rotate-180" : "rotate-0"}`}
       aria-hidden
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -46,7 +49,17 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
-function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
+function QuestionCreate({
+  navigate,
+  onTitleChange,
+  showDiscardModal: externalShowDiscardModal,
+  setShowDiscardModal: externalSetShowDiscardModal,
+}: {
+  navigate?: (path: string) => void;
+  onTitleChange?: (title: string) => void;
+  showDiscardModal?: boolean;
+  setShowDiscardModal?: (show: boolean) => void;
+}) {
   const defaultNavigate = useNavigate();
   const finalNavigate = navigate || defaultNavigate;
 
@@ -58,17 +71,23 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
 
   // state
   const [title, setTitle] = useState("");
+  const [titleError, setTitleError] = useState(""); // NEW
   const [description, setDescription] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentError, setAttachmentError] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showFormattingPanel, setShowFormattingPanel] = useState(false);
+  const [internalShowDiscardModal, setInternalShowDiscardModal] =
+    useState(false);
+  const showDiscardModal = externalShowDiscardModal ?? internalShowDiscardModal;
+  const setShowDiscardModal =
+    externalSetShowDiscardModal ?? setInternalShowDiscardModal;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [catOpen, setCatOpen] = useState(false);
   const catMenuRef = useRef<HTMLDivElement | null>(null);
-
+  const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
   // formatting state
   const [activeFormatting, setActiveFormatting] = useState({
     bold: false,
@@ -98,6 +117,19 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
   // ---------- form submit / cancel ----------
   const handleSubmitCreateQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!title.trim()) {
+      setTitleError(
+        "Add your question. Try beginning with who, what, where, when, why, or how."
+      );
+      const field = document.getElementById(
+        "questionTitle"
+      ) as HTMLTextAreaElement | null;
+      field?.focus();
+      return;
+    }
+    setTitleError("");
+
     try {
       const res = await import("../utils/store");
       await res.createQuestion({
@@ -105,14 +137,30 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
         description: descriptionEditableRef.current?.innerHTML || "",
         attachment,
       });
-      finalNavigate("/dashboard");
+
+      setShowSuccessSnackbar(true);
+
+      setTimeout(() => {
+        finalNavigate("/dashboard");
+      }, 500);
     } catch (err: any) {
       setAttachmentError(err?.message || "Failed to post question.");
     }
   };
 
   const handleCancelCreateQuestion = () => {
+    // If no title entered, go directly to dashboard without confirmation
+    if (!title.trim()) {
+      finalNavigate("/dashboard");
+      return;
+    }
+    // If title exists, show confirmation modal
+    setShowDiscardModal(true);
+  };
+
+  const confirmDiscard = () => {
     setTitle("");
+    setTitleError("");
     setDescription("");
     if (descriptionEditableRef.current) {
       descriptionEditableRef.current.innerHTML = "";
@@ -121,7 +169,12 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     setShowEmojiPicker(false);
     setShowFormattingPanel(false);
     setSelectedCategoryIds([]);
+    setShowDiscardModal(false);
     finalNavigate("/dashboard");
+  };
+
+  const cancelDiscard = () => {
+    setShowDiscardModal(false);
   };
 
   // ---------- description editor bootstrap ----------
@@ -161,20 +214,19 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     return null;
   }
 
-function unwrapList(li: HTMLLIElement) {
-  const list = li.parentElement as HTMLUListElement | HTMLOListElement;
-  const parent = list.parentNode!;
-  const frag = document.createDocumentFragment(); // ✅ Fixed line — removed stray word “the”
+  function unwrapList(li: HTMLLIElement) {
+    const list = li.parentElement as HTMLUListElement | HTMLOListElement;
+    const parent = list.parentNode!;
+    const frag = document.createDocumentFragment();
 
-  Array.from(list.children).forEach((child) => {
-    const p = document.createElement("p");
-    while (child.firstChild) p.appendChild(child.firstChild);
-    frag.appendChild(p);
-  });
+    Array.from(list.children).forEach((child) => {
+      const p = document.createElement("p");
+      while (child.firstChild) p.appendChild(child.firstChild);
+      frag.appendChild(p);
+    });
 
-  parent.replaceChild(frag, list);
-}
-
+    parent.replaceChild(frag, list);
+  }
 
   function toggleList(kind: "ul" | "ol") {
     const host = descriptionEditableRef.current;
@@ -346,6 +398,7 @@ function unwrapList(li: HTMLLIElement) {
         setCatOpen(false);
         setShowFormattingPanel(false);
         setShowEmojiPicker(false);
+        setShowDiscardModal(false);
       }
     }
     document.addEventListener("mousedown", onDown);
@@ -374,55 +427,68 @@ function unwrapList(li: HTMLLIElement) {
   const hasSelection = selectedCategoryIds.length > 0;
 
   // ---------- icon button ----------
-function IconButton({
-  selected,
-  onClick,
-  src,
-  activeSrc,
-  alt,
-  title,
-}: {
-  selected?: boolean;
-  onClick?: (e: React.MouseEvent) => void;
-  src: string;
-  activeSrc?: string;
-  alt: string;
-  title: string;
-}) {
-  const iconSrc = selected && activeSrc ? activeSrc : src;
+  function IconButton({
+    selected,
+    onClick,
+    src,
+    activeSrc,
+    alt,
+    title,
+  }: {
+    selected?: boolean;
+    onClick?: (e: React.MouseEvent) => void;
+    src: string;
+    activeSrc?: string;
+    alt: string;
+    title: string;
+  }) {
+    const iconSrc = selected && activeSrc ? activeSrc : src;
 
-  return (
-    <button
-      type="button"
-      title={title}
-      aria-pressed={!!selected}
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={onClick}
-      className={`
+    return (
+      <button
+        type="button"
+        title={title}
+        aria-pressed={!!selected}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={onClick}
+        className={`
         group/icon flex items-center justify-center
         w-11 h-11 rounded-md transition-all outline-none select-none
         focus-visible:ring-2 focus-visible:ring-[#8DBFC7]
         ${
           selected
-            ? "bg-[#C8E9E9]" // active / selected state background
+            ? "bg[#C8E9E9]"
             : "bg-transparent hover:bg-[#D6EEF0] focus:bg-[#b7e2e7]"
         }
       `}
-    >
-      <img
-        src={iconSrc}
-        alt={alt}
-        className="
+      >
+        <img
+          src={iconSrc}
+          alt={alt}
+          className="
           w-9 h-9 pointer-events-none transition
         "
-      />
-    </button>
-  );
-}
-
+        />
+      </button>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen" style={{ backgroundColor: "#F9F9F9" }}>
+      {/* Discard Confirmation Modal */}
+      <DiscardModal
+        isOpen={showDiscardModal}
+        onCancel={cancelDiscard}
+        onConfirm={confirmDiscard}
+      />
+
+      <Snackbar
+        message="Success - Your question posted!"
+        isOpen={showSuccessSnackbar}
+        onClose={() => setShowSuccessSnackbar(false)}
+        duration={4000}
+      />
+
       <div className="p-8">
         <h1 className="text-2xl font-semibold text-[#111] mb-10">
           Ask Question
@@ -431,28 +497,78 @@ function IconButton({
         <form onSubmit={handleSubmitCreateQuestion}>
           {/* Question */}
           <div style={{ marginBottom: SPACING.sectionY }}>
-            <label className="block mb-4 text-gray-700 font-medium">
+            <label className="block mb-4 font-medium text-gray-700">
               Question <span className="text-red-600">*</span>{" "}
               <span className="text-gray-500 font-normal">(required)</span>
             </label>
-            <p className="text-sm text-gray-500 mb-4">
-              Begin with who, what, where, when, why, or how.
-            </p>
+            {titleError && (
+              <div
+                className="mb-3 flex items-center"
+                style={{
+                  width: 582,
+                  height: 32,
+                  borderRadius: 2,
+                  paddingTop: 10,
+                  paddingRight: 8,
+                  paddingBottom: 10,
+                  paddingLeft: 8,
+                  background: "#FCE2E2",
+                  gap: 17,
+                  position: "relative",
+                  top: -5,
+                  opacity: 1,
+                }}
+              >
+                <img
+                  src={ErrorIcon}
+                  alt="error icon"
+                  className="w-5 h-5"
+                  style={{ display: "inline-block" }}
+                />
+
+                <span
+                  style={{
+                    fontFamily: "Lato",
+                    fontWeight: 500,
+                    fontStyle: "normal",
+                    fontSize: "16px",
+                    lineHeight: "100%",
+                    letterSpacing: "0%",
+                    color: "#404955",
+                  }}
+                >
+                  {titleError}
+                </span>
+              </div>
+            )}
+
+            {!titleError && (
+              <p className="text-sm text-gray-500 mb-4">
+                Begin with who, what, where, when, why, or how.
+              </p>
+            )}
+
             <textarea
-              required
               id="questionTitle"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                onTitleChange?.(e.target.value); // Notify parent of title changes
+                if (titleError && e.target.value.trim()) {
+                  setTitleError("");
+                }
+              }}
               maxLength={MAX_TITLE}
-              className="
-                w-full min-h-[92px] rounded-[10px] px-3 py-2
-                border outline-none transition
-                border-[#D1DBDD] bg-white text-gray-900
-                hover:border-[#929898]            
-                focus:border-[#929898]
-                active:border-[#929898]
-                focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
-              "
+              className={`
+              w-full min-h-[92px] rounded-[10px] px-3 py-2
+              border outline-none transition
+              border-[#D1DBDD] bg-white text-gray-900
+              hover:border-[#929898]          
+              focus:border-[#929898]
+              active:border-[#929898]
+              focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
+              ${titleError ? "border-red-500" : ""}
+            `}
             />
             <div className="mt-2 text-xs text-gray-500">
               {remainingTitle} characters allowed
@@ -470,14 +586,14 @@ function IconButton({
 
             <div
               className="
-                group/desc relative rounded-[10px] border bg-white transition
-                border-[#D1DBDD]
-                hover:border-[#929898]
-                focus-within:border-[#929898]
-                active:border-[#929898]
-                has-[:focus-visible]:[box-shadow:0_0_0_2px_#A77CB2]
-                overflow-visible
-              "
+              group/desc relative rounded-[10px] border bg-white transition
+              border-[#D1DBDD]
+              hover:border-[#929898]
+              focus-within:border-[#929898]
+              active:border-[#929898]
+              has-[:focus-visible]:[box-shadow:0_0_0_2px_#A77CB2]
+              overflow-visible
+            "
             >
               {/* editable area */}
               <div
@@ -684,23 +800,21 @@ function IconButton({
                 type="button"
                 onClick={() => setCatOpen((s) => !s)}
                 className={`
-                  w-full flex items-center justify-between px-3 py-2 rounded-[10px] border outline-none transition
-                  bg-white text-[#063E53]
-                  ${
-                    catOpen || hasSelection
-                      ? "border-[#A77CB2]"
-                      : "border-[#D1DBDD]"
-                  }
-                  hover:border-[#929898]
-                  focus:border-[#A77CB2]
-                  active:border-[#A77CB2]
-                  focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
-                `}
+                w-full flex items-center justify-between px-3 py-2 rounded-[10px] border outline-none transition
+                bg-white text-[#063E53]
+                ${
+                  catOpen || hasSelection
+                    ? "border-[#A77CB2]"
+                    : "border-[#D1DBDD]"
+                }
+                hover:border-[#929898]
+                focus:border-[#A77CB2]
+                active:border-[#A77CB2]
+                focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
+              `}
               >
                 <span
-                  className={
-                    selectedLabel ? "text-[#063E53]" : "text-gray-400"
-                  }
+                  className={selectedLabel ? "text-[#063E53]" : "text-gray-400"}
                 >
                   {selectedLabel || "Select categories"}
                 </span>
@@ -726,12 +840,8 @@ function IconButton({
                         <label
                           key={c.id}
                           className={`flex items-center gap-3 px-4 py-2 cursor-pointer
-                            ${
-                              checked
-                                ? "bg-[#C7C7C7]"
-                                : "hover:bg-[#C7C7C7]"
-                            }
-                          `}
+                          ${checked ? "bg-[#C7C7C7]" : "hover:bg-[#C7C7C7]"}
+                        `}
                         >
                           <input
                             type="checkbox"
@@ -794,9 +904,7 @@ function IconButton({
               </div>
             )}
             {attachmentError && (
-              <div className="mt-1 text-xs text-red-600">
-                {attachmentError}
-              </div>
+              <div className="mt-1 text-xs text-red-600">{attachmentError}</div>
             )}
           </div>
         </form>
