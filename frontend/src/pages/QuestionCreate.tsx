@@ -6,29 +6,70 @@ import EmojiPicker from "emoji-picker-react";
 import { FiBold, FiItalic, FiUnderline, FiLink, FiList } from "react-icons/fi";
 import { BsListOl } from "react-icons/bs";
 
+/* SVG assets */
+import EmojiIcon from "../assets/Emojiicon.svg";
+import FileIcon from "../assets/Fileicon.svg";
+import FormattingIcon from "../assets/Formatingicon.svg";
+import FormattingIconLeft from "../assets/Formatingiconleft.svg"; // ⬅️ new active icon
+
+const SPACING = { sectionY: 48, labelGap: 16, helperGap: 16 };
+const MAX_TITLE = 250;
+
+const DEFAULT_CATEGORIES: Category[] = [
+  { id: 1, name: "Education" },
+  { id: 2, name: "Pd Management" },
+  { id: 3, name: "Performance" },
+  { id: 4, name: "SRE" },
+  { id: 5, name: "Unemployment" },
+  { id: 6, name: "UX" },
+];
+
+/** Chevron – ORIGINAL teal, untouched */
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <span
+      className={`ml-2 inline-flex items-center justify-center
+        rounded-full w-6 h-6 bg-[#F2F4F5]
+        transition-transform duration-200 ${open ? "rotate-180" : "rotate-0"}`}
+      aria-hidden
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M6 9l6 6 6-6"
+          stroke="#0CA3A6"
+          strokeWidth="2.25"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  );
+}
+
 function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
   const defaultNavigate = useNavigate();
   const finalNavigate = navigate || defaultNavigate;
 
-  // Refs
-  const emojiPickerRef = useRef<HTMLDivElement | null>(null);
-  const formattingPanelRef = useRef<HTMLDivElement | null>(null);
+  // refs
   const descriptionEditableRef = useRef<HTMLDivElement | null>(null);
+  const formattingPanelRef = useRef<HTMLDivElement | null>(null);
+  const emojiPanelRef = useRef<HTMLDivElement | null>(null);
   const savedRangeRef = useRef<Range | null>(null);
-  const formattingToggleRef = useRef<HTMLButtonElement | null>(null); // NEW
 
-  // State
-  const [title, setTitle] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
-  const [showFormattingPanel, setShowFormattingPanel] = useState<boolean>(false);
+  // state
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
-  const [attachmentError, setAttachmentError] = useState<string>("");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
-  const [showAllCategories, setShowAllCategories] = useState<boolean>(false);
+  const [attachmentError, setAttachmentError] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showFormattingPanel, setShowFormattingPanel] = useState(false);
 
-  // Active states for toolbar highlighting
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [catOpen, setCatOpen] = useState(false);
+  const catMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // formatting state
   const [activeFormatting, setActiveFormatting] = useState({
     bold: false,
     italic: false,
@@ -38,45 +79,23 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     link: false,
   });
 
-  // ---------- File attach ----------
+  useEffect(() => setCategories(DEFAULT_CATEGORIES), []);
+
+  const remainingTitle = Math.max(0, MAX_TITLE - title.length);
+
+  // ---------- file attach ----------
   const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        setAttachmentError("File size exceeds 10MB limit.");
-        setAttachment(null);
-      } else {
-        setAttachment(file);
-        setAttachmentError("");
-      }
-    } else {
-      setAttachment(null);
-      setAttachmentError("");
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setAttachmentError("File size exceeds 10MB limit.");
+      return;
     }
+    setAttachment(file);
+    setAttachmentError("");
   };
 
-  // ---------- Categories ----------
-  const handleCategoryClick = (category: Category) => {
-    setSelectedCategories((prev) =>
-      prev.some((c) => c.id === category.id)
-        ? prev.filter((c) => c.id !== category.id)
-        : [...prev, category]
-    );
-  };
-
-  // ---------- Cancel ----------
-  const handleCancelCreateQuestion = () => {
-    setTitle("");
-    setDescription("");
-    if (descriptionEditableRef.current) descriptionEditableRef.current.innerHTML = "";
-    setAttachment(null);
-    setSelectedCategories([]);
-    setShowAllCategories(false);
-    setShowFormattingPanel(false);
-    finalNavigate("/dashboard");
-  };
-
-  // ---------- Submit ----------
+  // ---------- form submit / cancel ----------
   const handleSubmitCreateQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -92,19 +111,20 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     }
   };
 
-  // fetch categories from localStorage
-  useEffect(() => {
-    const catStr = localStorage.getItem("categories");
-    if (catStr) {
-      try {
-        setCategories(JSON.parse(catStr));
-      } catch {
-        setCategories([]);
-      }
+  const handleCancelCreateQuestion = () => {
+    setTitle("");
+    setDescription("");
+    if (descriptionEditableRef.current) {
+      descriptionEditableRef.current.innerHTML = "";
     }
-  }, []);
+    setAttachment(null);
+    setShowEmojiPicker(false);
+    setShowFormattingPanel(false);
+    setSelectedCategoryIds([]);
+    finalNavigate("/dashboard");
+  };
 
-  // ---------- Initialize editor with an empty paragraph ----------
+  // ---------- description editor bootstrap ----------
   useEffect(() => {
     const el = descriptionEditableRef.current;
     if (!el) return;
@@ -127,7 +147,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     sel.addRange(savedRangeRef.current);
   }
 
-  // ---------- Helpers for lists ----------
+  // ---------- list helpers ----------
   function closest<K extends keyof HTMLElementTagNameMap>(
     el: Node | null,
     tag: K
@@ -141,17 +161,20 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     return null;
   }
 
-  function unwrapList(li: HTMLLIElement) {
-    const list = li.parentElement as HTMLUListElement | HTMLOListElement;
-    const parent = list.parentNode!;
-    const frag = document.createDocumentFragment();
-    Array.from(list.children).forEach((child) => {
-      const p = document.createElement("p");
-      while (child.firstChild) p.appendChild(child.firstChild);
-      frag.appendChild(p);
-    });
-    parent.replaceChild(frag, list);
-  }
+function unwrapList(li: HTMLLIElement) {
+  const list = li.parentElement as HTMLUListElement | HTMLOListElement;
+  const parent = list.parentNode!;
+  const frag = document.createDocumentFragment(); // ✅ Fixed line — removed stray word “the”
+
+  Array.from(list.children).forEach((child) => {
+    const p = document.createElement("p");
+    while (child.firstChild) p.appendChild(child.firstChild);
+    frag.appendChild(p);
+  });
+
+  parent.replaceChild(frag, list);
+}
+
 
   function toggleList(kind: "ul" | "ol") {
     const host = descriptionEditableRef.current;
@@ -164,31 +187,26 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     if (!sel || sel.rangeCount === 0) return;
     const range = sel.getRangeAt(0);
 
-    // If already inside a list, unwrap it (toggle off)
-    const currentLi = closest(range.startContainer, "LI" as keyof HTMLElementTagNameMap) as HTMLLIElement | null;
-    const currentUl = closest(range.startContainer, "UL" as keyof HTMLElementTagNameMap);
-    const currentOl = closest(range.startContainer, "OL" as keyof HTMLElementTagNameMap);
+    const currentLi = closest(
+      range.startContainer,
+      "LI" as any
+    ) as HTMLLIElement | null;
+    const currentUl = closest(range.startContainer, "UL" as any);
+    const currentOl = closest(range.startContainer, "OL" as any);
     if (currentLi && (currentUl || currentOl)) {
       unwrapList(currentLi);
       return;
     }
 
-    // Otherwise, wrap selection (or caret) into a new list
     const list = document.createElement(kind);
     const li = document.createElement("li");
-
-    if (range.collapsed) {
-      li.appendChild(document.createTextNode(""));
-    } else {
-      const contents = range.cloneContents();
-      li.appendChild(contents);
-    }
+    if (range.collapsed) li.appendChild(document.createTextNode(""));
+    else li.appendChild(range.cloneContents());
 
     list.appendChild(li);
     range.deleteContents();
     range.insertNode(list);
 
-    // place caret inside the new li
     const newRange = document.createRange();
     newRange.selectNodeContents(li);
     newRange.collapse(true);
@@ -197,7 +215,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     savedRangeRef.current = newRange;
   }
 
-  // ---------- Track which formatting is active ----------
+  // ---------- formatting state & apply ----------
   const updateActiveFormattingOnSelection = useCallback(() => {
     const res = {
       bold: false,
@@ -207,32 +225,40 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
       number: false,
       link: false,
     };
-
     try {
+      // @ts-ignore
       res.bold = document.queryCommandState("bold");
+    } catch {}
+    try {
+      // @ts-ignore
       res.italic = document.queryCommandState("italic");
+    } catch {}
+    try {
+      // @ts-ignore
       res.underline = document.queryCommandState("underline");
-    } catch {
-      // ignore deprecated execCommand warnings
-    }
+    } catch {}
 
     const sel = window.getSelection();
     if (sel && sel.rangeCount > 0) {
       const node = sel.focusNode;
-      res.bullet = !!closest(node, "UL" as keyof HTMLElementTagNameMap);
-      res.number = !!closest(node, "OL" as keyof HTMLElementTagNameMap);
-      res.link = !!closest(node, "A" as keyof HTMLElementTagNameMap);
+      res.bullet = !!closest(node, "UL" as any);
+      res.number = !!closest(node, "OL" as any);
+      res.link = !!closest(node, "A" as any);
     }
-
     setActiveFormatting((prev) =>
       JSON.stringify(prev) === JSON.stringify(res) ? prev : res
     );
   }, []);
 
-  // ---------- Apply formatting ----------
   const applyFormatting = useCallback(
     (
-      type: "bold" | "italic" | "underline" | "bulletList" | "numberedList" | "link"
+      type:
+        | "bold"
+        | "italic"
+        | "underline"
+        | "bulletList"
+        | "numberedList"
+        | "link"
     ) => {
       const host = descriptionEditableRef.current;
       if (!host) return;
@@ -249,24 +275,27 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
             toggleList("ol");
             break;
           case "bold":
+            // @ts-ignore
             document.execCommand("bold");
             break;
           case "italic":
+            // @ts-ignore
             document.execCommand("italic");
             break;
           case "underline":
+            // @ts-ignore
             document.execCommand("underline");
             break;
           case "link": {
             const url = prompt("Enter URL:", "https://");
-            if (url) document.execCommand("createLink", false, url);
+            if (url) {
+              // @ts-ignore
+              document.execCommand("createLink", false, url);
+            }
             break;
           }
         }
-      } catch {
-        // no-op
-      }
-
+      } catch {}
       setDescription(host.innerHTML);
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) savedRangeRef.current = sel.getRangeAt(0);
@@ -275,12 +304,11 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     [updateActiveFormattingOnSelection]
   );
 
-  // ---------- Keep state in sync while typing ----------
   const handleDescriptionInput = (e: React.FormEvent<HTMLDivElement>) => {
     setDescription(e.currentTarget.innerHTML);
   };
 
-  // ---------- Save selection + update active states when selection changes ----------
+  // selection tracking
   useEffect(() => {
     function handleSelectionChange() {
       const sel = window.getSelection();
@@ -297,522 +325,479 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
       document.removeEventListener("selectionchange", handleSelectionChange);
   }, [updateActiveFormattingOnSelection]);
 
-  // --- Outside click/keyboard close handling (UPDATED to keep panel open while working) ---
+  // close menus on outside click/esc
   useEffect(() => {
-    if (!showEmojiPicker && !showFormattingPanel) return;
-
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as Node;
-
-      // Emoji picker close
+    function onDown(e: MouseEvent) {
+      if (catMenuRef.current && !catMenuRef.current.contains(e.target as Node))
+        setCatOpen(false);
       if (
-        showEmojiPicker &&
-        emojiPickerRef.current &&
-        !emojiPickerRef.current.contains(target)
-      ) {
+        formattingPanelRef.current &&
+        !formattingPanelRef.current.contains(e.target as Node)
+      )
+        setShowFormattingPanel(false);
+      if (
+        emojiPanelRef.current &&
+        !emojiPanelRef.current.contains(e.target as Node)
+      )
+        setShowEmojiPicker(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setCatOpen(false);
+        setShowFormattingPanel(false);
         setShowEmojiPicker(false);
       }
-
-      // Formatting panel close (only on true outside click)
-      if (showFormattingPanel) {
-        const inPanel = !!formattingPanelRef.current?.contains(target);
-        const inToggle = !!formattingToggleRef.current?.contains(target);
-        const inEditor = !!descriptionEditableRef.current?.contains(target);
-
-        if (!inPanel && !inToggle && !inEditor) {
-          setShowFormattingPanel(false);
-        }
-      }
     }
-
-    function handleKeydown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        if (showEmojiPicker) setShowEmojiPicker(false);
-        if (showFormattingPanel) setShowFormattingPanel(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeydown);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeydown);
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
     };
-  }, [showEmojiPicker, showFormattingPanel]);
+  }, []);
+
+  // ---------- categories ----------
+  const toggleCategory = (id: string) => {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const selectedLabel =
+    selectedCategoryIds.length === 0
+      ? ""
+      : categories
+          .filter((c) => selectedCategoryIds.includes(String(c.id)))
+          .map((c) => c.name)
+          .join(", ");
+
+  const hasSelection = selectedCategoryIds.length > 0;
+
+  // ---------- icon button ----------
+function IconButton({
+  selected,
+  onClick,
+  src,
+  activeSrc,
+  alt,
+  title,
+}: {
+  selected?: boolean;
+  onClick?: (e: React.MouseEvent) => void;
+  src: string;
+  activeSrc?: string;
+  alt: string;
+  title: string;
+}) {
+  const iconSrc = selected && activeSrc ? activeSrc : src;
 
   return (
-    <div
-      className="flex items-center justify-center h-screen mt20"
-      style={{ borderRadius: "7px", padding: "28px 24px 24px 24px" }}
+    <button
+      type="button"
+      title={title}
+      aria-pressed={!!selected}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      className={`
+        group/icon flex items-center justify-center
+        w-11 h-11 rounded-md transition-all outline-none select-none
+        focus-visible:ring-2 focus-visible:ring-[#8DBFC7]
+        ${
+          selected
+            ? "bg-[#C8E9E9]" // active / selected state background
+            : "bg-transparent hover:bg-[#D6EEF0] focus:bg-[#b7e2e7]"
+        }
+      `}
     >
-      <div
-        className="flex flex-col items-center"
-        style={{
-          width: "676px",
-          padding: "28px 24px 24px 24px",
-          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-          borderRadius: "7px",
-          backgroundColor: "#FFFFFF",
-          marginBottom: "70px",
-          marginLeft: "-60px",
-        }}
-      >
-        <form className="flex flex-col gap-6 w-full" onSubmit={handleSubmitCreateQuestion}>
-          <h1
-            style={{
-              width: "251px",
-              height: "23px",
-              opacity: 1,
-              fontFamily: "Raleway, sans-serif",
-              fontWeight: 500,
-              fontSize: "20px",
-              lineHeight: "100%",
-              letterSpacing: "0",
-              textTransform: "uppercase",
-              verticalAlign: "middle",
-              color: "#3D3D3D",
-            }}
-          >
-            ASK A QUESTION
-          </h1>
+      <img
+        src={iconSrc}
+        alt={alt}
+        className="
+          w-9 h-9 pointer-events-none transition
+        "
+      />
+    </button>
+  );
+}
 
-          {/* Title */}
-          <div className="flex flex-col gap-2">
-            <label
-              style={{
-                fontFamily: "Lato, sans-serif",
-                fontWeight: 500,
-                fontSize: "18px",
-                lineHeight: "100%",
-                letterSpacing: "0",
-                color: "#323232",
-                opacity: 1,
-              }}
-            >
-              Question<span style={{ color: "red" }}>*</span>
+
+  return (
+    <div className="w-full min-h-screen" style={{ backgroundColor: "#F9F9F9" }}>
+      <div className="p-8">
+        <h1 className="text-2xl font-semibold text-[#111] mb-10">
+          Ask Question
+        </h1>
+
+        <form onSubmit={handleSubmitCreateQuestion}>
+          {/* Question */}
+          <div style={{ marginBottom: SPACING.sectionY }}>
+            <label className="block mb-4 text-gray-700 font-medium">
+              Question <span className="text-red-600">*</span>{" "}
+              <span className="text-gray-500 font-normal">(required)</span>
             </label>
-
+            <p className="text-sm text-gray-500 mb-4">
+              Begin with who, what, where, when, why, or how.
+            </p>
             <textarea
               required
               id="questionTitle"
-              name="questionTitle"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              maxLength={250}
-              className="px-3 py-2 focus:outline-none focus:ring-1"
-              style={{
-                width: "100%",
-                height: "72px",
-                fontSize: "16px",
-                borderRadius: "3px",
-                border: "1px solid #D1DBDD",
-                backgroundColor: "#FFFFFF",
-                color: "#063E53",
-              }}
+              maxLength={MAX_TITLE}
+              className="
+                w-full min-h-[92px] rounded-[10px] px-3 py-2
+                border outline-none transition
+                border-[#D1DBDD] bg-white text-gray-900
+                hover:border-[#929898]            
+                focus:border-[#929898]
+                active:border-[#929898]
+                focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
+              "
             />
-            <div className="flex justify-between text-sm mt-1">
-              <span style={{ color: "#5E7A84" }}>250 characters allowed</span>
+            <div className="mt-2 text-xs text-gray-500">
+              {remainingTitle} characters allowed
             </div>
           </div>
 
-          {/* Description (rich text) */}
-          <div className="flex flex-col gap-2">
-            <label
-              style={{
-                fontFamily: "Lato, sans-serif",
-                fontWeight: 500,
-                fontSize: "18px",
-                lineHeight: "100%",
-                letterSpacing: "0",
-                color: "#323232",
-                opacity: 1,
-              }}
-            >
+          {/* Description */}
+          <div style={{ marginBottom: SPACING.sectionY }}>
+            <label className="block mb-4 text-gray-700 font-medium">
               Description
             </label>
+            <p className="text-sm text-gray-500 mb-4">
+              Provide more details and context to help others answer.
+            </p>
 
-            <div className="relative" style={{ overflow: "visible" }}>
+            <div
+              className="
+                group/desc relative rounded-[10px] border bg-white transition
+                border-[#D1DBDD]
+                hover:border-[#929898]
+                focus-within:border-[#929898]
+                active:border-[#929898]
+                has-[:focus-visible]:[box-shadow:0_0_0_2px_#A77CB2]
+                overflow-visible
+              "
+            >
+              {/* editable area */}
               <div
                 id="descriptionEditable"
                 ref={descriptionEditableRef}
                 contentEditable
+                role="textbox"
+                aria-label="Description"
+                tabIndex={0}
                 onInput={handleDescriptionInput}
-                className="px-3 py-2 focus:outline-none focus:ring-1"
-                style={{
-                  width: "100%",
-                  height: 153, // fixed height with inner scrolling
-                  overflowY: "auto",
-                  fontSize: 16,
-                  borderRadius: 3,
-                  border: "1px solid #D1DBDD",
-                  backgroundColor: "#FFFFFF",
-                  color: "#063E53",
-                  paddingBottom: 44, // keeps text from hiding behind the icon row
-                  whiteSpace: "pre-wrap",
-                }}
+                className="px-3 pt-3 pb-16 outline-none min-h-[153px] text-[#063E53] focus-visible:outline-none rounded-[10px]"
+                style={{ backgroundColor: "#FFFFFF" }}
               />
 
-              {/* Icons row inside the editor */}
-              <div className="absolute left-0 bottom-0 mb-1 ml-1 flex items-center gap-4 z-10">
-                {/* Hidden file input (placed before label) */}
+              {/* icon row */}
+              <div className="absolute left-3 bottom-2 flex items-center gap-4 z-10">
+                {/* attach */}
+                <label htmlFor="attachment" className="cursor-pointer">
+                  <span className="sr-only">Attach file</span>
+                  <IconButton
+                    selected={!!attachment}
+                    title="Attach file"
+                    src={FileIcon}
+                    alt="Attach file"
+                    onClick={() => {
+                      const input = document.getElementById(
+                        "attachment"
+                      ) as HTMLInputElement | null;
+                      input?.click();
+                    }}
+                  />
+                </label>
                 <input
-                  type="file"
                   id="attachment"
-                  name="attachment"
+                  type="file"
                   onChange={handleAttachmentChange}
-                  accept="*/*"
                   className="hidden"
                 />
 
-                {/* File upload icon (clickable via label) */}
-                <label
-                  htmlFor="attachment"
-                  className="cursor-pointer hover:opacity-80"
-                  title="Attach file"
-                  aria-label="Attach file"
-                >
-                  <svg
-                    width="45"
-                    height="28"
-                    viewBox="0 0 28 28"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M8.5 14.5L14.8 8.2C15.9 7.1 17.7 7.1 18.8 8.2C19.9 9.3 19.9 11.1 18.8 12.2L10.9 20.1C9.3 21.7 6.7 21.7 5.1 20.1C3.5 18.5 3.5 15.9 5.1 14.3L13 6.4C15.7 3.7 20.1 3.7 22.8 6.4C25.5 9.1 25.5 13.5 22.8 16.2L16.5 22.5"
-                      stroke="#6C9BA6"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </label>
+                {/* emoji */}
+                <div className="relative">
+                  <IconButton
+                    selected={showEmojiPicker}
+                    title="Add emoji"
+                    src={EmojiIcon}
+                    alt="Emoji"
+                    onClick={() => setShowEmojiPicker((s) => !s)}
+                  />
+                  {showEmojiPicker && (
+                    <div
+                      ref={emojiPanelRef}
+                      className="absolute z-20"
+                      style={{ left: 0, bottom: 50 }}
+                    >
+                      <EmojiPicker
+                        onEmojiClick={(data: any) => {
+                          const host = descriptionEditableRef.current;
+                          if (!host) return;
+                          host.focus();
+                          const sel = window.getSelection();
+                          if (!sel || sel.rangeCount === 0) return;
+                          const range = sel.getRangeAt(0);
+                          range.deleteContents();
+                          const node = document.createTextNode(data.emoji);
+                          range.insertNode(node);
+                          range.setStartAfter(node);
+                          range.setEndAfter(node);
+                          sel.removeAllRanges();
+                          sel.addRange(range);
+                          savedRangeRef.current = range;
+                          setDescription(host.innerHTML);
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
 
-                {/* Emoji icon */}
-                <button
-                  type="button"
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="hover:opacity-80"
-                  title="Add emoji"
-                  aria-label="Add emoji"
-                >
-                  <svg
-                    width="30"
-                    height="30"
-                    viewBox="0 0 28 29"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M19.4472 13.1117C20.1546 15.3075 19.6649 17.8105 17.9248 19.5517C16.7266 20.7499 15.1316 21.4097 13.4358 21.4097C11.7399 21.4097 10.1461 20.7499 8.9467 19.5517C6.47206 17.0748 6.47206 13.0482 8.9467 10.5736C10.1461 9.37312 11.7399 8.71336 13.4358 8.71336C14.0558 8.71336 14.6532 8.83126 15.2314 9.0013V7.34057C14.6408 7.20341 14.0388 7.12746 13.4358 7.12746C11.4055 7.12746 9.37407 7.90171 7.82444 9.45133C4.72519 12.5495 4.72519 17.5747 7.82444 20.6728C9.37407 22.2213 11.4055 22.9978 13.4358 22.9978C15.4672 22.9978 17.4974 22.2213 19.0471 20.6728C21.0977 18.6233 21.7836 15.7326 21.1204 13.1117H19.4472ZM20.3032 8.20068V6.00293H19.0298V8.20068H16.832V9.47733H19.0298V11.6709H20.3032V9.47733H22.5V8.20068H20.3032ZM8.85148 16.169C9.04873 16.9886 9.45115 17.7674 10.0905 18.4079C11.0144 19.3306 12.2251 19.7931 13.4358 19.7931C14.6476 19.7931 15.8571 19.3306 16.781 18.4079C17.4203 17.7674 17.8228 16.9886 18.02 16.169H16.5804C16.4194 16.6281 16.1666 17.0612 15.8016 17.4285C15.1702 18.0599 14.329 18.4079 13.4358 18.4079C12.5425 18.4079 11.7025 18.0599 11.0699 17.4285C10.7038 17.0612 10.4521 16.6281 10.2923 16.169H8.85148ZM14.2349 12.7682C14.2349 13.3951 14.7428 13.9018 15.3685 13.9018C15.9954 13.9018 16.5021 13.3951 16.5021 12.7682C16.5021 12.1425 15.9954 11.6346 15.3685 11.6346C14.7428 11.6346 14.2349 12.1425 14.2349 12.7682ZM12.6286 12.7682C12.6286 12.1425 12.1219 11.6346 11.495 11.6346C10.8693 11.6346 10.3614 12.1425 10.3614 12.7682C10.3614 13.3951 10.8693 13.9018 11.495 13.9018C12.1219 13.9018 12.6286 13.3951 12.6286 12.7682Z"
-                      fill="#6C9BA6"
-                    />
-                  </svg>
-                </button>
-
-                {/* Rich text icon */}
-                <button
-                  type="button"
-                  ref={formattingToggleRef}
-                  onClick={() => setShowFormattingPanel((s) => !s)}
-                  title="Formatting options"
-                  className={`hover:opacity-80 ${showFormattingPanel ? "ring-1 ring-[#6C9BA6] rounded" : ""}`}
-                  aria-label="Formatting options"
-                  aria-pressed={showFormattingPanel}
-                  aria-expanded={showFormattingPanel}
-                >
-                  <svg
-                    width="45"
-                    height="28"
-                    viewBox="0 0 45 28"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M12.4615 18.3615L16.0846 9.90385C16.1188 9.82184 16.1765 9.75178 16.2504 9.7025C16.3243 9.65322 16.4112 9.62692 16.5 9.62692C16.5888 9.62692 16.6757 9.65322 16.7496 9.7025C16.8235 9.75178 16.8812 9.82184 16.9154 9.90385L20.5385 18.3615M13.8346 15.1538H19.1654M10.1538 6.5H22.8462C23.4834 6.5 24 7.01659 24 7.65385V20.3462C24 20.9834 23.4834 21.5 22.8462 21.5H10.1538C9.51659 21.5 9 20.9834 9 20.3462V7.65385C9 7.01659 9.51659 6.5 10.1538 6.5Z"
-                      stroke="#6C9BA6"
-                      strokeWidth="1.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M31.4714 16.1104C31.2111 16.3708 30.7889 16.3708 30.5286 16.1104L27.1953 12.7771C26.9349 12.5167 26.9349 12.0946 27.1953 11.8343C27.4556 11.5739 27.7397 11.712 28 11.9723L31 14.9723L34 12.0003C34.2603 11.74 34.5444 11.5739 34.8047 11.8343C35.0651 12.0946 35.0651 12.5167 34.8047 12.7771L31.4714 16.1104Z"
-                      fill="#6C9BA6"
-                    />
-                  </svg>
-                </button>
-
-                {/* Emoji picker */}
-                {showEmojiPicker && (
-                  <div
-                    ref={emojiPickerRef}
-                    className="absolute z-20"
-                    style={{ left: "8px", bottom: "52px" }}
-                  >
-                    <EmojiPicker
-                      onEmojiClick={(data: any) => {
-                        if (!descriptionEditableRef.current) return;
-                        const sel = window.getSelection();
-                        if (!sel || sel.rangeCount === 0) return;
-                        const range = sel.getRangeAt(0);
-                        range.deleteContents();
-                        const node = document.createTextNode(data.emoji);
-                        range.insertNode(node);
-                        range.setStartAfter(node);
-                        range.setEndAfter(node);
-                        sel.removeAllRanges();
-                        sel.addRange(range);
-                        setDescription(descriptionEditableRef.current.innerHTML);
+                {/* formatting */}
+                <div className="relative">
+                  <IconButton
+                    selected={showFormattingPanel}
+                    title="Formatting"
+                    src={FormattingIcon}
+                    activeSrc={FormattingIconLeft} // ⬅️ when selected show left icon
+                    alt="Formatting"
+                    onClick={() => setShowFormattingPanel((s) => !s)}
+                  />
+                  {showFormattingPanel && (
+                    <div
+                      ref={formattingPanelRef}
+                      className="absolute z-20 rounded-lg shadow-md"
+                      style={{
+                        left: "calc(100% + 8px)",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        border: "1px solid #D1D5DB",
+                        background: "#F2F4F5",
                       }}
-                    />
-                  </div>
-                )}
-
-                {/* Formatting panel */}
-                {showFormattingPanel && (
-                  <div
-                    ref={formattingPanelRef}
-                    className="absolute z-10 bg-[#E6EFF2] border border-gray-200 shadow-lg rounded-xl flex items-center gap-2"
-                    style={{
-                      bottom: "-60px",
-                      left: "8px",
-                      padding: "8px 14px",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      title="Bold"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        applyFormatting("bold");
-                      }}
-                      className={`px-2 py-1 rounded transition ${
-                        activeFormatting.bold
-                          ? "bg-[#CFE8EC] ring-1 ring-[#6C9BA6]"
-                          : "hover:bg-[#DFEDF0]"
-                      }`}
                     >
-                      <FiBold size={18} color="#6C9BA6" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Italic"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        applyFormatting("italic");
-                      }}
-                      className={`px-2 py-1 rounded transition ${
-                        activeFormatting.italic
-                          ? "bg-[#CFE8EC] ring-1 ring-[#6C9BA6]"
-                          : "hover:bg-[#DFEDF0]"
-                      }`}
-                    >
-                      <FiItalic size={18} color="#6C9BA6" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Underline"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        applyFormatting("underline");
-                      }}
-                      className={`px-2 py-1 rounded transition ${
-                        activeFormatting.underline
-                          ? "bg-[#CFE8EC] ring-1 ring-[#6C9BA6]"
-                          : "hover:bg-[#DFEDF0]"
-                      }`}
-                    >
-                      <FiUnderline size={18} color="#6C9BA6" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Bulleted list"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        applyFormatting("bulletList");
-                      }}
-                      className={`px-2 py-1 rounded transition ${
-                        activeFormatting.bullet
-                          ? "bg-[#CFE8EC] ring-1 ring-[#6C9BA6]"
-                          : "hover:bg-[#DFEDF0]"
-                      }`}
-                    >
-                      <FiList size={18} color="#6C9BA6" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Numbered list"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        applyFormatting("numberedList");
-                      }}
-                      className={`px-2 py-1 rounded transition ${
-                        activeFormatting.number
-                          ? "bg-[#CFE8EC] ring-1 ring-[#6C9BA6]"
-                          : "hover:bg-[#DFEDF0]"
-                      }`}
-                    >
-                      <BsListOl size={18} color="#6C9BA6" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Insert link"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        applyFormatting("link");
-                      }}
-                      className={`px-2 py-1 rounded transition ${
-                        activeFormatting.link
-                          ? "bg-[#CFE8EC] ring-1 ring-[#6C9BA6]"
-                          : "hover:bg-[#DFEDF0]"
-                      }`}
-                    >
-                      <FiLink size={18} color="#6C9BA6" />
-                    </button>
-                  </div>
-                )}
+                      <div className="flex items-center gap-2 h-10 px-3">
+                        <button
+                          type="button"
+                          title="Bold"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            applyFormatting("bold");
+                          }}
+                          className={`px-2 py-1 rounded transition hover:bg-white/70 ${
+                            activeFormatting.bold ? "bg-white" : ""
+                          }`}
+                        >
+                          <FiBold size={18} color="#6B7280" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Italic"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            applyFormatting("italic");
+                          }}
+                          className={`px-2 py-1 rounded transition hover:bg-white/70 ${
+                            activeFormatting.italic ? "bg-white" : ""
+                          }`}
+                        >
+                          <FiItalic size={18} color="#6B7280" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Underline"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            applyFormatting("underline");
+                          }}
+                          className={`px-2 py-1 rounded transition hover:bg-white/70 ${
+                            activeFormatting.underline ? "bg-white" : ""
+                          }`}
+                        >
+                          <FiUnderline size={18} color="#6B7280" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Bulleted list"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            applyFormatting("bulletList");
+                          }}
+                          className={`px-2 py-1 rounded transition hover:bg-white/70 ${
+                            activeFormatting.bullet ? "bg-white" : ""
+                          }`}
+                        >
+                          <FiList size={18} color="#6B7280" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Numbered list"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            applyFormatting("numberedList");
+                          }}
+                          className={`px-2 py-1 rounded transition hover:bg-white/70 ${
+                            activeFormatting.number ? "bg-white" : ""
+                          }`}
+                        >
+                          <BsListOl size={18} color="#6B7280" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Insert link"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            applyFormatting("link");
+                          }}
+                          className={`px-2 py-1 rounded transition hover:bg-white/70 ${
+                            activeFormatting.link ? "bg-white" : ""
+                          }`}
+                        >
+                          <FiLink size={18} color="#6B7280" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Attachment */}
-          <div className="flex flex-col gap-2 mt-2">
-            {attachment && (
-              <div className="flex items-center gap-2 mt-1">
-                <FaFileAlt className="mr-2" />
-                <span className="text-sm text-gray-600">
-                  {attachment.name} ({(attachment.size / 1024 / 1024).toFixed(2)} MB)
-                </span>
-                {attachment.type.startsWith("image/") && (
-                  <img
-                    src={URL.createObjectURL(attachment)}
-                    alt="preview"
-                    className="w-16 h-12 object-cover rounded border"
-                  />
-                )}
-                <button
-                  type="button"
-                  onClick={() => setAttachment(null)}
-                  className="ml-2 px-2 py-1 text-xs rounded bg-red-100 text-red-600 hover:bg-red-200 ml-auto"
-                >
-                  Remove
-                </button>
-              </div>
-            )}
-            {attachmentError && (
-              <span className="text-xs text-red-500">{attachmentError}</span>
-            )}
           </div>
 
           {/* Category */}
-          <label
-            style={{
-              fontFamily: "Lato, sans-serif",
-              fontWeight: 500,
-              fontSize: "18px",
-              lineHeight: "100%",
-              letterSpacing: "0",
-              color: "#323232",
-              opacity: 1,
-              marginBottom: "-20px",
-            }}
-          >
-            Categories
-          </label>
-          <div className="flex flex-col gap-2 mt-2">
-            <div className="flex items-center gap-3 flex-wrap">
-              {categories.map((category, index) => (
-                <label
-                  key={index}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full cursor-pointer"
+          <div className="mb-12">
+            <label className="block mb-4 font-medium text-gray-800">
+              Category
+            </label>
+            <p className="text-sm text-gray-500 mb-4">
+              Select one or more categories to get your question better
+              visibility.
+            </p>
+
+            <div
+              className="relative inline-block"
+              ref={catMenuRef}
+              style={{ width: 280 }}
+            >
+              {/* SELECT BOX */}
+              <button
+                type="button"
+                onClick={() => setCatOpen((s) => !s)}
+                className={`
+                  w-full flex items-center justify-between px-3 py-2 rounded-[10px] border outline-none transition
+                  bg-white text-[#063E53]
+                  ${
+                    catOpen || hasSelection
+                      ? "border-[#A77CB2]"
+                      : "border-[#D1DBDD]"
+                  }
+                  hover:border-[#929898]
+                  focus:border-[#A77CB2]
+                  active:border-[#A77CB2]
+                  focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
+                `}
+              >
+                <span
+                  className={
+                    selectedLabel ? "text-[#063E53]" : "text-gray-400"
+                  }
+                >
+                  {selectedLabel || "Select categories"}
+                </span>
+                <Chevron open={catOpen} />
+              </button>
+
+              {/* DROPDOWN MENU */}
+              {catOpen && (
+                <div
+                  className="absolute z-20 w-full rounded-[10px] bg-white shadow-md"
                   style={{
-                    backgroundColor: "#D9EFF2",
+                    border: "1px solid #D1DBDD",
+                    bottom: "calc(100% + 8px)",
+                    top: "auto",
                   }}
                 >
-                  <input
-                    type="checkbox"
-                    checked={selectedCategories.some((c) => c.id === category.id)}
-                    onChange={() => handleCategoryClick(category)}
-                    className="w-4 h-4"
-                  />
-                  <span
-                    style={{
-                      fontWeight: 500,
-                      color: "#333333",
-                    }}
-                  >
-                    {category.name}
-                  </span>
-                </label>
-              ))}
+                  <div className="max-h-72 overflow-auto py-2">
+                    {categories.map((c) => {
+                      const checked = selectedCategoryIds.includes(
+                        String(c.id)
+                      );
+                      return (
+                        <label
+                          key={c.id}
+                          className={`flex items-center gap-3 px-4 py-2 cursor-pointer
+                            ${
+                              checked
+                                ? "bg-[#C7C7C7]"
+                                : "hover:bg-[#C7C7C7]"
+                            }
+                          `}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleCategory(String(c.id))}
+                            className="w-4 h-4 accent-[#A77CB2]"
+                          />
+                          <span className="text-gray-800">{c.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Submit and Cancel Buttons */}
-          <div className="flex items-center gap-4">
+          {/* Actions */}
+          <div className="flex items-center gap-4 mt-12">
             <button
               type="submit"
-              className="px-4 py-2 font-medium rounded-md"
               style={{
-                width: "103px",
-                height: "45px",
+                minWidth: 96,
+                height: 44,
+                padding: "0 18px",
                 backgroundColor: "#05808F",
                 color: "#FFFFFF",
-                fontWeight: 500,
-                fontSize: "16px",
-                borderRadius: "12px",
                 border: "none",
+                borderRadius: 10,
+                fontWeight: 600,
               }}
             >
               Post
             </button>
-
             <button
               type="button"
-              className="px-4 py-2 font-medium"
-              style={{
-                width: "112px",
-                height: "45px",
-                color: "#05808F",
-                backgroundColor: "#FFFFFF",
-                border: "2px solid #05808F",
-                borderRadius: "12px",
-                fontWeight: 500,
-                fontSize: "16px",
-              }}
-              onClick={() => {
-                const snapshot = {
-                  title,
-                  description: descriptionEditableRef.current?.innerHTML || "",
-                  categories: selectedCategories.map((c) => c.id),
-                  savedAt: new Date().toISOString(),
-                };
-                localStorage.setItem("questionDraft", JSON.stringify(snapshot));
-              }}
-            >
-              Save draft
-            </button>
-
-            <button
               onClick={handleCancelCreateQuestion}
-              type="button"
               style={{
-                width: "100px",
-                height: "45px",
+                height: 44,
+                background: "transparent",
                 color: "#05808F",
-                backgroundColor: "transparent",
                 border: "none",
-                fontWeight: 500,
-                fontSize: "16px",
                 textDecoration: "underline",
+                fontWeight: 500,
               }}
             >
               Discard
             </button>
+          </div>
+
+          {/* attachment preview + errors */}
+          <div className="mt-4">
+            {attachment && (
+              <div className="flex items-center gap-2">
+                <FaFileAlt className="mr-1" />
+                <span className="text-sm text-gray-600">
+                  {attachment.name} (
+                  {(attachment.size / 1024 / 1024).toFixed(2)} MB)
+                </span>
+              </div>
+            )}
+            {attachmentError && (
+              <div className="mt-1 text-xs text-red-600">
+                {attachmentError}
+              </div>
+            )}
           </div>
         </form>
       </div>

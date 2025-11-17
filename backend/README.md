@@ -56,3 +56,4 @@ npx sequelize-cli db:migrate
 ```bash
 npx sequelize-cli db:seed:all
 ```
+

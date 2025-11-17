@@ -11,7 +11,11 @@ interface MainLayoutProps {
   showAsk?: boolean;
 }
 
-const MainLayout = ({ children, showAsk = false }: MainLayoutProps) => {
+const MainLayout = ({
+  children,
+  searchBar,
+  showAsk = false,
+}: MainLayoutProps) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();

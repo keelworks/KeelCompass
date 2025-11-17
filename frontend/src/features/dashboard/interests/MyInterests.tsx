@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Bookmark } from 'lucide-react';
-import QuestionDetails from '../questions/QuestionDetails';
-import { Interest, QuestionListItem } from '../../../utils/types';
-import InterestItem from './InterestItem';
+import { useState } from "react";
+import BookmarkIcon from "../../../assets/Bookmark.svg";
+import QuestionDetails from "../questions/QuestionDetails";
+import { Interest, QuestionListItem } from "../../../utils/types";
+import InterestItem from "./InterestItem";
 
 interface MyInterstProps {
   interests: Interest[];
@@ -37,17 +37,16 @@ const MyInterests = ({
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(
     null
   );
-  
+
   const formatLongDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
-  
   const getCommentCount = (questionId: number): number => {
     const question = questions.find((q) => q.id === questionId);
     return question?.commentCount || 0;
@@ -96,44 +95,70 @@ const MyInterests = ({
     }
   };
 
-
   const handleInterestItemClick = (questionId: number) => {
     setSelectedQuestionId(questionId);
   };
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex flex-col h-full p-6 bg-white shadow-md rounded-lg">
+      <div
+        className="flex flex-col h-full p-6 bg-white shadow-md rounded-lg"
+        style={{ background: "#EFEFEF" }}
+      >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-medium text-[#4A4A4A] uppercase tracking-wide">
+          <h2
+            style={{
+              width: "229px",
+              height: "28px",
+              opacity: 1,
+              fontFamily: "Raleway, sans-serif",
+              fontWeight: 600,
+              fontStyle: "normal",
+              fontSize: "24px",
+              lineHeight: "100%",
+              letterSpacing: "0%",
+              verticalAlign: "middle",
+              color: "#212121",
+            }}
+          >
             My Interests
           </h2>
-          <div className="w-5 h-5 bg-[#007575] rounded-sm flex items-center justify-center">
-            <Bookmark size={12} className="text-white fill-white" />
+
+          <div className="flex items-center">
+            <img
+              src={BookmarkIcon}
+              srcSet={`${BookmarkIcon} 1x`}
+              alt="Bookmark"
+              style={{
+                width: "20px",
+                height: "20px",
+                objectFit: "contain",
+              }}
+            />
           </div>
         </div>
 
         <div
           className={`flex flex-col space-y-4 transition-all duration-300 ${
-            showAll && interests.length > 3 ? 'flex-1 overflow-y-auto pr-2' : ''
+            showAll && interests.length > 3 ? "flex-1 overflow-y-auto pr-2" : ""
           }`}
           style={{
             maxHeight:
-              showAll && interests.length > 3 ? 'calc(100vh - 300px)' : 'none',
+              showAll && interests.length > 3 ? "calc(100vh - 300px)" : "none",
           }}
         >
           {interests.length > 0 ? (
             (showAll ? interests : interests.slice(0, 3)).map((interest) => {
               // 🔥 CHANGED: Always use live question data (no fallback to cached data)
-              const liveQuestion = questions.find(q => q.id === interest.question_id);
-              
+              const liveQuestion = questions.find(
+                (q) => q.id === interest.question_id
+              );
+
               return (
                 <InterestItem
                   key={interest.id}
-                 
-                  title={liveQuestion?.title || ''}
+                  title={liveQuestion?.title || ""}
                   date={formatLongDate(interest.created_at)}
-
                   commentCount={liveQuestion?.commentCount || 0}
                   onClick={() =>
                     handleInterestItemClick(interest.question_id || 0)
@@ -149,20 +174,52 @@ const MyInterests = ({
         </div>
 
         {interests.length > 3 && (
-          <div className="mt-6">
+          <div
+            className="mt-6 flex justify-start"
+            style={{ paddingLeft: "7px" }} // same as card padding for alignment
+          >
             <button
               onClick={() => setShowAll(!showAll)}
-              className="text-[#007575] hover:text-[#005555] font-medium flex items-center gap-1 transition-colors duration-200"
+              style={{
+                width: "173px",
+                height: "44px",
+                gap: "4px",
+                opacity: 1,
+                background: "transparent",
+                color: "#2C7A7B",
+                fontFamily: "Lato, sans-serif",
+                fontWeight: 500,
+                fontSize: "18px",
+                lineHeight: "24px",
+                letterSpacing: "0%",
+                border: "none",
+                borderRadius: "0",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                whiteSpace: "nowrap",
+              }}
+              className="transition-colors duration-200 hover:text-[#005E64]"
             >
-              <span>{showAll ? 'Show Less' : 'View all My Interests'}</span>
-              <span className="text-[#007575]">→</span>
+              <span>
+                {showAll ? "Show less interests" : "View more interests"}
+              </span>
+              <span
+                style={{
+                  fontSize: "18px",
+                  marginBottom: "10px",
+                }}
+              >
+                ⌄
+              </span>
             </button>
           </div>
         )}
       </div>
-      
+
       {/* Modal */}
-      {typeof selectedQuestionId === 'number' &&
+      {typeof selectedQuestionId === "number" &&
         !isNaN(selectedQuestionId) &&
         selectedQuestionId > 0 && (
           <QuestionDetails
@@ -171,7 +228,7 @@ const MyInterests = ({
             onQuestionDelete={handleQuestionDeleteLocal}
             onQuestionLike={handleQuestionLikeLocal}
             interests={interests}
-            setInterests={setInterests || (() => {})} 
+            setInterests={setInterests || (() => {})}
             onInterestsUpdate={handleInterestUpdateLocal}
             onCommentCreate={handleCommentCreateLocal}
             onCommentDelete={handleCommentDeleteLocal}

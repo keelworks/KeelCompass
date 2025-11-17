@@ -20,7 +20,9 @@ const QnA = () => {
 
   const subcategories = ["Posted", "Bookmarked", "Drafts"];
 
-  const [selectedMainCategory, setSelectedMainCategory] = useState<string>(categories[0]);
+  const [selectedMainCategory, setSelectedMainCategory] = useState<string>(
+    categories[0]
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -58,8 +60,7 @@ const QnA = () => {
         <div
           className="flex items-center justify-between mb-6"
           style={{ width: "676px", height: "44px" }}
-        >
-        </div>
+        ></div>
 
         <div className="mb-4">
           <CategoryFilter
