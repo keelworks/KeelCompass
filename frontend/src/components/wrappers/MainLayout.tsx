@@ -9,12 +9,16 @@ interface MainLayoutProps {
   children: React.ReactNode;
   searchBar?: React.ReactNode;
   showAsk?: boolean;
+  questionTitle?: string;
+  onHomeClick?: () => void;
 }
 
 const MainLayout = ({
   children,
   searchBar,
   showAsk = false,
+  questionTitle,
+  onHomeClick,
 }: MainLayoutProps) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -47,7 +51,11 @@ const MainLayout = ({
     <div className="flex min-h-screen bg-[#F9F9F9]">
       {/* Sidebar */}
       <div className="flex-none transition-all duration-300">
-        <Navigation showAsk={showAsk} />
+        <Navigation
+          showAsk={showAsk}
+          questionTitle={questionTitle}
+          onHomeClick={onHomeClick}
+        />
       </div>
 
       {/* Content Area */}

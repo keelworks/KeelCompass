@@ -29,6 +29,19 @@ const Dashboard = () => {
   const [hasMore, setHasMore] = useState(true);
   const [showAsk, setShowAsk] = useState(false);
   const [askDisabled, setAskDisabled] = useState(false);
+  const [questionTitle, setQuestionTitle] = useState("");
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+
+  const handleHomeClickFromSidebar = () => {
+    // If no title entered, go directly to dashboard
+    if (!questionTitle.trim()) {
+      setShowAsk(false);
+      setQuestionTitle("");
+      return;
+    }
+    // If title exists, show confirmation modal
+    setShowDiscardModal(true);
+  };
 
   const handleQuestionUpdate = (
     updatedQuestion: Partial<QuestionsResponse> & { id: number }
@@ -148,6 +161,8 @@ const Dashboard = () => {
         />
       }
       showAsk={showAsk}
+      questionTitle={questionTitle}
+      onHomeClick={handleHomeClickFromSidebar}
     >
       {/* Middle Column - Questions */}
       <div className="col-span-2 flex flex-col h-full overflow-hidden">
@@ -155,15 +170,17 @@ const Dashboard = () => {
         <div className="flex-1 overflow-hidden">
           {showAsk ? (
             <QuestionCreate
-              // override navigate calls so it doesn't leave dashboard
               navigate={(path: string) => {
                 if (path === "/dashboard") {
                   setShowAsk(false);
-                  // optionally reload recent feed
+                  setQuestionTitle("");
                   setTab("recent");
                   setQuestions({ questions: [], count: PAGE_SIZE, offset: 0 });
                 }
               }}
+              onTitleChange={setQuestionTitle}
+              showDiscardModal={showDiscardModal}
+              setShowDiscardModal={setShowDiscardModal}
             />
           ) : (
             <QuestionsSection

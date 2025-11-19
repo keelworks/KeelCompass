@@ -5,12 +5,15 @@ import { Category } from "../utils/types";
 import EmojiPicker from "emoji-picker-react";
 import { FiBold, FiItalic, FiUnderline, FiLink, FiList } from "react-icons/fi";
 import { BsListOl } from "react-icons/bs";
+import DiscardModal from "../components/DiscardModal";
+import Snackbar from "../components/Snackbar";
 
 /* SVG assets */
 import EmojiIcon from "../assets/Emojiicon.svg";
 import FileIcon from "../assets/Fileicon.svg";
 import FormattingIcon from "../assets/Formatingicon.svg";
 import FormattingIconLeft from "../assets/Formatingiconleft.svg"; // ⬅️ new active icon
+import ErrorIcon from "../../src/assets/ErrorIcon.svg";
 
 const SPACING = { sectionY: 48, labelGap: 16, helperGap: 16 };
 const MAX_TITLE = 250;
@@ -46,7 +49,17 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
-function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
+function QuestionCreate({
+  navigate,
+  onTitleChange,
+  showDiscardModal: externalShowDiscardModal,
+  setShowDiscardModal: externalSetShowDiscardModal,
+}: {
+  navigate?: (path: string) => void;
+  onTitleChange?: (title: string) => void;
+  showDiscardModal?: boolean;
+  setShowDiscardModal?: (show: boolean) => void;
+}) {
   const defaultNavigate = useNavigate();
   const finalNavigate = navigate || defaultNavigate;
 
@@ -59,17 +72,23 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
 
   // state
   const [title, setTitle] = useState("");
+  const [titleError, setTitleError] = useState(""); // NEW
   const [description, setDescription] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentError, setAttachmentError] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showFormattingPanel, setShowFormattingPanel] = useState(false);
+  const [internalShowDiscardModal, setInternalShowDiscardModal] =
+    useState(false);
+  const showDiscardModal = externalShowDiscardModal ?? internalShowDiscardModal;
+  const setShowDiscardModal =
+    externalSetShowDiscardModal ?? setInternalShowDiscardModal;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [catOpen, setCatOpen] = useState(false);
   const catMenuRef = useRef<HTMLDivElement | null>(null);
-
+  const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
   // formatting state
   const [activeFormatting, setActiveFormatting] = useState({
     bold: false,
@@ -104,6 +123,19 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
   // ---------- form submit / cancel ----------
   const handleSubmitCreateQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!title.trim()) {
+      setTitleError(
+        "Add your question. Try beginning with who, what, where, when, why, or how."
+      );
+      const field = document.getElementById(
+        "questionTitle"
+      ) as HTMLTextAreaElement | null;
+      field?.focus();
+      return;
+    }
+    setTitleError("");
+
     try {
       const res = await import("../utils/store");
       await res.createQuestion({
@@ -111,14 +143,30 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
         description: descriptionEditableRef.current?.innerHTML || "",
         attachment,
       });
-      finalNavigate("/dashboard");
+
+      setShowSuccessSnackbar(true);
+
+      setTimeout(() => {
+        finalNavigate("/dashboard");
+      }, 500);
     } catch (err: any) {
       setAttachmentError(err?.message || "Failed to post question.");
     }
   };
 
   const handleCancelCreateQuestion = () => {
+    // If no title entered, go directly to dashboard without confirmation
+    if (!title.trim()) {
+      finalNavigate("/dashboard");
+      return;
+    }
+    // If title exists, show confirmation modal
+    setShowDiscardModal(true);
+  };
+
+  const confirmDiscard = () => {
     setTitle("");
+    setTitleError("");
     setDescription("");
     if (descriptionEditableRef.current) {
       descriptionEditableRef.current.innerHTML = "";
@@ -127,7 +175,12 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
     setShowEmojiPicker(false);
     setShowFormattingPanel(false);
     setSelectedCategoryIds([]);
+    setShowDiscardModal(false);
     finalNavigate("/dashboard");
+  };
+
+  const cancelDiscard = () => {
+    setShowDiscardModal(false);
   };
 
   // ---------- description editor bootstrap ----------
@@ -345,6 +398,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
         setCatOpen(false);
         setShowFormattingPanel(false);
         setShowEmojiPicker(false);
+        setShowDiscardModal(false);
       }
     }
     document.addEventListener("mousedown", onDown);
@@ -403,7 +457,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
 				focus-visible:ring-2 focus-visible:ring-[#8DBFC7]
 				${
           selected
-            ? "bg-[#C8E9E9]" // active / selected state background
+            ? "bg[#C8E9E9]"
             : "bg-transparent hover:bg-[#D6EEF0] focus:bg-[#b7e2e7]"
         }
 			`}
@@ -438,19 +492,68 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
         <form onSubmit={handleSubmitCreateQuestion}>
           {/* Question */}
           <div style={{ marginBottom: SPACING.sectionY }}>
-            <label className="block mb-4 text-gray-700 font-medium">
+            <label className="block mb-4 font-medium text-gray-700">
               Question <span className="text-red-600">*</span>{" "}
               <span className="text-gray-500 font-normal">(required)</span>
             </label>
-            <p className="text-sm text-gray-500 mb-4">
-              Begin with who, what, where, when, why, or how.
-            </p>
+            {titleError && (
+              <div
+                className="mb-3 flex items-center"
+                style={{
+                  width: 582,
+                  height: 32,
+                  borderRadius: 2,
+                  paddingTop: 10,
+                  paddingRight: 8,
+                  paddingBottom: 10,
+                  paddingLeft: 8,
+                  background: "#FCE2E2",
+                  gap: 17,
+                  position: "relative",
+                  top: -5,
+                  opacity: 1,
+                }}
+              >
+                <img
+                  src={ErrorIcon}
+                  alt="error icon"
+                  className="w-5 h-5"
+                  style={{ display: "inline-block" }}
+                />
+
+                <span
+                  style={{
+                    fontFamily: "Lato",
+                    fontWeight: 500,
+                    fontStyle: "normal",
+                    fontSize: "16px",
+                    lineHeight: "100%",
+                    letterSpacing: "0%",
+                    color: "#404955",
+                  }}
+                >
+                  {titleError}
+                </span>
+              </div>
+            )}
+
+            {!titleError && (
+              <p className="text-sm text-gray-500 mb-4">
+                Begin with who, what, where, when, why, or how.
+              </p>
+            )}
+
             <textarea
-              required
               id="questionTitle"
               ref={titleRef} // ⬅️ connects auto-focus to Question box
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                onTitleChange?.(e.target.value); // Notify parent of title changes
+                if (titleError && e.target.value.trim()) {
+                  setTitleError("");
+                }
+              }}
               maxLength={MAX_TITLE}
               className="
 								w-full min-h-[92px] rounded-[10px] px-3 py-2
@@ -931,9 +1034,7 @@ function QuestionCreate({ navigate }: { navigate?: (path: string) => void }) {
               </div>
             )}
             {attachmentError && (
-              <div className="mt-1 text-xs text-red-600">
-                {attachmentError}
-              </div>
+              <div className="mt-1 text-xs text-red-600">{attachmentError}</div>
             )}
           </div>
         </form>
