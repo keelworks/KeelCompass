@@ -45,16 +45,16 @@ const MainLayout = ({
 
   return (
     <div className="flex justify-center w-full bg-[#F9F9F9] pr-8 2xl:pr-0">
-      <div className="flex min-h-screen w-full max-w-[1497px]">
+      <div className="flex max-w-[1497px]">
         {/* Sidebar */}
         <div className="flex-none transition-all duration-300">
           <Navigation showAsk={showAsk} />
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 flex flex-col h-screen overflow-hidden py-4 pl-6 max-w-[1280px] mx-auto">
+        <div className="flex-1 flex flex-col h-screen overflow-hidden py-4 max-w-[1280px]">
           {/* Top Row: Profile Header only */}
-          <div className="flex items-center justify-end space-x-4 pr-1 relative mb-2">
+          <div className="flex items-center justify-center space-x-4 pr-1 relative mb-2">
             {/* Bell Icon */}
             <div className="relative group cursor-pointer text-gray-700">
               <MdNotificationsNone size={20} />
@@ -113,7 +113,7 @@ const MainLayout = ({
           </div>
 
           {/* Main Content Grid - moved closer to top */}
-          <div className="flex-1 overflow-auto mt-0 pt-0 grid grid-cols-3 gap-8">
+          <div className="flex-1 overflow-auto mt-0 pt-0 grid grid-cols-3">
             {children}
           </div>
         </div>
