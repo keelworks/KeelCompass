@@ -32,8 +32,8 @@ function Chevron({ open }: { open: boolean }) {
   return (
     <span
       className={`ml-2 inline-flex items-center justify-center
-      rounded-full w-6 h-6 bg-[#F2F4F5]
-      transition-transform duration-200 ${open ? "rotate-180" : "rotate-0"}`}
+			  rounded-full w-6 h-6 bg-[#F2F4F5]
+			  transition-transform duration-200 ${open ? "rotate-180" : "rotate-0"}`}
       aria-hidden
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -64,6 +64,7 @@ function QuestionCreate({
   const finalNavigate = navigate || defaultNavigate;
 
   // refs
+  const titleRef = useRef<HTMLTextAreaElement | null>(null); // ⬅️ NEW: Question box ref
   const descriptionEditableRef = useRef<HTMLDivElement | null>(null);
   const formattingPanelRef = useRef<HTMLDivElement | null>(null);
   const emojiPanelRef = useRef<HTMLDivElement | null>(null);
@@ -101,6 +102,11 @@ function QuestionCreate({
   useEffect(() => setCategories(DEFAULT_CATEGORIES), []);
 
   const remainingTitle = Math.max(0, MAX_TITLE - title.length);
+
+  // ⬅️ NEW: Auto-focus only Question textarea on mount
+  useEffect(() => {
+    titleRef.current?.focus();
+  }, []);
 
   // ---------- file attach ----------
   const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,14 +188,8 @@ function QuestionCreate({
     const el = descriptionEditableRef.current;
     if (!el) return;
     if (!el.innerHTML || el.innerHTML === "<br>") {
+      // ⬅️ Only set initial HTML, DON'T move caret / selection here
       el.innerHTML = "<p><br></p>";
-      const range = document.createRange();
-      range.selectNodeContents(el.firstChild as Node);
-      range.collapse(true);
-      const sel = window.getSelection();
-      sel?.removeAllRanges();
-      sel?.addRange(range);
-      savedRangeRef.current = range;
     }
   }, []);
 
@@ -452,47 +452,42 @@ function QuestionCreate({
         onMouseDown={(e) => e.preventDefault()}
         onClick={onClick}
         className={`
-        group/icon flex items-center justify-center
-        w-11 h-11 rounded-md transition-all outline-none select-none
-        focus-visible:ring-2 focus-visible:ring-[#8DBFC7]
-        ${
+				group/icon flex items-center justify-center
+				w-11 h-11 rounded-md transition-all outline-none select-none
+				focus-visible:ring-2 focus-visible:ring-[#8DBFC7]
+				${
           selected
             ? "bg[#C8E9E9]"
             : "bg-transparent hover:bg-[#D6EEF0] focus:bg-[#b7e2e7]"
         }
-      `}
+			`}
       >
         <img
-          src={iconSrc}
-          alt={alt}
-          className="
-          w-9 h-9 pointer-events-none transition
-        "
+        src={iconSrc}
+        alt={alt}
+        className={`pointer-events-none transition ${
+            selected ? "w-8 h-8" : "w-9 h-9"
+        }`}
         />
+
       </button>
     );
   }
 
+  // Tooltip constants (based on image styles)
+  const TOOLTIP_COLOR = "#7F5A8E"; // A shade of purple close to the image
+  const TOOLTIP_TEXT_COLOR = "#FFFFFF";
+
   return (
     <div className="w-full min-h-screen" style={{ backgroundColor: "#F9F9F9" }}>
-      {/* Discard Confirmation Modal */}
-      <DiscardModal
-        isOpen={showDiscardModal}
-        onCancel={cancelDiscard}
-        onConfirm={confirmDiscard}
-      />
+      <div className="p-1">
+        <h1
+        className="text-2xl font-semibold text-[#111] mb-10"
+        style={{ fontFamily: "Raleway, sans-serif" }}
+      >
+        Ask Question
+      </h1>
 
-      <Snackbar
-        message="Success - Your question posted!"
-        isOpen={showSuccessSnackbar}
-        onClose={() => setShowSuccessSnackbar(false)}
-        duration={4000}
-      />
-
-      <div className="p-8">
-        <h1 className="text-2xl font-semibold text-[#111] mb-10">
-          Ask Question
-        </h1>
 
         <form onSubmit={handleSubmitCreateQuestion}>
           {/* Question */}
@@ -550,6 +545,7 @@ function QuestionCreate({
 
             <textarea
               id="questionTitle"
+              ref={titleRef} // ⬅️ connects auto-focus to Question box
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
@@ -559,16 +555,15 @@ function QuestionCreate({
                 }
               }}
               maxLength={MAX_TITLE}
-              className={`
-              w-full min-h-[92px] rounded-[10px] px-3 py-2
-              border outline-none transition
-              border-[#D1DBDD] bg-white text-gray-900
-              hover:border-[#929898]          
-              focus:border-[#929898]
-              active:border-[#929898]
-              focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
-              ${titleError ? "border-red-500" : ""}
-            `}
+              className="
+								w-full min-h-[92px] rounded-[10px] px-3 py-2
+								border outline-none transition
+								border-[#D1DBDD] bg-white text-gray-900
+								hover:border-[#929898]            
+								focus:border-[#929898]
+								active:border-[#929898]
+								focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
+							"
             />
             <div className="mt-2 text-xs text-gray-500">
               {remainingTitle} characters allowed
@@ -586,14 +581,14 @@ function QuestionCreate({
 
             <div
               className="
-              group/desc relative rounded-[10px] border bg-white transition
-              border-[#D1DBDD]
-              hover:border-[#929898]
-              focus-within:border-[#929898]
-              active:border-[#929898]
-              has-[:focus-visible]:[box-shadow:0_0_0_2px_#A77CB2]
-              overflow-visible
-            "
+								group/desc relative rounded-[10px] border bg-white transition
+								border-[#D1DBDD]
+								hover:border-[#929898]
+								focus-within:border-[#929898]
+								active:border-[#929898]
+								has-[:focus-visible]:[box-shadow:0_0_0_2px_#A77CB2]
+								overflow-visible
+							"
             >
               {/* editable area */}
               <div
@@ -646,7 +641,7 @@ function QuestionCreate({
                     <div
                       ref={emojiPanelRef}
                       className="absolute z-20"
-                      style={{ left: 0, bottom: 50 }}
+                      style={{ left:-100 , bottom: 50 }}
                     >
                       <EmojiPicker
                         onEmojiClick={(data: any) => {
@@ -677,100 +672,231 @@ function QuestionCreate({
                     selected={showFormattingPanel}
                     title="Formatting"
                     src={FormattingIcon}
-                    activeSrc={FormattingIconLeft} // ⬅️ when selected show left icon
+                    activeSrc={FormattingIconLeft} style // when selected show left icon
                     alt="Formatting"
                     onClick={() => setShowFormattingPanel((s) => !s)}
                   />
                   {showFormattingPanel && (
                     <div
                       ref={formattingPanelRef}
-                      className="absolute z-20 rounded-lg shadow-md"
+                      className="absolute z-20 rounded-s shadow-md"
                       style={{
-                        left: "calc(100% + 8px)",
+                        left: "calc(100% + 0px)",
                         top: "50%",
                         transform: "translateY(-50%)",
                         border: "1px solid #D1D5DB",
-                        background: "#F2F4F5",
+                        background: "#F1F1F1",
                       }}
                     >
                       <div className="flex items-center gap-2 h-10 px-3">
+                        {/* 1. Bold Button */}
                         <button
                           type="button"
-                          title="Bold"
                           onMouseDown={(e) => {
                             e.preventDefault();
                             applyFormatting("bold");
                           }}
-                          className={`px-2 py-1 rounded transition hover:bg-white/70 ${
-                            activeFormatting.bold ? "bg-white" : ""
-                          }`}
+                          className={`
+                            group/tooltip relative px-3 py-3 rounded transition 
+                            hover:bg-gray-200 
+                            ${
+                              activeFormatting.bold
+                                ? "bg-[#C8E9E9]" // Light Teal Active Color
+                                : ""
+                            }
+                          `}
                         >
                           <FiBold size={18} color="#6B7280" />
+                          {/* Custom Tooltip */}
+                          <div
+                            style={{ backgroundColor: TOOLTIP_COLOR, color: TOOLTIP_TEXT_COLOR }}
+                            className="
+                              absolute hidden group-hover/tooltip:block z-30 
+                              bottom-full left-1/2 -translate-x-1/2 
+                              mb-2 px-3 py-1 text-sm font-medium rounded shadow-md 
+                              whitespace-nowrap after:content-[''] after:absolute 
+                              after:top-full after:left-1/2 after:-translate-x-1/2 after:w-0 
+                              after:h-0 after:border-8 after:border-x-transparent 
+                              after:border-b-transparent after:border-t-[${TOOLTIP_COLOR}] after:mt-[-1px]
+                            "
+                          >
+                            Bold
+                          </div>
                         </button>
+                        
+                        {/* 2. Italics Button */}
                         <button
                           type="button"
-                          title="Italic"
                           onMouseDown={(e) => {
                             e.preventDefault();
                             applyFormatting("italic");
                           }}
-                          className={`px-2 py-1 rounded transition hover:bg-white/70 ${
-                            activeFormatting.italic ? "bg-white" : ""
-                          }`}
+                          className={`
+                            group/tooltip relative px-3 py-3 rounded transition 
+                            hover:bg-gray-200 
+                            ${
+                              activeFormatting.italic
+                                ? "bg-[#C8E9E9]" // Light Teal Active Color
+                                : ""
+                            }
+                          `}
                         >
                           <FiItalic size={18} color="#6B7280" />
+                          {/* Custom Tooltip */}
+                          <div
+                            style={{ backgroundColor: TOOLTIP_COLOR, color: TOOLTIP_TEXT_COLOR }}
+                            className="
+                              absolute hidden group-hover/tooltip:block z-30 
+                              bottom-full left-1/2 -translate-x-1/2 
+                              mb-2 px-3 py-1 text-sm font-medium rounded shadow-md 
+                              whitespace-nowrap after:content-[''] after:absolute 
+                              after:top-full after:left-1/2 after:-translate-x-1/2 after:w-0 
+                              after:h-0 after:border-8 after:border-x-transparent 
+                              after:border-b-transparent after:border-t-[${TOOLTIP_COLOR}] after:mt-[-1px]
+                            "
+                          >
+                            Italics
+                          </div>
                         </button>
+
+                        {/* 3. Underline Button */}
                         <button
                           type="button"
-                          title="Underline"
                           onMouseDown={(e) => {
                             e.preventDefault();
                             applyFormatting("underline");
                           }}
-                          className={`px-2 py-1 rounded transition hover:bg-white/70 ${
-                            activeFormatting.underline ? "bg-white" : ""
-                          }`}
+                          className={`
+                            group/tooltip relative px-2 py-3 rounded transition 
+                            hover:bg-gray-200 
+                            ${
+                              activeFormatting.underline
+                                ? "bg-[#C8E9E9]" // Light Teal Active Color
+                                : ""
+                            }
+                          `}
                         >
                           <FiUnderline size={18} color="#6B7280" />
+                          {/* Custom Tooltip */}
+                          <div
+                            style={{ backgroundColor: TOOLTIP_COLOR, color: TOOLTIP_TEXT_COLOR }}
+                            className="
+                              absolute hidden group-hover/tooltip:block z-30 
+                              bottom-full left-1/2 -translate-x-1/2 
+                              mb-2 px-3 py-1 text-sm font-medium rounded shadow-md 
+                              whitespace-nowrap after:content-[''] after:absolute 
+                              after:top-full after:left-1/2 after:-translate-x-1/2 after:w-0 
+                              after:h-0 after:border-8 after:border-x-transparent 
+                              after:border-b-transparent after:border-t-[${TOOLTIP_COLOR}] after:mt-[-1px]
+                            "
+                          >
+                            Underline
+                          </div>
                         </button>
+                        
+                        {/* 4. Bulleted list Button */}
                         <button
                           type="button"
-                          title="Bulleted list"
                           onMouseDown={(e) => {
                             e.preventDefault();
                             applyFormatting("bulletList");
                           }}
-                          className={`px-2 py-1 rounded transition hover:bg-white/70 ${
-                            activeFormatting.bullet ? "bg-white" : ""
-                          }`}
+                          className={`
+                            group/tooltip relative px-3 py-3 rounded transition 
+                            hover:bg-gray-200 
+                            ${
+                              activeFormatting.bullet
+                                ? "bg-[#C8E9E9]" // Light Teal Active Color
+                                : ""
+                            }
+                          `}
                         >
                           <FiList size={18} color="#6B7280" />
+                          {/* Custom Tooltip */}
+                          <div
+                            style={{ backgroundColor: TOOLTIP_COLOR, color: TOOLTIP_TEXT_COLOR }}
+                            className="
+                              absolute hidden group-hover/tooltip:block z-30 
+                              bottom-full left-1/2 -translate-x-1/2 
+                              mb-2 px-3 py-1 text-sm font-medium rounded shadow-md 
+                              whitespace-nowrap after:content-[''] after:absolute 
+                              after:top-full after:left-1/2 after:-translate-x-1/2 after:w-0 
+                              after:h-0 after:border-8 after:border-x-transparent 
+                              after:border-b-transparent after:border-t-[${TOOLTIP_COLOR}] after:mt-[-1px]
+                            "
+                          >
+                            Bulleted list
+                          </div>
                         </button>
+                        
+                        {/* 5. Numbered list Button (Keep original list icon if not provided) */}
                         <button
                           type="button"
-                          title="Numbered list"
                           onMouseDown={(e) => {
                             e.preventDefault();
                             applyFormatting("numberedList");
                           }}
-                          className={`px-2 py-1 rounded transition hover:bg-white/70 ${
-                            activeFormatting.number ? "bg-white" : ""
-                          }`}
+                          className={`
+                            group/tooltip relative px-3 py-3 rounded transition 
+                            hover:bg-gray-200 
+                            ${
+                              activeFormatting.number
+                                ? "bg-[#C8E9E9]" // Light Teal Active Color
+                                : ""
+                            }
+                          `}
                         >
                           <BsListOl size={18} color="#6B7280" />
+                          {/* Custom Tooltip */}
+                          <div
+                            style={{ backgroundColor: TOOLTIP_COLOR, color: TOOLTIP_TEXT_COLOR }}
+                            className="
+                              absolute hidden group-hover/tooltip:block z-30 
+                              bottom-full left-1/2 -translate-x-1/2 
+                              mb-2 px-3 py-1 text-sm font-medium rounded shadow-md 
+                              whitespace-nowrap after:content-[''] after:absolute 
+                              after:top-full after:left-1/2 after:-translate-x-1/2 after:w-0 
+                              after:h-0 after:border-8 after:border-x-transparent 
+                              after:border-b-transparent after:border-t-[${TOOLTIP_COLOR}] after:mt-[-1px]
+                            "
+                          >
+                            Numbered list
+                          </div>
                         </button>
+                        
+                        {/* 6. Insert link Button */}
                         <button
                           type="button"
-                          title="Insert link"
                           onMouseDown={(e) => {
                             e.preventDefault();
                             applyFormatting("link");
                           }}
-                          className={`px-2 py-1 rounded transition hover:bg-white/70 ${
-                            activeFormatting.link ? "bg-white" : ""
-                          }`}
+                          className={`
+                            group/tooltip relative px-3 py-3 rounded transition 
+                            hover:bg-gray-200 
+                            ${
+                              activeFormatting.link
+                                ? "bg-[#C8E9E9]" // Light Teal Active Color
+                                : ""
+                            }
+                          `}
                         >
                           <FiLink size={18} color="#6B7280" />
+                          {/* Custom Tooltip */}
+                          <div
+                            style={{ backgroundColor: TOOLTIP_COLOR, color: TOOLTIP_TEXT_COLOR }}
+                            className="
+                              absolute hidden group-hover/tooltip:block z-30 
+                              bottom-full left-1/2 -translate-x-1/2 
+                              mb-2 px-3 py-1 text-sm font-medium rounded shadow-md 
+                              whitespace-nowrap after:content-[''] after:absolute 
+                              after:top-full after:left-1/2 after:-translate-x-1/2 after:w-0 
+                              after:h-0 after:border-8 after:border-x-transparent 
+                              after:border-b-transparent after:border-t-[${TOOLTIP_COLOR}] after:mt-[-1px]
+                            "
+                          >
+                            Insert link
+                          </div>
                         </button>
                       </div>
                     </div>
@@ -785,9 +911,9 @@ function QuestionCreate({
             <label className="block mb-4 font-medium text-gray-800">
               Category
             </label>
+
             <p className="text-sm text-gray-500 mb-4">
-              Select one or more categories to get your question better
-              visibility.
+              Select one or more categories to get your question better visibility.
             </p>
 
             <div
@@ -800,64 +926,68 @@ function QuestionCreate({
                 type="button"
                 onClick={() => setCatOpen((s) => !s)}
                 className={`
-                w-full flex items-center justify-between px-3 py-2 rounded-[10px] border outline-none transition
-                bg-white text-[#063E53]
-                ${
-                  catOpen || hasSelection
-                    ? "border-[#A77CB2]"
-                    : "border-[#D1DBDD]"
-                }
-                hover:border-[#929898]
-                focus:border-[#A77CB2]
-                active:border-[#A77CB2]
-                focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
-              `}
+                  w-full flex items-center justify-between px-3 py-2 rounded-[3px] border outline-none transition
+                  bg-white text-[#063E53]
+                  ${catOpen || hasSelection ? "border-[#A77CB2]" : "border-[#D1DBDD]"}
+                  hover:border-[#929898]
+                  focus:border-[#A77CB2]
+                  active:border-[#A77CB2]
+                  focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
+                `}
+                style={{ height: 48 }}
               >
                 <span
-                  className={selectedLabel ? "text-[#063E53]" : "text-gray-400"}
+                  className={
+                    selectedLabel
+                      ? "text-[#063E53] whitespace-nowrap overflow-hidden text-ellipsis block"
+                      : "text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis block"
+                  }
+                  style={{
+                    maxWidth: "210px", // ← IMPORTANT TO PREVENT WRAP
+                  }}
                 >
                   {selectedLabel || "Select categories"}
                 </span>
+
                 <Chevron open={catOpen} />
               </button>
 
               {/* DROPDOWN MENU */}
               {catOpen && (
                 <div
-                  className="absolute z-20 w-full rounded-[10px] bg-white shadow-md"
+                  className="absolute z-20 rounded-[10px] bg-white shadow-md"
                   style={{
+                    width: "100%",
                     border: "1px solid #D1DBDD",
-                    bottom: "calc(100% + 8px)",
-                    top: "auto",
+                    bottom: "calc(100% + 8px)", // dropdown upwards
+                    maxHeight: "250px",
+                    overflowY: "auto",
                   }}
                 >
-                  <div className="max-h-72 overflow-auto py-2">
-                    {categories.map((c) => {
-                      const checked = selectedCategoryIds.includes(
-                        String(c.id)
-                      );
-                      return (
-                        <label
-                          key={c.id}
-                          className={`flex items-center gap-3 px-4 py-2 cursor-pointer
+                  {categories.map((c) => {
+                    const checked = selectedCategoryIds.includes(String(c.id));
+                    return (
+                      <label
+                        key={c.id}
+                        className={`flex items-center gap-3 px-4 py-2 cursor-pointer
                           ${checked ? "bg-[#C7C7C7]" : "hover:bg-[#C7C7C7]"}
                         `}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleCategory(String(c.id))}
-                            className="w-4 h-4 accent-[#A77CB2]"
-                          />
-                          <span className="text-gray-800">{c.name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleCategory(String(c.id))}
+                          className="w-4 h-4 accent-[#A77CB2]"
+                        />
+                        <span className="text-gray-800">{c.name}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </div>
           </div>
+
 
           {/* Actions */}
           <div className="flex items-center gap-4 mt-12">
