@@ -8,6 +8,7 @@ const Question = db.Question;
 const UserQuestionAction = db.UserQuestionAction;
 const Attachment = db.Attachment;
 const Comment = db.Comment;
+const Category = db.Category;
 const Interest = db.Interest;
 const attachmentService = require("./attachmentServices");
 
@@ -19,29 +20,51 @@ const getRecentQuestions = async (userId, count = 10, offset = 0) => {
     if (isNaN(count) || count <= 0) count = 10;
     if (isNaN(offset) || offset < 0) offset = 0;
 
-    const { count: totalCount, rows: questions } = await Question.findAndCountAll({
-      include: [
-        { model: User, as: "user", attributes: ["id", "username"] },
-        { model: UserQuestionAction, as: "userQuestionActions", attributes: ["user_id", "action_type"] },
-        { model: Attachment, as: "attachment", attributes: ["id", "file_name", "mime_type"] },
-        { model: Comment, as: "comments", attributes: ["id"] },
-        { model: Interest, as: "interests", attributes: ["id", "user_id"] },
-      ],
-      order: [["created_at", "DESC"]],
-      limit: count,
-      offset: offset,
-      distinct: true
-    });
+    const { count: totalCount, rows: questions } =
+      await Question.findAndCountAll({
+        include: [
+          { model: User, as: "user", attributes: ["id", "username"] },
+          {
+            model: UserQuestionAction,
+            as: "userQuestionActions",
+            attributes: ["user_id", "action_type"],
+          },
+          {
+            model: Attachment,
+            as: "attachment",
+            attributes: ["id", "file_name", "mime_type"],
+          },
+          { model: Comment, as: "comments", attributes: ["id"] },
+          { model: Interest, as: "interests", attributes: ["id", "user_id"] },
+          { model: Category, attributes: ["id", "name"] }, // Add this line
+        ],
+        order: [["created_at", "DESC"]],
+        limit: count,
+        offset: offset,
+        distinct: true,
+      });
 
-    const questionsWithCounts = questions.map(q => {
-      const uqas = Array.isArray(q.userQuestionActions) ? q.userQuestionActions : [];
-      const userInterest = Array.isArray(q.interests) ? q.interests.find(i => i.user_id === userId) : null;
+    const questionsWithCounts = questions.map((q) => {
+      const uqas = Array.isArray(q.userQuestionActions)
+        ? q.userQuestionActions
+        : [];
+      const userInterest = Array.isArray(q.interests)
+        ? q.interests.find((i) => i.user_id === userId)
+        : null;
       const isInterested = !!userInterest;
       const interestId = isInterested ? userInterest.id : null;
-      const hasLiked = uqas.some(a => a.action_type === "like" && a.user_id === userId);
-      const likeCount = uqas.filter(a => a.action_type === "like").length;
+      const hasLiked = uqas.some(
+        (a) => a.action_type === "like" && a.user_id === userId
+      );
+      const likeCount = uqas.filter((a) => a.action_type === "like").length;
       const comments = Array.isArray(q.comments) ? q.comments : [];
       const commentCount = comments.length;
+
+      // Map categories to a simple array
+      const categories = Array.isArray(q.Categories)
+        ? q.Categories.map((cat) => ({ id: cat.id, name: cat.name }))
+        : [];
+
       return {
         id: q.id,
         user: { username: q.user?.username },
@@ -55,12 +78,15 @@ const getRecentQuestions = async (userId, count = 10, offset = 0) => {
         hasLiked,
         likeCount,
         commentCount,
+        categories, // Add this line
       };
     });
 
     const nextOffset = offset + questionsWithCounts.length;
     const resOffset = nextOffset >= totalCount ? -1 : nextOffset;
-    logger.info(`Fetched ${questionsWithCounts.length} recent questions, totalCount: ${totalCount}, resOffset: ${resOffset}`);
+    logger.info(
+      `Fetched ${questionsWithCounts.length} recent questions, totalCount: ${totalCount}, resOffset: ${resOffset}`
+    );
     return {
       questions: questionsWithCounts,
       total: totalCount,
@@ -79,20 +105,34 @@ const getPopularQuestions = async (userId, count = 10, offset = 0) => {
     const allQuestions = await Question.findAll({
       include: [
         { model: User, as: "user", attributes: ["id", "username"] },
-        { model: UserQuestionAction, as: "userQuestionActions", attributes: ["user_id", "action_type"] },
-        { model: Attachment, as: "attachment", attributes: ["id", "file_name", "mime_type"] },
+        {
+          model: UserQuestionAction,
+          as: "userQuestionActions",
+          attributes: ["user_id", "action_type"],
+        },
+        {
+          model: Attachment,
+          as: "attachment",
+          attributes: ["id", "file_name", "mime_type"],
+        },
         { model: Comment, as: "comments", attributes: ["id"] },
         { model: Interest, as: "interests", attributes: ["user_id"] },
       ],
     });
 
-    const questionsWithScores = allQuestions.map(q => {
-      const uqas = Array.isArray(q.userQuestionActions) ? q.userQuestionActions : [];
-      const userInterest = Array.isArray(q.interests) ? q.interests.find(i => i.user_id === userId) : null;
+    const questionsWithScores = allQuestions.map((q) => {
+      const uqas = Array.isArray(q.userQuestionActions)
+        ? q.userQuestionActions
+        : [];
+      const userInterest = Array.isArray(q.interests)
+        ? q.interests.find((i) => i.user_id === userId)
+        : null;
       const isInterested = !!userInterest;
       const interestId = userInterest ? userInterest.id : null;
-      const hasLiked = uqas.some(a => a.action_type === "like" && a.user_id === userId);
-      const likeCount = uqas.filter(a => a.action_type === "like").length;
+      const hasLiked = uqas.some(
+        (a) => a.action_type === "like" && a.user_id === userId
+      );
+      const likeCount = uqas.filter((a) => a.action_type === "like").length;
       const comments = Array.isArray(q.comments) ? q.comments : [];
       const commentCount = comments.length;
       const popularityScore = likeCount + commentCount;
@@ -113,11 +153,17 @@ const getPopularQuestions = async (userId, count = 10, offset = 0) => {
       };
     });
 
-    const sortedQuestions = questionsWithScores
-      .sort((a, b) => b.popularityScore - a.popularityScore || new Date(b.createdAt) - new Date(a.createdAt));
+    const sortedQuestions = questionsWithScores.sort(
+      (a, b) =>
+        b.popularityScore - a.popularityScore ||
+        new Date(b.createdAt) - new Date(a.createdAt)
+    );
 
     const pagedQuestions = sortedQuestions.slice(offset, offset + count);
-    const resOffset = offset + pagedQuestions.length >= sortedQuestions.length ? -1 : offset + pagedQuestions.length;
+    const resOffset =
+      offset + pagedQuestions.length >= sortedQuestions.length
+        ? -1
+        : offset + pagedQuestions.length;
 
     return {
       questions: pagedQuestions,
@@ -139,28 +185,43 @@ const getPendingQuestions = async (count = 10, offset = 0) => {
     if (isNaN(count) || count <= 0) count = 10;
     if (isNaN(offset) || offset < 0) offset = 0;
 
-    const { count: totalCount, rows: questions } = await Question.findAndCountAll({
-      where: { status: 'pending' },
-      include: [
-        { model: User, as: "user", attributes: ["id", "username"] },
-        { model: UserQuestionAction, as: "userQuestionActions", attributes: ["user_id", "action_type"] },
-        { model: Attachment, as: "attachment", attributes: ["id", "file_name", "mime_type"] },
-        { model: Comment, as: "comments", attributes: ["id"] },
-        { model: Interest, as: "interests", attributes: ["id", "user_id"] },
-      ],
-      order: [["created_at", "DESC"]],
-      limit: count,
-      offset: offset,
-      distinct: true
-    });
+    const { count: totalCount, rows: questions } =
+      await Question.findAndCountAll({
+        where: { status: "pending" },
+        include: [
+          { model: User, as: "user", attributes: ["id", "username"] },
+          {
+            model: UserQuestionAction,
+            as: "userQuestionActions",
+            attributes: ["user_id", "action_type"],
+          },
+          {
+            model: Attachment,
+            as: "attachment",
+            attributes: ["id", "file_name", "mime_type"],
+          },
+          { model: Comment, as: "comments", attributes: ["id"] },
+          { model: Interest, as: "interests", attributes: ["id", "user_id"] },
+        ],
+        order: [["created_at", "DESC"]],
+        limit: count,
+        offset: offset,
+        distinct: true,
+      });
 
-    const questionsWithCounts = questions.map(q => {
-      const uqas = Array.isArray(q.userQuestionActions) ? q.userQuestionActions : [];
-      const userInterest = Array.isArray(q.interests) ? q.interests.find(i => i.user_id === userId) : null;
+    const questionsWithCounts = questions.map((q) => {
+      const uqas = Array.isArray(q.userQuestionActions)
+        ? q.userQuestionActions
+        : [];
+      const userInterest = Array.isArray(q.interests)
+        ? q.interests.find((i) => i.user_id === userId)
+        : null;
       const isInterested = !!userInterest;
       const interestId = isInterested ? userInterest.id : null;
-      const hasLiked = uqas.some(a => a.action_type === "like" && a.user_id === userId);
-      const likeCount = uqas.filter(a => a.action_type === "like").length;
+      const hasLiked = uqas.some(
+        (a) => a.action_type === "like" && a.user_id === userId
+      );
+      const likeCount = uqas.filter((a) => a.action_type === "like").length;
       const comments = Array.isArray(q.comments) ? q.comments : [];
       const commentCount = comments.length;
       return {
@@ -181,7 +242,9 @@ const getPendingQuestions = async (count = 10, offset = 0) => {
 
     const nextOffset = offset + questionsWithCounts.length;
     const resOffset = nextOffset >= totalCount ? -1 : nextOffset;
-    logger.info('Fetched ${questionsWithCounts.length} pending questions, totalCount: ${totalCount}, resOffset: ${resOffset}');
+    logger.info(
+      "Fetched ${questionsWithCounts.length} pending questions, totalCount: ${totalCount}, resOffset: ${resOffset}"
+    );
     return {
       questions: questionsWithCounts,
       total: totalCount,
@@ -200,15 +263,31 @@ const getQuestion = async (userId, questionId) => {
     const question = await Question.findByPk(questionId, {
       include: [
         { model: User, as: "user", attributes: ["id", "username"] },
-        { model: UserQuestionAction, as: "userQuestionActions", attributes: ["user_id", "action_type"] },
-        { model: Attachment, as: "attachment", attributes: ["id", "file_name", "mime_type", "data"] },
+        {
+          model: UserQuestionAction,
+          as: "userQuestionActions",
+          attributes: ["user_id", "action_type"],
+        },
+        {
+          model: Attachment,
+          as: "attachment",
+          attributes: ["id", "file_name", "mime_type", "data"],
+        },
         {
           model: Comment,
           as: "comments",
           include: [
             { model: User, as: "user", attributes: ["id", "username"] },
-            { model: Attachment, as: "attachment", attributes: ["id", "file_name", "mime_type"] },
-            { model: db.UserCommentAction, as: "userCommentActions", attributes: ["user_id", "action_type"] },
+            {
+              model: Attachment,
+              as: "attachment",
+              attributes: ["id", "file_name", "mime_type"],
+            },
+            {
+              model: db.UserCommentAction,
+              as: "userCommentActions",
+              attributes: ["user_id", "action_type"],
+            },
           ],
         },
         { model: Interest, as: "interests", attributes: ["id", "user_id"] },
@@ -217,37 +296,51 @@ const getQuestion = async (userId, questionId) => {
     });
     if (!question) throw new HttpError(404, "Question not found");
 
-    const uqas = Array.isArray(question.userQuestionActions) ? question.userQuestionActions : [];
-    const userInterest = Array.isArray(question.interests) ? question.interests.find(i => i.user_id === userId) : null;
+    const uqas = Array.isArray(question.userQuestionActions)
+      ? question.userQuestionActions
+      : [];
+    const userInterest = Array.isArray(question.interests)
+      ? question.interests.find((i) => i.user_id === userId)
+      : null;
     const isInterested = !!userInterest;
     const interestId = isInterested ? userInterest.id : null;
-    const hasLiked = uqas.some(a => a.action_type === "like" && a.user_id === userId);
-    const likeCount = uqas.filter(a => a.action_type === "like").length;
-    const comments = Array.isArray(question.comments) ? question.comments.map(c => {
-      const ucas = Array.isArray(c.userCommentActions) ? c.userCommentActions : [];
-      const likeCount = ucas.filter(a => a.action_type === "like").length;
-      const hasLiked = ucas.some(a => a.action_type === "like" && a.user_id === userId);
-      return {
-        id: c.id,
-        user: { id: c.user?.id, username: c.user?.username },
-        parentId: c.parent_id,
-        content: c.content,
-        createdAt: c.created_at,
-        updatedAt: c.updated_at,
-        attachment: c.attachment ? {
-          id: c.attachment.id,
-          fileName: c.attachment.file_name,
-          mimeType: c.attachment.mime_type,
-          data: c.attachment.data
-            ? Buffer.isBuffer(c.attachment.data)
-              ? c.attachment.data.toString('base64')
-              : c.attachment.data
-            : null,
-        } : null,
-        hasLiked,
-        likeCount,
-      };
-    }) : [];
+    const hasLiked = uqas.some(
+      (a) => a.action_type === "like" && a.user_id === userId
+    );
+    const likeCount = uqas.filter((a) => a.action_type === "like").length;
+    const comments = Array.isArray(question.comments)
+      ? question.comments.map((c) => {
+          const ucas = Array.isArray(c.userCommentActions)
+            ? c.userCommentActions
+            : [];
+          const likeCount = ucas.filter((a) => a.action_type === "like").length;
+          const hasLiked = ucas.some(
+            (a) => a.action_type === "like" && a.user_id === userId
+          );
+          return {
+            id: c.id,
+            user: { id: c.user?.id, username: c.user?.username },
+            parentId: c.parent_id,
+            content: c.content,
+            createdAt: c.created_at,
+            updatedAt: c.updated_at,
+            attachment: c.attachment
+              ? {
+                  id: c.attachment.id,
+                  fileName: c.attachment.file_name,
+                  mimeType: c.attachment.mime_type,
+                  data: c.attachment.data
+                    ? Buffer.isBuffer(c.attachment.data)
+                      ? c.attachment.data.toString("base64")
+                      : c.attachment.data
+                    : null,
+                }
+              : null,
+            hasLiked,
+            likeCount,
+          };
+        })
+      : [];
 
     const commentCount = comments.length;
 
@@ -259,16 +352,18 @@ const getQuestion = async (userId, questionId) => {
       status: question.status,
       createdAt: question.created_at,
       updatedAt: question.updated_at,
-      attachment: question.attachment ? {
-        id: question.attachment.id,
-        fileName: question.attachment.file_name,
-        mimeType: question.attachment.mime_type,
-        data: question.attachment.data
-          ? Buffer.isBuffer(question.attachment.data)
-            ? question.attachment.data.toString('base64')
-            : question.attachment.data
-          : null,
-      } : null,
+      attachment: question.attachment
+        ? {
+            id: question.attachment.id,
+            fileName: question.attachment.file_name,
+            mimeType: question.attachment.mime_type,
+            data: question.attachment.data
+              ? Buffer.isBuffer(question.attachment.data)
+                ? question.attachment.data.toString("base64")
+                : question.attachment.data
+              : null,
+          }
+        : null,
       isInterested,
       interestId,
       hasLiked,
@@ -284,7 +379,13 @@ const getQuestion = async (userId, questionId) => {
 };
 
 // create question
-const createQuestion = async (userId, categoryIds, title, description, attachment = null) => {
+const createQuestion = async (
+  userId,
+  categoryIds,
+  title,
+  description,
+  attachment = null
+) => {
   try {
     const newQuestion = await Question.create({
       user_id: userId,
@@ -299,7 +400,9 @@ const createQuestion = async (userId, categoryIds, title, description, attachmen
 
     // create attachment
     if (attachment) {
-      await attachmentService.createAttachment(attachment, { question_id: newQuestion.id });
+      await attachmentService.createAttachment(attachment, {
+        question_id: newQuestion.id,
+      });
     }
 
     logger.info(`Question created successfully with ID: ${newQuestion.id}`);
@@ -312,23 +415,34 @@ const createQuestion = async (userId, categoryIds, title, description, attachmen
 };
 
 // update question by id
-const updateQuestion = async (userId, questionId, title, description, attachment = null) => {
+const updateQuestion = async (
+  userId,
+  questionId,
+  title,
+  description,
+  attachment = null
+) => {
   try {
     const question = await Question.findByPk(questionId);
     if (!question) throw new HttpError(404, "Question not found");
-    if (question.user_id !== userId) throw new HttpError(401, "No permission to update question");
+    if (question.user_id !== userId)
+      throw new HttpError(401, "No permission to update question");
 
     question.title = title;
     question.description = description;
     await question.save();
 
     // update attachment
-    const existingAttachment = await Attachment.findOne({ where: { question_id: question.id } });
+    const existingAttachment = await Attachment.findOne({
+      where: { question_id: question.id },
+    });
     if (attachment) {
       if (existingAttachment) {
         await attachmentService.deleteAttachment(existingAttachment.id);
       }
-      await attachmentService.createAttachment(attachment, { question_id: question.id });
+      await attachmentService.createAttachment(attachment, {
+        question_id: question.id,
+      });
     } else if (existingAttachment) {
       await attachmentService.deleteAttachment(existingAttachment.id);
     }
@@ -365,7 +479,8 @@ const deleteQuestion = async (userId, questionId) => {
   try {
     const question = await Question.findByPk(questionId);
     if (!question) throw new HttpError(404, "Question not found");
-    if (question.user_id !== userId) throw new HttpError(401, "No permission to delete question");
+    if (question.user_id !== userId)
+      throw new HttpError(401, "No permission to delete question");
 
     await Question.destroy({ where: { id: questionId } });
     logger.info(`Question ${questionId} deleted successfully`);

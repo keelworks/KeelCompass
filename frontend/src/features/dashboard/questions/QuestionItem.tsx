@@ -1,4 +1,3 @@
-import { FaRegThumbsUp, FaRegCommentDots } from "react-icons/fa";
 import { MdOutlineRateReview } from "react-icons/md";
 import { formatDate } from "../../../utils/format";
 import {
@@ -48,6 +47,7 @@ function QuestionItem({
     hasLiked,
     likeCount,
     commentCount,
+    categories,
   } = question;
 
   const isInterested = question.isInterested;
@@ -151,10 +151,8 @@ function QuestionItem({
             type="button"
           >
             {isInterested ? (
-              // <FaBookmark className="text-blue-500" />
               <img src={bookmarked} alt="Bookmarked" />
             ) : (
-              // <FaRegBookmark className="text-gray-500" />
               <img src={bookmark} alt="Bookmark" />
             )}
           </button>
@@ -176,7 +174,9 @@ function QuestionItem({
         <div>
           {/* Category */}
           <span className="font-medium text-[#684571]">
-            Category A | Category B
+            {categories && categories.length > 0
+              ? categories.map((cat) => cat.name).join(" | ")
+              : ""}
           </span>
         </div>
         <div className="flex">

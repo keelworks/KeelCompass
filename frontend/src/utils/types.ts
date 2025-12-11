@@ -1,17 +1,17 @@
 export enum UserType {
-  User = 'user',
-  Facilitator = 'facilitator',
+  User = "user",
+  Facilitator = "facilitator",
 }
 
 export enum QuestionStatus {
-  Pending = 'pending',
-  Approved = 'approved',
-  Rejected = 'rejected',
+  Pending = "pending",
+  Approved = "approved",
+  Rejected = "rejected",
 }
 
 export enum UserActionType {
-  Like = 'like',
-  Report = 'report',
+  Like = "like",
+  Report = "report",
 }
 
 // response for auth routes
@@ -50,11 +50,12 @@ export interface QuestionListItem {
   likeCount: number;
   commentCount: number;
   popularityScore?: number;
+  categories?: Category[];
 }
 
 // response for get question details
-export interface QuestionDetail extends Omit<QuestionListItem, 'user'> {
-  user: QuestionListItem['user'] & { id: number };
+export interface QuestionDetail extends Omit<QuestionListItem, "user"> {
+  user: QuestionListItem["user"] & { id: number };
   updatedAt?: string;
   attachment?: Attachment;
   comments?: Comment[];
