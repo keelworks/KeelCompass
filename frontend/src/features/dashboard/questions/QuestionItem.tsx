@@ -1,9 +1,4 @@
-import {
-  FaRegThumbsUp,
-  FaRegCommentDots,
-  FaRegBookmark,
-  FaBookmark,
-} from "react-icons/fa";
+import { FaRegThumbsUp, FaRegCommentDots } from "react-icons/fa";
 import { MdOutlineRateReview } from "react-icons/md";
 import { formatDate } from "../../../utils/format";
 import {
@@ -19,6 +14,8 @@ import {
 } from "../../../utils/store";
 import DOMPurify from "dompurify";
 import React from "react";
+import bookmark from "../../../assets/bookmark.svg";
+import bookmarked from "../../../assets/bookmarked.svg";
 
 interface QuestionItemProps {
   question: QuestionListItem;
@@ -154,9 +151,11 @@ function QuestionItem({
             type="button"
           >
             {isInterested ? (
-              <FaBookmark className="text-blue-500" />
+              // <FaBookmark className="text-blue-500" />
+              <img src={bookmarked} alt="Bookmarked" />
             ) : (
-              <FaRegBookmark className="text-gray-500" />
+              // <FaRegBookmark className="text-gray-500" />
+              <img src={bookmark} alt="Bookmark" />
             )}
           </button>
         </div>
