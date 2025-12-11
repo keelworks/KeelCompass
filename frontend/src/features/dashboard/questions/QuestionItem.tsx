@@ -172,25 +172,31 @@ function QuestionItem({
         dangerouslySetInnerHTML={{ __html: cleanHtml }}
       />
 
-      <div className="flex justify-end text-gray-600 text-sm">
-        {/* Likes */}
-        <div
-          className={`flex items-center mr-4 cursor-pointer select-none text-sm ${
-            hasLiked ? "text-blue-600" : "text-gray-600"
-          }`}
-          onClick={handleLikeQuestion}
-        >
-          <FaRegThumbsUp className="mr-1" />
-          <span>{likeCount}</span>
+      <div className="flex justify-between text-gray-600 text-sm">
+        <div>
+          {/* Category */}
+          <span className="font-medium text-[#684571]">
+            Category A | Category B
+          </span>
         </div>
+        <div className="flex">
+          {/* Likes */}
+          <div
+            className={`flex items-center mr-4 cursor-pointer select-none text-sm ${
+              hasLiked ? "text-blue-600" : "text-gray-600"
+            }`}
+            onClick={handleLikeQuestion}
+          >
+            <span>{likeCount} likes</span>
+          </div>
 
-        {/* Comments */}
-        <div
-          className="flex items-center cursor-pointer"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <FaRegCommentDots className="mr-1" />
-          <span>{commentCount}</span>
+          {/* Comments */}
+          <div
+            className="flex items-center cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span>{commentCount} comments</span>
+          </div>
         </div>
       </div>
     </div>
