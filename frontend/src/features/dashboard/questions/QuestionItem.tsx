@@ -1,3 +1,4 @@
+// frontend\src\features\dashboard\questions\QuestionItem.tsx
 import {
   FaRegThumbsUp,
   FaRegCommentDots,
@@ -121,8 +122,17 @@ function QuestionItem({
 
   return (
     <div
-      className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-4 cursor-pointer hover:shadow-lg transition-shadow duration-200"
+      className="question-item bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-4 cursor-pointer transition-all duration-200 hover:bg-[#F0F0F0] hover:border-[#E8E8E8]/[0.53] hover:shadow-lg active:bg-[#E5E5E5] active:shadow-sm focus-within:border-2 focus-within:border-[#007C88] focus-within:outline-none"
       onClick={() => setSelectedQuestionId(id)}
+      tabIndex={0}
+      role="article"
+      aria-label={`Question: ${title}`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setSelectedQuestionId(id);
+        }
+      }}
     >
       <div className="flex items-center justify-between mb-3">
         {/* Username and Date */}
@@ -148,22 +158,23 @@ function QuestionItem({
             </span>
           )}
           <button
-            className="p-1 rounded hover:bg-gray-100"
+            className="p-1.5 rounded hover:bg-[#E8E8E8] active:bg-[#D8D8D8] transition-all duration-150 focus:ring-2 focus:ring-[#007C88] focus:outline-none"
             onClick={handleInterestQuestion}
-            title="Bookmark"
+            title={isInterested ? "Remove bookmark" : "Bookmark question"}
             type="button"
+            aria-label={isInterested ? "Remove bookmark" : "Bookmark question"}
           >
             {isInterested ? (
-              <FaBookmark className="text-blue-500" />
+              <FaBookmark className="text-blue-500 transition-transform hover:scale-110" />
             ) : (
-              <FaRegBookmark className="text-gray-500" />
+              <FaRegBookmark className="text-gray-500 transition-transform hover:scale-110" />
             )}
           </button>
         </div>
       </div>
 
       {/* Title */}
-      <h3 className="text-lg font-semibold text-[#004466] leading-relaxed mb-3">
+      <h3 className="text-lg font-semibold text-[#004466] leading-relaxed mb-3 hover:text-[#003355] transition-colors">
         {title}
       </h3>
 
@@ -176,10 +187,21 @@ function QuestionItem({
       <div className="flex justify-end text-gray-600 text-sm">
         {/* Likes */}
         <div
-          className={`flex items-center mr-4 cursor-pointer select-none text-sm ${
+          className={`flex items-center mr-4 cursor-pointer select-none text-sm transition-all duration-150 rounded px-2 py-1 hover:bg-[#E8E8E8] active:bg-[#D8D8D8] ${
             hasLiked ? "text-blue-600" : "text-gray-600"
           }`}
           onClick={handleLikeQuestion}
+          role="button"
+          tabIndex={0}
+          aria-label={`${
+            hasLiked ? "Unlike" : "Like"
+          } question. ${likeCount} likes`}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleLikeQuestion(e as any);
+            }
+          }}
         >
           <FaRegThumbsUp className="mr-1" />
           <span>{likeCount}</span>
@@ -187,8 +209,11 @@ function QuestionItem({
 
         {/* Comments */}
         <div
-          className="flex items-center cursor-pointer"
+          className="flex items-center cursor-pointer rounded px-2 py-1 hover:bg-[#E8E8E8] active:bg-[#D8D8D8] transition-all duration-150"
           onClick={(e) => e.stopPropagation()}
+          role="button"
+          tabIndex={0}
+          aria-label={`${commentCount} comments`}
         >
           <FaRegCommentDots className="mr-1" />
           <span>{commentCount}</span>

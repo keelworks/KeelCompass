@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Interest } from '../../../utils/types';
-import { QuestionListItem, QuestionsResponse } from '../../../utils/types';
-import QuestionItem from './QuestionItem';
-import QuestionDetails from './QuestionDetails';
+import { useEffect, useState } from "react";
+import { Interest } from "../../../utils/types";
+import { QuestionListItem, QuestionsResponse } from "../../../utils/types";
+import QuestionItem from "./QuestionItem";
+import QuestionDetails from "./QuestionDetails";
 
 interface QuestionsSectionProps {
   questions: QuestionsResponse;
@@ -21,8 +21,8 @@ interface QuestionsSectionProps {
   onInterestUpdate: () => void;
   onCommentCreate: (questionId: number) => void;
   onCommentDelete: (commentId: number) => void; // ✅ added
-  tab: 'recent' | 'popular';
-  setTab: (tab: 'recent' | 'popular') => void;
+  tab: "recent" | "popular";
+  setTab: (tab: "recent" | "popular") => void;
   searchActive: boolean;
   setSearchActive: (active: boolean) => void;
   hasMore: boolean;
@@ -52,7 +52,7 @@ function QuestionsSection({
   );
   const [visibleCount, setVisibleCount] = useState(pageSize);
 
-  const handleTabChange = (newTab: 'recent' | 'popular') => {
+  const handleTabChange = (newTab: "recent" | "popular") => {
     if (tab !== newTab) {
       setTab(newTab);
       setQuestions({ questions: [], offset: 0, count: pageSize });
@@ -81,25 +81,25 @@ function QuestionsSection({
   }, [tab, questions.questions, pageSize]);
 
   return (
-    <div className="shadow-md rounded-lg p-4 mb-6 bg-gray-50 w-full h-full flex flex-col overflow-hidden">
+    <div className="shadow-md rounded-lg p-4 px-6 xl:px-8 2xl:px-12 mb-6 bg-gray-50 w-full h-full flex flex-col overflow-hidden">
       {/* Fixed Heading + Tabs */}
       <div className="mb-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-medium uppercase tracking-wide">Posts</h2>
           <div className="flex items-center bg-gray-100 rounded-md w-fit p-0.5 border border-gray-300">
             {[
-              { label: 'Most Recent', value: 'recent' },
-              { label: 'Popular', value: 'popular' },
+              { label: "Most Recent", value: "recent" },
+              { label: "Popular", value: "popular" },
             ].map((tabOption) => (
               <button
                 key={tabOption.value}
                 onClick={() =>
-                  handleTabChange(tabOption.value as 'recent' | 'popular')
+                  handleTabChange(tabOption.value as "recent" | "popular")
                 }
                 className={`px-6 py-[6px] text-[14px] font-medium leading-6 font-sans rounded-md transition duration-200 ${
                   tab === tabOption.value
-                    ? 'bg-white text-[#007575] shadow-md'
-                    : 'bg-transparent text-[#5F6C7B] hover:bg-[#E5E7EB]'
+                    ? "bg-white text-[#007575] shadow-md"
+                    : "bg-transparent text-[#5F6C7B] hover:bg-[#E5E7EB]"
                 }`}
               >
                 {tabOption.label}
@@ -144,7 +144,7 @@ function QuestionsSection({
       </div>
 
       {/* Question Details Modal */}
-      {typeof selectedQuestionId === 'number' && !isNaN(selectedQuestionId) && (
+      {typeof selectedQuestionId === "number" && !isNaN(selectedQuestionId) && (
         <QuestionDetails
           questionId={selectedQuestionId}
           onQuestionUpdate={onQuestionUpdate}
