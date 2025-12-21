@@ -54,6 +54,14 @@ function QuestionItem({
   const isInterested = question.isInterested;
   const interestId = question.interestId;
 
+  // Hide description if title is long (to keep card height consistent)
+  // or if description is empty
+  const TITLE_LENGTH_THRESHOLD = 100; // Titles beyond this length will hide description
+  const shouldShowDescription =
+    description &&
+    description.trim().length > 0 &&
+    title.length <= TITLE_LENGTH_THRESHOLD;
+
   // Sanitize description HTML and ensure links open in new tab
   const cleanHtml = DOMPurify.sanitize(description || "", {
     ALLOWED_TAGS: [
@@ -159,7 +167,6 @@ function QuestionItem({
           <span className="text-sm text-gray-500">{formatDate(createdAt)}</span>
         </div>
 
-        {/* // bookmark color alt - d5d9d9 */}
         {/* Bookmark */}
         <button
           className={`
@@ -183,15 +190,17 @@ function QuestionItem({
       </div>
 
       {/* Title */}
-      <h3 className="text-lg font-semibold text-[#004466] leading-relaxed m-0">
+      <h3 className="text-lg font-semibold text-[#00545C] leading-relaxed m-0">
         {title}
       </h3>
 
-      {/* Description (sanitized HTML, 2-line clamp) */}
-      <p
-        className="post-content text-sm text-[#555] leading-normal m-0 line-clamp-2"
-        dangerouslySetInnerHTML={{ __html: cleanHtml }}
-      />
+      {/* Description (sanitized HTML, 2-line clamp) - hidden for long titles */}
+      {shouldShowDescription && (
+        <p
+          className="post-content text-sm text-[#555] leading-normal m-0 line-clamp-2"
+          dangerouslySetInnerHTML={{ __html: cleanHtml }}
+        />
+      )}
 
       {/* Footer: Categories and Stats */}
       <div className="flex justify-between items-center text-sm">
