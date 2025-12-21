@@ -1,4 +1,4 @@
-import { MdOutlineRateReview } from "react-icons/md";
+// frontend\src\features\dashboard\questions\QuestionItem.tsx
 import { formatDate } from "../../../utils/format";
 import {
   UserActionType,
@@ -12,7 +12,7 @@ import {
   deleteInterest,
 } from "../../../utils/store";
 import DOMPurify from "dompurify";
-import React from "react";
+import React, { useState } from "react";
 import bookmark from "../../../assets/bookmark.svg";
 import bookmarked from "../../../assets/bookmarked.svg";
 
@@ -37,12 +37,13 @@ function QuestionItem({
   onInterestUpdate,
   setSelectedQuestionId,
 }: QuestionItemProps) {
+  const [isPressed, setIsPressed] = useState(false);
+
   const {
     id,
     user,
     title,
     description,
-    status,
     createdAt,
     hasLiked,
     likeCount,
@@ -116,90 +117,119 @@ function QuestionItem({
     onInterestUpdate();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setSelectedQuestionId(id);
+    }
+  };
+
   return (
-    <div
-      className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-4 cursor-pointer hover:shadow-lg transition-shadow duration-200"
+    <article
+      className={`
+        w-full max-w-[646px] p-4 flex flex-col gap-4 rounded cursor-pointer
+        border-2 border-transparent bg-transparent
+        transition-all duration-150 ease-in-out
+        hover:bg-[#F0F0F0] hover:border-[#E8E8E8]
+        focus:outline-none focus:border-[#007C88]
+        ${isPressed ? "!bg-[#E5E5E5]" : ""}
+      `}
       onClick={() => setSelectedQuestionId(id)}
+      onMouseDown={() => setIsPressed(true)}
+      onMouseUp={() => setIsPressed(false)}
+      onMouseLeave={() => setIsPressed(false)}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      aria-label={`Post: ${title}`}
     >
-      <div className="flex items-center justify-between mb-3">
-        {/* Username and Date */}
+      {/* Header: Avatar, Username, Date, Bookmark */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Profile Picture */}
-          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 font-bold">
+          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 font-semibold text-sm">
             {user.username.charAt(0).toUpperCase()}
           </div>
 
           {/* Username and date */}
-          <span className="font-semibold text-gray-900">{user.username}</span>
-          <span className="text-xs text-gray-400">
-            • {formatDate(createdAt)}
+          <span className="text-sm text-gray-700 font-medium font-lato">
+            {user.username}
           </span>
+          <span className="text-sm text-gray-500">•</span>
+          <span className="text-sm text-gray-500">{formatDate(createdAt)}</span>
         </div>
 
-        {/* Bookmark and Status */}
-        <div className="flex items-center gap-2">
-          {status === "pending" && (
-            <span className="flex items-center">
-              <MdOutlineRateReview className="mr-1 text-gray-500" />
-              <span className="text-gray-500 text-xs">In Review</span>
-            </span>
+        {/* Bookmark */}
+        <button
+          className="p-1 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#007C88]"
+          onClick={handleInterestQuestion}
+          title={isInterested ? "Remove bookmark" : "Add bookmark"}
+          type="button"
+          aria-label={isInterested ? "Remove bookmark" : "Add bookmark"}
+        >
+          {isInterested ? (
+            <img src={bookmarked} alt="" aria-hidden="true" />
+          ) : (
+            <img src={bookmark} alt="" aria-hidden="true" />
           )}
-          <button
-            className="p-1 rounded hover:bg-gray-100"
-            onClick={handleInterestQuestion}
-            title="Bookmark"
-            type="button"
-          >
-            {isInterested ? (
-              <img src={bookmarked} alt="Bookmarked" />
-            ) : (
-              <img src={bookmark} alt="Bookmark" />
-            )}
-          </button>
-        </div>
+        </button>
       </div>
 
       {/* Title */}
-      <h3 className="text-lg font-semibold text-[#004466] leading-relaxed mb-3">
+      <h3 className="text-lg font-semibold text-[#004466] leading-relaxed m-0">
         {title}
       </h3>
 
-      {/* Description (sanitized HTML). Limit height so cards stay compact */}
-      <div
-        className="post-content text-base text-[#616161] leading-[1.5] mb-4 max-h-40 overflow-hidden"
+      {/* Description (sanitized HTML, 2-line clamp) */}
+      <p
+        className="post-content text-sm text-[#555] leading-normal m-0 line-clamp-2"
         dangerouslySetInnerHTML={{ __html: cleanHtml }}
       />
 
-      <div className="flex justify-between text-gray-600 text-sm">
-        <div>
-          {/* Category */}
-          <span className="font-medium text-[#684571]">
-            {categories && categories.length > 0
-              ? categories.map((cat) => cat.name).join(" | ")
-              : ""}
-          </span>
+      {/* Footer: Categories and Stats */}
+      <div className="flex justify-between items-center text-sm">
+        {/* Categories */}
+        <div className="flex items-center gap-2">
+          {categories && categories.length > 0
+            ? categories.map((cat, index) => (
+                <React.Fragment key={cat.id}>
+                  <span className="text-gray-600">{cat.name}</span>
+                  {index < categories.length - 1 && (
+                    <span className="text-gray-300">|</span>
+                  )}
+                </React.Fragment>
+              ))
+            : null}
         </div>
-        <div className="flex">
-          {/* Likes */}
-          <div
-            className={`flex items-center mr-4 cursor-pointer select-none text-sm ${
-              hasLiked ? "text-blue-600" : "text-gray-600"
+
+        {/* Stats */}
+        <div className="flex items-center gap-2">
+          <span
+            className={`cursor-pointer select-none ${
+              hasLiked ? "text-blue-600" : "text-gray-500"
             }`}
             onClick={handleLikeQuestion}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleLikeQuestion(e as unknown as React.MouseEvent);
+              }
+            }}
           >
-            <span>{likeCount} likes</span>
-          </div>
-
-          {/* Comments */}
-          <div
-            className="flex items-center cursor-pointer"
+            {likeCount} likes
+          </span>
+          <span className="text-gray-500">•</span>
+          <span
+            className="text-gray-500 cursor-pointer"
             onClick={(e) => e.stopPropagation()}
           >
-            <span>{commentCount} comments</span>
-          </div>
+            {commentCount} comments
+          </span>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
