@@ -152,16 +152,23 @@ function QuestionItem({
           </div>
 
           {/* Username and date */}
-          <span className="text-sm text-gray-700 font-medium font-lato">
+          <span className="text-[14px] text-[#666A6F] font-normal font-lato leading-none">
             {user.username}
           </span>
           <span className="text-sm text-gray-500">•</span>
           <span className="text-sm text-gray-500">{formatDate(createdAt)}</span>
         </div>
 
+        {/* // bookmark color alt - d5d9d9 */}
         {/* Bookmark */}
         <button
-          className="p-1 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#007C88]"
+          className={`
+            w-10 h-10 flex items-center justify-center rounded-full
+            transition-all duration-150 ease-in-out
+            hover:bg-[#EDF2F2] hover:border hover:border-[#E8F4F5]
+            active:bg-[#C8E9E9]
+            focus:outline-none focus:ring-2 focus:ring-[#007C88]
+          `}
           onClick={handleInterestQuestion}
           title={isInterested ? "Remove bookmark" : "Add bookmark"}
           type="button"
