@@ -1,12 +1,12 @@
-import { useState, useRef } from "react";
+// frontend\src\features\dashboard\Sidebar.tsx
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { BsChevronBarLeft, BsChevronBarRight } from "react-icons/bs";
 import Logo from "../../assets/logo.png";
 import homelogo from "../../assets/homelogo.svg";
+import Tooltip from "../../components/ui/Tooltip";
 
-const HOME_PURPLE = "#53385A";
 const TOGGLE_TEAL = "#0E8B87";
-const TIP_BG = "#825E8B";
 
 function Sidebar({
   showAsk,
@@ -19,9 +19,6 @@ function Sidebar({
 }) {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
-
-  const [showHomeTip, setShowHomeTip] = useState(false);
-  const tipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
 
   const menuItems = [
@@ -37,7 +34,6 @@ function Sidebar({
           }}
         />
       ),
-
       path: "/dashboard",
       disabled: false,
     },
@@ -158,9 +154,9 @@ function Sidebar({
 
           const state = getStateStyles();
 
-          return (
+          // Menu item content - identical to original
+          const menuItemElement = (
             <div
-              key={i}
               tabIndex={isDisabled ? -1 : 0}
               aria-current={selected ? "page" : undefined}
               className={`group relative flex items-center rounded-[6px] h-[44px] mb-[8px] transition-all duration-150 cursor-pointer
@@ -176,7 +172,6 @@ function Sidebar({
               onClick={() => {
                 if (!isDisabled) {
                   if (isHome && showAsk && onHomeClick) {
-                    // If on QuestionCreate and Home is clicked, use custom handler
                     onHomeClick();
                   } else {
                     navigate(item.path);
@@ -250,6 +245,22 @@ function Sidebar({
               )}
             </div>
           );
+
+          // Only wrap with Tooltip when sidebar is collapsed
+          if (collapsed) {
+            return (
+              <Tooltip
+                key={i}
+                text={item.name}
+                position="right"
+                className="block"
+              >
+                {menuItemElement}
+              </Tooltip>
+            );
+          }
+
+          return <div key={i}>{menuItemElement}</div>;
         })}
       </nav>
     </aside>

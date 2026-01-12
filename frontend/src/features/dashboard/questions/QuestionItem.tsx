@@ -1,4 +1,3 @@
-// frontend\src\features\dashboard\questions\QuestionItem.tsx
 import { formatDate } from "../../../utils/format";
 import {
   UserActionType,
@@ -57,7 +56,7 @@ function QuestionItem({
 
   // Hide description if title is long (to keep card height consistent)
   // or if description is empty
-  const TITLE_LENGTH_THRESHOLD = 100; // Titles beyond this length will hide description
+  const TITLE_LENGTH_THRESHOLD = 80; // Titles beyond this length will hide description
   const shouldShowDescription =
     description &&
     description.trim().length > 0 &&
