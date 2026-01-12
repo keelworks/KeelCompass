@@ -1,4 +1,3 @@
-// frontend\src\features\dashboard\questions\QuestionItem.tsx
 import { formatDate } from "../../../utils/format";
 import {
   UserActionType,
@@ -15,6 +14,7 @@ import DOMPurify from "dompurify";
 import React, { useState } from "react";
 import bookmark from "../../../assets/bookmark.svg";
 import bookmarked from "../../../assets/bookmarked.svg";
+import Tooltip from "../../../components/ui/Tooltip";
 
 interface QuestionItemProps {
   question: QuestionListItem;
@@ -56,7 +56,7 @@ function QuestionItem({
 
   // Hide description if title is long (to keep card height consistent)
   // or if description is empty
-  const TITLE_LENGTH_THRESHOLD = 100; // Titles beyond this length will hide description
+  const TITLE_LENGTH_THRESHOLD = 80; // Titles beyond this length will hide description
   const shouldShowDescription =
     description &&
     description.trim().length > 0 &&
@@ -167,26 +167,27 @@ function QuestionItem({
           <span className="text-sm text-gray-500">{formatDate(createdAt)}</span>
         </div>
 
-        {/* Bookmark */}
-        <button
-          className={`
-            w-10 h-10 flex items-center justify-center rounded-full
-            transition-all duration-150 ease-in-out
-            hover:bg-[#EDF2F2] hover:border hover:border-[#E8F4F5]
-            active:bg-[#C8E9E9]
-            focus:outline-none focus:ring-2 focus:ring-[#007C88]
-          `}
-          onClick={handleInterestQuestion}
-          title={isInterested ? "Remove bookmark" : "Add bookmark"}
-          type="button"
-          aria-label={isInterested ? "Remove bookmark" : "Add bookmark"}
-        >
-          {isInterested ? (
-            <img src={bookmarked} alt="" aria-hidden="true" />
-          ) : (
-            <img src={bookmark} alt="" aria-hidden="true" />
-          )}
-        </button>
+        {/* Bookmark Button with Tooltip */}
+        <Tooltip text={isInterested ? "Remove bookmark" : "Add bookmark"}>
+          <button
+            className={`
+              w-10 h-10 flex items-center justify-center rounded-full
+              transition-all duration-150 ease-in-out
+              hover:bg-[#EDF2F2] hover:border hover:border-[#E8F4F5]
+              active:bg-[#C8E9E9]
+              focus:outline-none focus:ring-2 focus:ring-[#007C88]
+            `}
+            onClick={handleInterestQuestion}
+            type="button"
+            aria-label={isInterested ? "Remove bookmark" : "Add bookmark"}
+          >
+            {isInterested ? (
+              <img src={bookmarked} alt="" aria-hidden="true" />
+            ) : (
+              <img src={bookmark} alt="" aria-hidden="true" />
+            )}
+          </button>
+        </Tooltip>
       </div>
 
       {/* Title */}

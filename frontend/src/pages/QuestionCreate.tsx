@@ -16,7 +16,7 @@ import FormattingIconLeft from "../assets/Formatingiconleft.png";
 import ErrorIcon from "../../src/assets/ErrorIcon.svg";
 
 const SPACING = { sectionY: 48, labelGap: 16, helperGap: 16 };
-const MAX_TITLE = 250;
+const MAX_TITLE = 80;
 const MIN_DESC_HEIGHT = 153;
 
 const DEFAULT_CATEGORIES: Category[] = [
@@ -74,21 +74,27 @@ function ResizeHandleIcon() {
 }
 
 /* ---------------- CUSTOM TOOLTIP COMPONENT ---------------- */
-function CustomTooltip({ text, children }: { text: string; children: React.ReactNode }) {
+function CustomTooltip({
+  text,
+  children,
+}: {
+  text: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="group/tooltip relative flex items-center justify-center h-full">
       {children}
       {/* Tooltip Bubble */}
       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-[10px] hidden group-hover/tooltip:flex flex-col items-center z-50 whitespace-nowrap">
         {/* Text Container */}
-        <div 
+        <div
           className="text-white text-[13px] px-3 py-1.5 rounded-[4px] shadow-md font-normal leading-none"
           style={{ backgroundColor: "#7E578A" }} // Purple color from image
         >
           {text}
         </div>
         {/* Arrow (Triangle) */}
-        <div 
+        <div
           className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px]"
           style={{ borderTopColor: "#7E578A" }}
         ></div>
@@ -123,8 +129,9 @@ function IconButton({
     "invert(48%) sepia(50%) saturate(2264%) hue-rotate(148deg) brightness(93%) contrast(88%)";
 
   const isGenericIcon =
-    [FileIcon, EmojiIcon].includes(src) || (src === FormattingIcon && !selected);
-  
+    [FileIcon, EmojiIcon].includes(src) ||
+    (src === FormattingIcon && !selected);
+
   const shouldShowTeal = isGenericIcon && isHovered;
 
   return (
@@ -186,7 +193,7 @@ function QuestionCreate({
 
   /* Refs */
   const descriptionEditableRef = useRef<HTMLDivElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null); 
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const formattingPanelRef = useRef<HTMLDivElement | null>(null);
   const emojiPanelRef = useRef<HTMLDivElement | null>(null);
   const savedRangeRef = useRef<Range | null>(null);
@@ -258,7 +265,6 @@ function QuestionCreate({
     document.removeEventListener("mousemove", handleResizeMove);
     document.removeEventListener("mouseup", handleResizeEnd);
   }, [handleResizeMove]);
-
 
   /* ---------------- File Attach ---------------- */
   const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -587,10 +593,7 @@ function QuestionCreate({
 
   /* ---------------- RETURN UI ---------------- */
   return (
-    <div
-      className="w-full min-h-screen"
-      style={{ backgroundColor: "#F9F9F9" }}
-    >
+    <div className="w-full min-h-screen" style={{ backgroundColor: "#F9F9F9" }}>
       <DiscardModal
         isOpen={showDiscardModal}
         onCancel={cancelDiscard}
@@ -664,7 +667,8 @@ function QuestionCreate({
               </p>
             )}
 
-            <textarea
+            <input
+              type="text"
               required
               id="questionTitle"
               value={title}
@@ -676,7 +680,7 @@ function QuestionCreate({
                 }
               }}
               maxLength={MAX_TITLE}
-              className={`w-full min-h-[92px] rounded-[10px] px-3 py-2 border outline-none transition
+              className={`w-full  rounded-[10px] px-3 py-2 border outline-none transition
                 border-[#D1DBDD] bg-white text-gray-900
                 hover:border-[#929898] focus:border-[#929898] active:border-[#929898]
                 focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
@@ -720,14 +724,14 @@ function QuestionCreate({
                 tabIndex={0}
                 onInput={handleDescriptionInput}
                 className="px-3 pt-3 pb-16 outline-none text-[#063E53] rounded-[10px]"
-                style={{ 
+                style={{
                   backgroundColor: "#FFFFFF",
                   minHeight: "100%", // Expands to fill wrapper
                 }}
               />
 
               {/* RESIZE HANDLE (Extender) */}
-              <div 
+              <div
                 onMouseDown={handleResizeStart}
                 className="absolute right-0 bottom-0 cursor-nwse-resize p-1 z-20"
                 style={{ userSelect: "none" }}
@@ -811,7 +815,11 @@ function QuestionCreate({
                     src={FormattingIcon}
                     activeSrc={FormattingIconLeft}
                     alt="Formatting"
-                    className={showFormattingPanel ? "rounded-l-md rounded-r-none" : "rounded-md"}
+                    className={
+                      showFormattingPanel
+                        ? "rounded-l-md rounded-r-none"
+                        : "rounded-md"
+                    }
                     onClick={() => setShowFormattingPanel((s) => !s)}
                   />
 
@@ -820,7 +828,7 @@ function QuestionCreate({
                       ref={formattingPanelRef}
                       className="absolute z-20 shadow-md flex items-center rounded-r-md rounded-l-none"
                       style={{
-                        left: "100%", 
+                        left: "100%",
                         top: 0,
                         height: "44px",
                         border: "1px solid #D1D5DB",
@@ -881,7 +889,9 @@ function QuestionCreate({
                           >
                             <FiUnderline
                               size={18}
-                              color={activeFormatting.underline ? "#" : "#6B7280"}
+                              color={
+                                activeFormatting.underline ? "#" : "#6B7280"
+                              }
                             />
                           </button>
                         </CustomTooltip>
@@ -1074,9 +1084,7 @@ function QuestionCreate({
             )}
 
             {attachmentError && (
-              <div className="mt-1 text-xs text-red-600">
-                {attachmentError}
-              </div>
+              <div className="mt-1 text-xs text-red-600">{attachmentError}</div>
             )}
           </div>
         </form>
