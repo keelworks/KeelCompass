@@ -3,6 +3,7 @@ import BookmarkIcon from "../../../assets/Bookmark.svg";
 import QuestionDetails from "../questions/QuestionDetails";
 import { Interest, QuestionListItem } from "../../../utils/types";
 import InterestItem from "./InterestItem";
+import { formatLongDate } from "../../../utils/format";
 
 interface MyInterstProps {
   interests: Interest[];
@@ -37,15 +38,6 @@ const MyInterests = ({
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(
     null
   );
-
-  const formatLongDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
 
   const getCommentCount = (questionId: number): number => {
     const question = questions.find((q) => q.id === questionId);

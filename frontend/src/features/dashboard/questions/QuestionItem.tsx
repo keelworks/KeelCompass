@@ -1,4 +1,4 @@
-import { formatDate } from "../../../utils/format";
+import { formatLongDate } from "../../../utils/format";
 import {
   UserActionType,
   QuestionListItem,
@@ -164,7 +164,9 @@ function QuestionItem({
             {user.username}
           </span>
           <span className="text-sm text-gray-500">•</span>
-          <span className="text-sm text-gray-500">{formatDate(createdAt)}</span>
+          <span className="text-sm text-gray-500">
+            {formatLongDate(createdAt)}
+          </span>
         </div>
 
         {/* Bookmark Button with Tooltip */}
