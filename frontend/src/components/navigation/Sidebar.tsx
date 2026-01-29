@@ -46,31 +46,37 @@ function Sidebar({
       } font-lato`}
     >
       {/* === Chevron Toggle === */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        aria-label="Toggle sidebar"
-        className="
-    absolute top-[15px] right-[-15px] z-10
-    flex items-center justify-center
-    w-[26px] h-[26px]
-    rounded-full transition-all duration-200
-    bg-white border border-[#F4F4F4] shadow-sm
-
-    hover:bg-[#EDF2F2] hover:border-[#E8F4F5]
-
-    active:bg-[#C8E9E9] active:border-[#D2EEF0]
-
-    focus:outline-none
-    focus:bg-white focus:border-[#F4F4F4]
-    focus:shadow-[0_0_0_2px_#007C88,0_6px_8px_0_#4141410F]
-  "
+      <Tooltip
+        text={collapsed ? "Expand" : "Collapse"}
+        position="right-bottom"
+        className="block"
       >
-        {collapsed ? (
-          <BsChevronBarRight size={14} color={TOGGLE_TEAL} />
-        ) : (
-          <BsChevronBarLeft size={14} color={TOGGLE_TEAL} />
-        )}
-      </button>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          aria-label="Toggle sidebar"
+          className="
+      absolute top-[15px] right-[-15px] z-10
+      flex items-center justify-center
+      w-[26px] h-[26px]
+      rounded-full transition-all duration-200
+      bg-white border border-[#F4F4F4] shadow-sm
+
+      hover:bg-[#EDF2F2] hover:border-[#E8F4F5]
+
+      active:bg-[#C8E9E9] active:border-[#D2EEF0]
+
+      focus:outline-none
+      focus:bg-white focus:border-[#F4F4F4]
+      focus:shadow-[0_0_0_2px_#007C88,0_6px_8px_0_#4141410F]
+    "
+        >
+          {collapsed ? (
+            <BsChevronBarRight size={14} color={TOGGLE_TEAL} />
+          ) : (
+            <BsChevronBarLeft size={14} color={TOGGLE_TEAL} />
+          )}
+        </button>
+      </Tooltip>
 
       {/* === Logo Section === */}
       <div
