@@ -4,6 +4,7 @@ import Navigation from "../navigation/Sidebar";
 import { MdNotificationsNone } from "react-icons/md";
 import { BsQuestionCircle } from "react-icons/bs";
 import { FiChevronDown, FiLogOut } from "react-icons/fi";
+import { getMe } from "../../utils/store";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -37,21 +38,9 @@ const MainLayout = ({
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        const response = await fetch("http://localhost:8080/api/users/me", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.ok) {
-          const user = await response.json();
-          console.log("Fetched user data:", user);
-          setUsername(user.username);
-        } else {
-          console.error(`Failed to fetch user data: HTTP ${response.status}`);
-        }
+        const user = await getMe();
+        console.log("Fetched user data:", user);
+        setUsername(user.username);
       } catch (error) {
         console.error("Failed to fetch user data:", error);
       }
