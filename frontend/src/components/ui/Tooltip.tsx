@@ -1,7 +1,7 @@
 // frontend\src\components\ui\Tooltip.tsx
 import React, { useState, useRef, useEffect, useCallback } from "react";
 
-type TooltipPosition = "top" | "bottom" | "left" | "right";
+type TooltipPosition = "top" | "bottom" | "left" | "right" | "right-bottom";
 
 interface TooltipProps {
   text: string;
@@ -96,6 +96,7 @@ function Tooltip({
     bottom: "top-full left-1/2 -translate-x-1/2 mt-[10px]",
     left: "right-full top-1/2 -translate-y-1/2 mr-[10px]",
     right: "left-full top-1/2 -translate-y-1/2 ml-[10px]",
+    "right-bottom": "left-full top-[15px] ml-[30px]",
   };
 
   const arrowClasses: Record<TooltipPosition, string> = {
@@ -103,6 +104,7 @@ function Tooltip({
     bottom: "bottom-full left-1/2 -translate-x-1/2",
     left: "left-full top-1/2 -translate-y-1/2",
     right: "right-full top-1/2 -translate-y-1/2",
+    "right-bottom": "right-full top-[8px]",
   };
 
   const arrowStyles: Record<TooltipPosition, React.CSSProperties> = {
@@ -122,6 +124,11 @@ function Tooltip({
       borderLeft: "6px solid #825E8B",
     },
     right: {
+      borderTop: "6px solid transparent",
+      borderBottom: "6px solid transparent",
+      borderRight: "6px solid #825E8B",
+    },
+    "right-bottom": {
       borderTop: "6px solid transparent",
       borderBottom: "6px solid transparent",
       borderRight: "6px solid #825E8B",
