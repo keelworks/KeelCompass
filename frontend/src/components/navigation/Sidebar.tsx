@@ -47,7 +47,7 @@ function Sidebar({
     >
       {/* === Chevron Toggle === */}
       <Tooltip
-        text={collapsed ? "Expand" : "Collapse"}
+        text={collapsed ? "Expand menu" : "Collapse menu"}
         position="right-bottom"
         className="block"
       >
