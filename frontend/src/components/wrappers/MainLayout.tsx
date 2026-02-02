@@ -4,6 +4,7 @@ import Navigation from "../navigation/Sidebar";
 import { MdNotificationsNone } from "react-icons/md";
 import { BsQuestionCircle } from "react-icons/bs";
 import { FiChevronDown, FiLogOut } from "react-icons/fi";
+import { getMe } from "../../utils/store";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -21,6 +22,7 @@ const MainLayout = ({
   onHomeClick,
 }: MainLayoutProps) => {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [username, setUsername] = useState("User");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -29,6 +31,23 @@ const MainLayout = ({
     localStorage.removeItem("userId");
     navigate("/");
   };
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const user = await getMe();
+        console.log("Fetched user data:", user);
+        setUsername(user.username);
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -91,7 +110,7 @@ const MainLayout = ({
             />
             <div className="leading-tight">
               <p className="text-sm font-semibold text-gray-900 -mb-1">
-                Louise Paulie
+                {username}
               </p>
               <p className="text-[10px] text-gray-500">Student</p>
             </div>

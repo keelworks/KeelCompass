@@ -262,3 +262,8 @@ export async function markNotificationRead(params: {
 }): Promise<void> {
   await axiosInstance.patch(`/notifications/${params.id}/mark-read`);
 }
+
+export const getMe = async () => {
+  const response = await axiosInstance.get("/users/me");
+  return response.data;
+};

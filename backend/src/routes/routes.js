@@ -9,6 +9,7 @@ const commentRoutes = require("./commentRoutes");
 const userCommentActionRoutes = require("./userCommentActionRoutes");
 const interestRoutes = require("./interestRoutes");
 const notificationRoutes = require("./notificationRoutes");
+const userRoutes = require("./userRoutes");
 
 // routes
 router.use("/api/auth", authRoutes);
@@ -20,6 +21,7 @@ router.use("/api/comments", commentRoutes);
 router.use("/api/comment-actions", userCommentActionRoutes);
 router.use("/api/interests", interestRoutes);
 router.use("/api/notifications", notificationRoutes);
+router.use("/api/users", userRoutes);
 
 // static routes
 router.use("/static/career", express.static("src/career"));
