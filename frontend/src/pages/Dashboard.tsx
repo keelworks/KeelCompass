@@ -13,7 +13,7 @@ import QuestionsSection from "../features/dashboard/questions/QuestionsSection";
 import MyInterests from "../features/dashboard/interests/MyInterests";
 import QuestionCreate from "../pages/QuestionCreate"; // adjust the path to where your file is
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 3;
 
 const Dashboard = () => {
   const navigate = useNavigate();
