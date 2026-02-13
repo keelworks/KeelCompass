@@ -11,7 +11,8 @@
     "test": "cross-env NODE_ENV=testing node server.js",
     "start": "node server.js",
     "migrate": "npx sequelize-cli db:migrate",
-    "seed": "sequelize-cli db:seed:all"
+    "seed": "npx sequelize-cli db:seed:all",
+    "bootstrap": "npm run migrate && (npm run seed || true) && npm run start"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

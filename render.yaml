@@ -5,7 +5,7 @@ services:
     rootDir: backend
     plan: free
     buildCommand: npm install
-    startCommand: npm run migrate && npm run start
+    startCommand: npm run bootstrap
     healthCheckPath: /
     envVars:
       - key: NODE_ENV
