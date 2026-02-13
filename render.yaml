@@ -21,7 +21,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
 
-  - type: static
+  - type: web
     name: keelcompass-web
     rootDir: frontend
     buildCommand: npm install && npm run build
