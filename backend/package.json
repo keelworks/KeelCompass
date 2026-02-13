@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "Backend part of Keel Compass project",
   "engines": {
-    "node": ">=14.0.0"
+    "node": "20.x"
   },
   "main": "index.js",
   "scripts": {
