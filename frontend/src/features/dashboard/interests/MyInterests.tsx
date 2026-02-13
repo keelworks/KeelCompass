@@ -1,5 +1,5 @@
 import { useState } from "react";
-import BookmarkIcon from "../../../assets/Bookmark.svg";
+import BookmarkIcon from "../../../assets/bookmark.svg";
 import QuestionDetails from "../questions/QuestionDetails";
 import { Interest, QuestionListItem } from "../../../utils/types";
 import InterestItem from "./InterestItem";
