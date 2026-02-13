@@ -47,11 +47,6 @@ const MyInterests = ({
     });
   };
 
-  const getCommentCount = (questionId: number): number => {
-    const question = questions.find((q) => q.id === questionId);
-    return question?.commentCount || 0;
-  };
-
   const handleQuestionUpdateLocal = (
     updatedQuestion: Partial<QuestionListItem> & { id: number }
   ) => {

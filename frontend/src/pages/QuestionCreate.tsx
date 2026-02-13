@@ -203,7 +203,6 @@ function QuestionCreate({
   /* State */
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
-  const [description, setDescription] = useState("");
   const [boxHeight, setBoxHeight] = useState<number>(MIN_DESC_HEIGHT);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentError, setAttachmentError] = useState("");
@@ -324,7 +323,6 @@ function QuestionCreate({
   const confirmDiscard = () => {
     setTitle("");
     setTitleError("");
-    setDescription("");
     if (descriptionEditableRef.current) {
       descriptionEditableRef.current.innerHTML = "";
     }
@@ -508,17 +506,12 @@ function QuestionCreate({
         }
       } catch {}
 
-      setDescription(host.innerHTML);
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) savedRangeRef.current = sel.getRangeAt(0);
       updateActiveFormattingOnSelection();
     },
     [updateActiveFormattingOnSelection]
   );
-
-  const handleDescriptionInput = (e: React.FormEvent<HTMLDivElement>) => {
-    setDescription(e.currentTarget.innerHTML);
-  };
 
   /* Track selection */
   useEffect(() => {
@@ -722,7 +715,6 @@ function QuestionCreate({
                 role="textbox"
                 aria-label="Description"
                 tabIndex={0}
-                onInput={handleDescriptionInput}
                 className="px-3 pt-3 pb-16 outline-none text-[#063E53] rounded-[10px]"
                 style={{
                   backgroundColor: "#FFFFFF",
@@ -800,7 +792,6 @@ function QuestionCreate({
                           sel.addRange(range);
                           savedRangeRef.current = range;
 
-                          setDescription(host.innerHTML);
                         }}
                       />
                     </div>

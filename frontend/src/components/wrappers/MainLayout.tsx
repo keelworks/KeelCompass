@@ -139,6 +139,7 @@ const MainLayout = ({
         </div>
 
         {/* Main Content Grid - moved closer to top */}
+        {searchBar && <div className="mb-4">{searchBar}</div>}
         <div className="flex-1 overflow-auto mt-0 pt-0 grid grid-cols-3 gap-8">
           {children}
         </div>

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Interest, QuestionsResponse } from "../utils/types";
 import {
   getAllCategories,
@@ -16,8 +15,6 @@ import QuestionCreate from "../pages/QuestionCreate"; // adjust the path to wher
 const PAGE_SIZE = 3;
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-
   const [questions, setQuestions] = useState<QuestionsResponse>({
     questions: [],
     count: PAGE_SIZE,
@@ -269,7 +266,7 @@ const Dashboard = () => {
               e.currentTarget.style.border = "none";
               e.currentTarget.style.boxShadow = "0px 6px 10px 0px #0000001A";
             }}
-            onClick={(e) => {
+            onClick={() => {
               if (askDisabled) return;
               setAskDisabled(true);
               setShowAsk(true);

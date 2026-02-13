@@ -7,7 +7,7 @@ import QnA from "./pages/QnA";
 import Fallback from "./pages/Fallback";
 
 
-const isValidToken = (token) => {
+const isValidToken = (token: string | null) => {
   if (!token) return false;
   
   try {
@@ -23,7 +23,7 @@ const isValidToken = (token) => {
     }
     
     return true;
-  } catch (error) {
+  } catch {
     // Invalid token format
     localStorage.removeItem("token");
     return false;
