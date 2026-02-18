@@ -4,6 +4,8 @@ const bcrypt = require("bcryptjs");
 
 module.exports = {
   async up(queryInterface, _) {
+    const isPostgres = queryInterface.sequelize.getDialect() === "postgres";
+
     console.log('Seeding Categories...');
     // seed categories
     await queryInterface.bulkInsert("Categories", [
@@ -203,6 +205,30 @@ module.exports = {
       { user_id: 2, type: "announcement", message: "Check out what's new.", read: false },
     ];
     await queryInterface.bulkInsert("Notifications", notifications);
+
+    // PostgreSQL sequences are not auto-advanced when explicit IDs are inserted.
+    // Realign all serial sequences used by seeded tables.
+    if (isPostgres) {
+      const resetSequence = async (tableName) => {
+        await queryInterface.sequelize.query(`
+          SELECT setval(
+            pg_get_serial_sequence('"${tableName}"', 'id'),
+            COALESCE((SELECT MAX(id) FROM "${tableName}"), 1),
+            (SELECT COUNT(*) > 0 FROM "${tableName}")
+          );
+        `);
+      };
+
+      await resetSequence("Users");
+      await resetSequence("Categories");
+      await resetSequence("Questions");
+      await resetSequence("Comments");
+      await resetSequence("Attachments");
+      await resetSequence("Interests");
+      await resetSequence("Notifications");
+      await resetSequence("UserQuestionActions");
+      await resetSequence("UserCommentActions");
+    }
   },
 
   async down(queryInterface, _) {

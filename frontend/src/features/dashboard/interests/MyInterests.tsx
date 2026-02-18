@@ -1,5 +1,5 @@
 import { useState } from "react";
-import BookmarkIcon from "../../../assets/Bookmark.svg";
+import BookmarkIcon from "../../../assets/bookmark.svg";
 import QuestionDetails from "../questions/QuestionDetails";
 import { Interest, QuestionListItem } from "../../../utils/types";
 import InterestItem from "./InterestItem";
@@ -45,11 +45,6 @@ const MyInterests = ({
       month: "long",
       day: "numeric",
     });
-  };
-
-  const getCommentCount = (questionId: number): number => {
-    const question = questions.find((q) => q.id === questionId);
-    return question?.commentCount || 0;
   };
 
   const handleQuestionUpdateLocal = (

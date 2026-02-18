@@ -2,11 +2,8 @@ const { Sequelize, DataTypes } = require("sequelize");
 const logger = require("../utils/logger.js");
 const dbConfig = require("../configs/dbConfig.js");
 
-// initialize sequelize
-const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
-  host: dbConfig.HOST,
+const sequelizeOptions = {
   dialect: dbConfig.dialect,
-  operatorsAliases: 0,
   define: {
     timestamps: false,
   },
@@ -16,11 +13,29 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     acquire: dbConfig.pool.acquire,
     idle: dbConfig.pool.idle,
   },
-  logging: (msg) => logger.info(msg),
-});
+  logging: dbConfig.logging ? (msg) => logger.info(msg) : false,
+};
 
-// connect to mysql db
-sequelize.authenticate()
+if (dbConfig.SSL) {
+  sequelizeOptions.dialectOptions = {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
+  };
+}
+
+// initialize sequelize
+const sequelize = dbConfig.URL
+  ? new Sequelize(dbConfig.URL, sequelizeOptions)
+  : new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
+      ...sequelizeOptions,
+      host: dbConfig.HOST,
+    });
+
+// connect to database
+sequelize
+  .authenticate()
   .then(() => {
     logger.info("Syncing DB...");
   })
