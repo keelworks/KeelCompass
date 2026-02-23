@@ -298,7 +298,7 @@ function QuestionCreate({
       const res = await import("../utils/store");
       await res.createQuestion({
         title,
-        description: descriptionEditableRef.current?.innerHTML || "",
+        description: description || descriptionEditableRef.current?.innerHTML || "",
         attachment,
       });
 

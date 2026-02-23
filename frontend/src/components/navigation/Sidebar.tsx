@@ -10,7 +10,6 @@ const TOGGLE_TEAL = "#0E8B87";
 
 function Sidebar({
   showAsk,
-  questionTitle,
   onHomeClick,
 }: {
   showAsk?: boolean;
