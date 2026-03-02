@@ -16,34 +16,55 @@ function SearchBar({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
-  const [noCategory, setNoCategory] = useState(false);
+  const [appliedCategories, setAppliedCategories] = useState<number[]>([]);
+  const [appliedNoCategory, setAppliedNoCategory] = useState(false);
+  const [pendingCategories, setPendingCategories] = useState<number[]>([]);
+  const [pendingNoCategory, setPendingNoCategory] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+  const debounceRef = useRef<number | null>(null);
 
   const handleCategoryChange = (id: number) => {
-    setNoCategory(false);
-    setSelectedCategories((prev) =>
+    setPendingNoCategory(false);
+    setPendingCategories((prev) =>
       prev.includes(id) ? prev.filter((catId) => catId !== id) : [...prev, id]
     );
   };
 
   const handleNoCategoryChange = () => {
-    if (!noCategory) {
-      setNoCategory(true);
-      setSelectedCategories([]);
+    if (!pendingNoCategory) {
+      setPendingNoCategory(true);
+      setPendingCategories([]);
     } else {
-      setNoCategory(false);
+      setPendingNoCategory(false);
     }
   };
 
-  const handleSearch = async () => {
-    try {
-      const res = await searchQuestions({
-        query: searchInput,
+  const runSearch = async (
+    query: string,
+    categoryIds: number[],
+    hasNone: boolean
+  ) => {
+    const trimmedQuery = query.trim();
+    const hasFilters = hasNone || categoryIds.length > 0;
+
+    // Empty query + no filters means return to dashboard default list.
+    if (!trimmedQuery && !hasFilters) {
+      setSearchActive(false);
+      setQuestions({
+        questions: [],
         count: pageSize,
         offset: 0,
-        categoriesIds: noCategory ? [] : selectedCategories,
-        hasNone: noCategory,
+      });
+      return;
+    }
+
+    try {
+      const res = await searchQuestions({
+        query: trimmedQuery,
+        count: pageSize,
+        offset: 0,
+        categoriesIds: hasNone ? [] : categoryIds,
+        hasNone,
       });
       setQuestions({
         questions: res.questions,
@@ -54,6 +75,30 @@ function SearchBar({
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleSearch = async () => {
+    await runSearch(searchInput, appliedCategories, appliedNoCategory);
+  };
+
+  const applyFilters = async () => {
+    setAppliedCategories(pendingCategories);
+    setAppliedNoCategory(pendingNoCategory);
+    setDropdownOpen(false);
+    await runSearch(searchInput, pendingCategories, pendingNoCategory);
+  };
+
+  const clearFilters = async () => {
+    setPendingCategories([]);
+    setPendingNoCategory(false);
+    setAppliedCategories([]);
+    setAppliedNoCategory(false);
+    await runSearch(searchInput, [], false);
+  };
+
+  const clearSearch = async () => {
+    setSearchInput("");
+    await runSearch("", appliedCategories, appliedNoCategory);
   };
 
   // fetch categories from localStorage
@@ -81,6 +126,31 @@ function SearchBar({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // debounce keyword search; filters are applied only via Apply button
+  useEffect(() => {
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = window.setTimeout(() => {
+      runSearch(searchInput, appliedCategories, appliedNoCategory);
+    }, 350);
+
+    return () => {
+      if (debounceRef.current) {
+        window.clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchInput, appliedCategories, appliedNoCategory]);
+
+  // when opening dropdown, start from currently applied filter state
+  useEffect(() => {
+    if (dropdownOpen) {
+      setPendingCategories(appliedCategories);
+      setPendingNoCategory(appliedNoCategory);
+    }
+  }, [dropdownOpen, appliedCategories, appliedNoCategory]);
 
   return (
     <>
@@ -128,7 +198,7 @@ function SearchBar({
                     <input
                       type="checkbox"
                       value="no-category"
-                      checked={noCategory}
+                      checked={pendingNoCategory}
                       onChange={handleNoCategoryChange}
                       className="form-checkbox text-cyan-600 border-gray-300 focus:ring-cyan-600"
                     />
@@ -142,9 +212,9 @@ function SearchBar({
                       <input
                         type="checkbox"
                         value={category.id}
-                        checked={selectedCategories.includes(category.id)}
+                        checked={pendingCategories.includes(category.id)}
                         onChange={() => handleCategoryChange(category.id)}
-                        disabled={noCategory}
+                        disabled={pendingNoCategory}
                         className="form-checkbox text-cyan-600 border-gray-300 focus:ring-cyan-600"
                       />
                       <span className="text-gray-600 text-sm">
@@ -152,6 +222,23 @@ function SearchBar({
                       </span>
                     </label>
                   ))}
+
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="px-2 py-1 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
+                    >
+                      Clear all
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyFilters}
+                      className="px-3 py-1 text-xs rounded bg-cyan-600 text-white hover:bg-cyan-700"
+                    >
+                      Apply
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -170,10 +257,19 @@ function SearchBar({
               type="search"
               placeholder="Search something..."
               className="w-full outline-none bg-white pl-4 text-sm"
-              required
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="px-2 text-gray-400 hover:text-gray-700"
+                aria-label="Clear search"
+              >
+                x
+              </button>
+            )}
             <button
               type="submit"
               className="bg-[#EFEFEF] shadow-[0px_1px_2px_0px_#0A0D120D] text-cyan-600 text-sm rounded-lg px-5 py-2.5 transition-all"

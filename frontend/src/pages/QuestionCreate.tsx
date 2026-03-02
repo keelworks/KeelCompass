@@ -21,19 +21,11 @@ import FileIcon from "../assets/Fileicon.svg";
 import FormattingIcon from "../assets/Formatingicon.svg";
 import FormattingIconLeft from "../assets/Formatingiconleft.png";
 import ErrorIcon from "../../src/assets/ErrorIcon.svg";
+import { getAllCategories } from "../utils/store";
 
 const SPACING = { sectionY: 48, labelGap: 16, helperGap: 16 };
 const MAX_TITLE = 80;
 const MIN_DESC_HEIGHT = 153;
-
-const DEFAULT_CATEGORIES: Category[] = [
-  { id: 1, name: "Education" },
-  { id: 2, name: "Pd Management" },
-  { id: 3, name: "Performance" },
-  { id: 4, name: "SRE" },
-  { id: 5, name: "Unemployment" },
-  { id: 6, name: "UX" },
-];
 
 /* -------------------------------------------------------------------------- */
 /* SUB COMPONENTS                              */
@@ -242,7 +234,24 @@ function QuestionCreate({
     link: false,
   });
 
-  useEffect(() => setCategories(DEFAULT_CATEGORIES), []);
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCategories = async () => {
+      try {
+        const fetchedCategories = await getAllCategories();
+        if (isMounted) setCategories(fetchedCategories);
+      } catch {
+        if (isMounted) setCategories([]);
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const remainingTitle = Math.max(0, MAX_TITLE - title.length);
 
@@ -367,7 +376,7 @@ function QuestionCreate({
       const res = await import("../utils/store");
       await res.createQuestion({
         title,
-        description: descriptionEditableRef.current?.innerHTML || "",
+        description: description || descriptionEditableRef.current?.innerHTML || "",
         attachment,
       });
 
