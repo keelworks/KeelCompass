@@ -593,7 +593,10 @@ function QuestionCreate({
 
   /* ---------------- RETURN UI ---------------- */
   return (
-    <div className="w-full min-h-screen" style={{ backgroundColor: "#F9F9F9" }}>
+    <div
+      className="w-full h-screen overflow-y-auto"
+      style={{ backgroundColor: "#F9F9F9" }}
+    >
       <DiscardModal
         isOpen={showDiscardModal}
         onCancel={cancelDiscard}
