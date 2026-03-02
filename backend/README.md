@@ -31,18 +31,18 @@ npx sequelize-cli db:seed:all
 
 ## Resetting Database
 
-1. Open MySQL shell 
+1. Open PostgreSQL shell:
 
 ```bash
-mysql -u root -p
+psql -U postgres
 ```
 
 2. Drop and recreate the database
 
-```bash
-DROP DATABASE keelworks_keelcompass_db;
+```sql
+DROP DATABASE IF EXISTS keelworks_keelcompass_db;
 CREATE DATABASE keelworks_keelcompass_db;
-EXIT;
+\q
 ```
 
 3. Run migrations from the backend directory
@@ -56,4 +56,3 @@ npx sequelize-cli db:migrate
 ```bash
 npx sequelize-cli db:seed:all
 ```
-

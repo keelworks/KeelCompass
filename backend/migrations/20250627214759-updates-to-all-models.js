@@ -3,6 +3,9 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
+    const isPostgres = queryInterface.sequelize.getDialect() === "postgres";
+    const questionsTable = isPostgres ? "\"Questions\"" : "Questions";
+
     // 1. Attachments: Remove updated_at
     await queryInterface.removeColumn('Attachments', 'updated_at');
 
@@ -23,11 +26,41 @@ module.exports = {
     });
 
     // Change status column to ENUM('pending', 'approved', 'rejected')
-    await queryInterface.changeColumn('Questions', 'status', {
-      type: Sequelize.ENUM('pending', 'approved', 'rejected'),
-      allowNull: false,
-      defaultValue: 'pending'
-    });
+    if (isPostgres) {
+      await queryInterface.sequelize.query(`
+        ALTER TABLE ${questionsTable}
+        ALTER COLUMN "status" DROP DEFAULT
+      `);
+      await queryInterface.sequelize.query(`
+        DO $$ BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_type WHERE typname = 'enum_Questions_status'
+          ) THEN
+            CREATE TYPE "enum_Questions_status" AS ENUM ('pending', 'approved', 'rejected');
+          END IF;
+        END $$;
+      `);
+      await queryInterface.sequelize.query(`
+        ALTER TABLE ${questionsTable}
+        ALTER COLUMN "status" TYPE "enum_Questions_status"
+        USING ("status"::"enum_Questions_status")
+      `);
+      await queryInterface.sequelize.query(`
+        ALTER TABLE ${questionsTable}
+        ALTER COLUMN "status" SET DEFAULT 'pending'
+      `);
+      await queryInterface.changeColumn("Questions", "status", {
+        type: Sequelize.ENUM("pending", "approved", "rejected"),
+        allowNull: false,
+        defaultValue: "pending",
+      });
+    } else {
+      await queryInterface.changeColumn("Questions", "status", {
+        type: Sequelize.ENUM("pending", "approved", "rejected"),
+        allowNull: false,
+        defaultValue: "pending",
+      });
+    }
 
     // 4. Comments: Add updated_at
     await queryInterface.addColumn('Comments', 'updated_at', {
@@ -190,25 +223,29 @@ module.exports = {
       defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       allowNull: true
     });
-    // 6. Create QuestionCategories join table for many-to-many between Questions and Categories
-    await queryInterface.createTable('QuestionCategories', {
-      question_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        primaryKey: true,
-        references: { model: 'Questions', key: 'id' },
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-      },
-      category_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        primaryKey: true,
-        references: { model: 'Categories', key: 'id' },
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-      },
-    });
+    // 6. Create QuestionCategories join table if it does not already exist.
+    try {
+      await queryInterface.describeTable("QuestionCategories");
+    } catch (_error) {
+      await queryInterface.createTable("QuestionCategories", {
+        question_id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          references: { model: "Questions", key: "id" },
+          onDelete: "CASCADE",
+          onUpdate: "CASCADE",
+        },
+        category_id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          references: { model: "Categories", key: "id" },
+          onDelete: "CASCADE",
+          onUpdate: "CASCADE",
+        },
+      });
+    }
   },
 
   async down(queryInterface, Sequelize) {

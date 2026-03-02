@@ -10,7 +10,7 @@ KeelCompass is a Express.js + React.js full stack app. Each component has its ow
 
 - Docker
 - Node.js (optional for local dev, not needed for Docker)
-- MySQL
+- PostgreSQL
 
 ### Initial Setup
 
@@ -22,22 +22,22 @@ git clone git@github.com:keelworks/KeelCompass.git
 
 ### Running in Development Environment
 
-In development mode, the app connects to the local MySQL database on your computer. If you are a developer and the backend models have changed, you may need to reset the database to stay in sync (see [`backend/README.md`](backend/README.md) and scroll down to Resetting Database).
+In development mode, the app connects to a local PostgreSQL database on your computer. If you are a developer and the backend models have changed, you may need to reset the database to stay in sync (see [`backend/README.md`](backend/README.md) and scroll down to Resetting Database).
 
-1. Open a new terminal and activate the mysql shell using your username and password. If your username is root, the command is:
+1. Open a new terminal and enter the PostgreSQL shell:
 
 ```bash
-mysql -u root -p
+psql -U postgres
 ```
 
-2. Create a mysql db for KeelCompass from the mysql shell. Exit the mysql shell once database is created.
+2. Create a PostgreSQL database for KeelCompass and exit:
 
-```mysql
-create database keelworks_keelcompass_db;
-exit;
+```sql
+CREATE DATABASE keelworks_keelcompass_db;
+\q
 ```
 
-3. Create a .env file in backend/. Copy and paste the contents in .env.example into the newly created .env. Replace DB_USER, DB_PASSWORD, and DB_DATABASE variables with your own local database configurations.
+3. Create a `.env` file in `backend/` using `backend/.env.example`. Set `DATABASE_URL` (or the discrete `DB_*` values) for your local PostgreSQL instance.
 
 4. Create a .env file in frontend/. Copy and paste the contents in .env.example into the newly created .env.
 
@@ -87,13 +87,13 @@ App should be available on the browser at http://localhost:5173.
 
 ### Running in Testing Environment
 
-In testing mode, the app uses Dockerized MySQL (defined in docker-compose.testing.yml). This setup is fully containerized and does not use your local MySQL server.
+In testing mode, the app uses Dockerized PostgreSQL (defined in `docker-compose.testing.yml`). This setup is fully containerized and does not use your local PostgreSQL server.
 
-1. Create a .env file in the ROOT directory. Copy and paste the contents in .env.example in the ROOT into the newly created .env. Replace the values with your own mysql password and database name. These values will be used to initialize the mysql container during startup.
+1. Create a `.env` file in the project root using `.env.example`. Replace the values with your own PostgreSQL password and database name. These values initialize the PostgreSQL container.
 
 ```bash
-MYSQL_PASSWORD=Password1
-MYSQL_DATABASE=keelworks_keelcompass_db
+POSTGRES_PASSWORD=Password1
+POSTGRES_DB=keelworks_keelcompass_db
 ```
 
 2. Create a .env.testing file in backend/. Copy and paste the contents in .env.testing.example into the newly created .env.
@@ -121,6 +121,25 @@ docker compose -f docker-compose.testing.yml exec backend npx sequelize-cli db:s
 ```
 
 App should be available on the browser at http://localhost:5173.
+
+### Deploying to Render (Free Tier)
+
+This repository now includes a Render Blueprint at `render.yaml` that provisions:
+
+- `keelcompass-api` (Node web service)
+- `keelcompass-web` (static frontend)
+- `keelcompass-db` (managed PostgreSQL)
+
+1. Push this branch to GitHub.
+2. In Render, choose **New +** -> **Blueprint** and connect the repo.
+3. Render reads `render.yaml` and creates all three resources.
+4. After first deploy, open `keelcompass-web`.
+
+Notes:
+
+- Backend runs migrations on startup with `npm run migrate && npm run start`.
+- Frontend uses `VITE_API_URL=https://keelcompass-api.onrender.com/api` by default in `render.yaml`.
+- If Render assigns a different backend hostname (for example, service name conflict), update `VITE_API_URL` in the static site environment variables and redeploy.
 
 #### Troubleshooting
 

@@ -3,12 +3,16 @@
   "version": "0.0.0",
   "description": "Backend part of Keel Compass project",
   "engines": {
-    "node": ">=14.0.0"
+    "node": "20.x"
   },
   "main": "index.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon server.js",
-    "test": "cross-env NODE_ENV=testing node server.js"
+    "test": "cross-env NODE_ENV=testing node server.js",
+    "start": "node server.js",
+    "migrate": "npx sequelize-cli db:migrate",
+    "seed": "npx sequelize-cli db:seed:all",
+    "bootstrap": "npm run migrate && (npm run seed || true) && npm run start"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -20,8 +24,10 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
-    "mysql2": "^3.11.3",
+    "pg": "^8.13.1",
+    "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.3",
+    "sequelize-cli": "^6.6.3",
     "winston": "^3.14.2"
   },
   "devDependencies": {
@@ -29,7 +35,6 @@
     "cross-env": "^7.0.3",
     "eslint": "^9.15.0",
     "globals": "^15.12.0",
-    "nodemon": "^3.1.7",
-    "sequelize-cli": "^6.6.3"
+    "nodemon": "^3.1.7"
   }
 }

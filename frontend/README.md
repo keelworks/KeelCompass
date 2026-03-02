@@ -23,7 +23,7 @@ The application runs using a **Vite development server** with hot module replace
 Ensure the following software is installed on your local machine:
 
 - Node.js (Recommended version: 14.x or higher)
-- MySQL
+- PostgreSQL (for backend API when running full stack locally)
 - npm
 
 **Install Dependencies**
@@ -38,7 +38,7 @@ npm install
 npm run dev
 ```
 
-The server will start at http://localhost:5137 by default
+The server will start at http://localhost:5173 by default.
 
 ## ESLint Setup
 

@@ -10,9 +10,9 @@ git clone git@github.com:keelworks/KeelCompass.git
 cd KeelCompass
 
 # 2. Create database
-mysql -u root -p
+psql -U postgres
 CREATE DATABASE keelworks_keelcompass_db;
-EXIT;
+\q;
 
 # 3. Backend setup
 cd backend
@@ -102,10 +102,10 @@ docker compose exec backend npx sequelize-cli db:migrate
 
 ```bash
 # Reset database (CAUTION: Deletes all data)
-mysql -u root -p
+psql -U postgres
 DROP DATABASE keelworks_keelcompass_db;
 CREATE DATABASE keelworks_keelcompass_db;
-EXIT;
+\q;
 
 cd backend
 npx sequelize-cli db:migrate
@@ -130,11 +130,11 @@ lsof -ti:8080 | xargs kill
 ### Database Connection Issues
 
 ```bash
-# Check MySQL is running
-mysql -u root -p
+# Check PostgreSQL is running
+psql -U postgres
 
 # Verify database exists
-SHOW DATABASES;
+\l
 
 # Check .env file has correct credentials
 ```
