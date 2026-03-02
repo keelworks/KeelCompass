@@ -198,7 +198,7 @@ const MyInterests = ({
               className="transition-colors duration-200 hover:text-[#005E64]"
             >
               <span>
-                {showAll ? "Show less interests" : "View more interests"}
+                {showAll ? "View less ^" : "View more interests "}
               </span>
               <span
                 style={{
@@ -206,7 +206,7 @@ const MyInterests = ({
                   marginBottom: "10px",
                 }}
               >
-                ⌄
+                {showAll ? "" : "⌄"}
               </span>
             </button>
           </div>
