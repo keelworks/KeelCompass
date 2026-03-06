@@ -8,7 +8,10 @@ const router = express.Router();
 router.use(isUser);
 
 const searchValidation = [
-  body("query").notEmpty().withMessage("Search query is required.").bail().isString().withMessage("Query must be a string."),
+  body("query")
+    .optional()
+    .isString()
+    .withMessage("Query must be a string."),
   body("count").optional().isInt({ gt: 0 }).withMessage("Count must be a positive integer.").toInt(),
   body("offset").optional().isInt({ min: 0 }).withMessage("Offset must be a non-negative integer.").toInt(),
   body("categoriesIds").optional().custom((value) => {

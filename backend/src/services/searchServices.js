@@ -13,11 +13,14 @@ const Comment = db.Comment;
 const Attachment = db.Attachment;
 
 // search questions by keyword
-const searchQuestionByKeyword = async (query, count = 10, offset = 0, categoryIds = [], hasNone = false) => {
+const searchQuestionByKeyword = async (query = "", count = 10, offset = 0, categoryIds = [], hasNone = false) => {
   // DEBUG: Log input arguments
   console.log('searchQuestionByKeyword called with:', { query, count, offset, categoryIds, hasNone });
   try {
-    const keywords = query.toLowerCase().split(" ");
+    const trimmedQuery = String(query || "").trim();
+    const keywords = trimmedQuery
+      ? trimmedQuery.toLowerCase().split(/\s+/).filter(Boolean)
+      : [];
     const likeClauses = keywords.map(keyword => ({
       [Op.or]: [
         { title: { [Op.like]: `%${keyword}%` } },
@@ -29,7 +32,6 @@ const searchQuestionByKeyword = async (query, count = 10, offset = 0, categoryId
       // DEBUG: Log likeClauses for keyword search
       // (log after construction below)
 
-      where: { [Op.or]: likeClauses },
       attributes: {
         include: [
           [Sequelize.literal(`(SELECT COUNT(*) FROM UserQuestionActions WHERE UserQuestionActions.question_id = Question.id AND UserQuestionActions.action_type = '${ActionTypes.LIKE}')`), 'likeCount'],
@@ -47,6 +49,9 @@ const searchQuestionByKeyword = async (query, count = 10, offset = 0, categoryId
       limit: count,
       offset: offset,
     };
+    if (likeClauses.length > 0) {
+      findOptions.where = { [Op.or]: likeClauses };
+    }
 
     // DEBUG: Log findOptions before category/none logic
     console.log('findOptions before category/none logic:', JSON.stringify(findOptions, null, 2));
@@ -56,7 +61,7 @@ const searchQuestionByKeyword = async (query, count = 10, offset = 0, categoryId
     // If hasNone is true, return questions with no categories
     if (hasNone) {
       findOptions.where = {
-        ...findOptions.where,
+        ...(findOptions.where || {}),
         [Op.and]: Sequelize.where(
           Sequelize.literal(`NOT EXISTS (
             SELECT 1 FROM QuestionCategories qc
