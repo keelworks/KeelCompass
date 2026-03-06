@@ -1192,27 +1192,10 @@ function QuestionCreate({
             </button>
           </div>
 
-
-          {/* Attachment preview + errors */}
-          <div className="mt-4">
-            {attachment && (
-              <div className="flex items-center gap-2">
-                <FaFileAlt className="mr-1" />
-                <span className="text-sm text-gray-600">
-                  {attachment.name} (
-                  {(attachment.size / 1024 / 1024).toFixed(2)} MB)
-                </span>
-              </div>
-            )}
-
-            {attachmentError && (
-              <div className="mt-1 text-xs text-red-600">{attachmentError}</div>
-            )}
-          </div>
-          <br/>
-          <br/>
-          <br/>
-          <br/>
+          <br />
+          <br />
+          <br />
+          <br />
 
         </form>
       </div>
