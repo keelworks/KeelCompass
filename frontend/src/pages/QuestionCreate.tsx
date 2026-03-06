@@ -1090,6 +1090,10 @@ function QuestionCreate({
               <div className="mt-1 text-xs text-red-600">{attachmentError}</div>
             )}
           </div>
+          <br/>
+          <br/>
+          <br/>
+          <br/>
         </form>
       </div>
     </div>
