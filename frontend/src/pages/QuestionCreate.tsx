@@ -3,7 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { FaFileAlt } from "react-icons/fa";
 import { Category } from "../utils/types";
 import EmojiPicker from "emoji-picker-react";
-import { FiBold, FiItalic, FiUnderline, FiLink, FiList } from "react-icons/fi";
+import {
+  FiBold,
+  FiItalic,
+  FiUnderline,
+  FiLink,
+  FiList,
+  FiTrash2,
+} from "react-icons/fi";
 import { BsListOl } from "react-icons/bs";
 import DiscardModal from "../components/DiscardModal";
 import Snackbar from "../components/Snackbar";
@@ -14,19 +21,11 @@ import FileIcon from "../assets/Fileicon.svg";
 import FormattingIcon from "../assets/Formatingicon.svg";
 import FormattingIconLeft from "../assets/Formatingiconleft.png";
 import ErrorIcon from "../../src/assets/ErrorIcon.svg";
+import { getAllCategories } from "../utils/store";
 
 const SPACING = { sectionY: 48, labelGap: 16, helperGap: 16 };
 const MAX_TITLE = 80;
 const MIN_DESC_HEIGHT = 153;
-
-const DEFAULT_CATEGORIES: Category[] = [
-  { id: 1, name: "Education" },
-  { id: 2, name: "Pd Management" },
-  { id: 3, name: "Performance" },
-  { id: 4, name: "SRE" },
-  { id: 5, name: "Unemployment" },
-  { id: 6, name: "UX" },
-];
 
 /* -------------------------------------------------------------------------- */
 /* SUB COMPONENTS                              */
@@ -199,6 +198,7 @@ function QuestionCreate({
   const savedRangeRef = useRef<Range | null>(null);
   const catMenuRef = useRef<HTMLDivElement | null>(null);
   const isResizingRef = useRef(false);
+  const attachmentInputRef = useRef<HTMLInputElement | null>(null);
 
   /* State */
   const [title, setTitle] = useState("");
@@ -206,6 +206,9 @@ function QuestionCreate({
   const [description, setDescription] = useState("");
   const [boxHeight, setBoxHeight] = useState<number>(MIN_DESC_HEIGHT);
   const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState<
+    string | null
+  >(null);
   const [attachmentError, setAttachmentError] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showFormattingPanel, setShowFormattingPanel] = useState(false);
@@ -231,7 +234,24 @@ function QuestionCreate({
     link: false,
   });
 
-  useEffect(() => setCategories(DEFAULT_CATEGORIES), []);
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCategories = async () => {
+      try {
+        const fetchedCategories = await getAllCategories();
+        if (isMounted) setCategories(fetchedCategories);
+      } catch {
+        if (isMounted) setCategories([]);
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const remainingTitle = Math.max(0, MAX_TITLE - title.length);
 
@@ -242,6 +262,28 @@ function QuestionCreate({
     ) as HTMLTextAreaElement | null;
     titleField?.focus();
   }, []);
+
+  useEffect(() => {
+    if (!attachmentError) return;
+    const timer = window.setTimeout(() => {
+      setAttachmentError("");
+    }, 3500);
+    return () => window.clearTimeout(timer);
+  }, [attachmentError]);
+
+  useEffect(() => {
+    if (!attachment || !attachment.type.startsWith("image/")) {
+      setAttachmentPreviewUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(attachment);
+    setAttachmentPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [attachment]);
 
   /* ---------------- Resize Logic ---------------- */
   const handleResizeStart = (e: React.MouseEvent) => {
@@ -271,11 +313,47 @@ function QuestionCreate({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
-      setAttachmentError("File size exceeds 10MB limit.");
+      setAttachmentError(
+        "This file is too big (limit 10 MB). Try uploading a smaller one"
+      );
       return;
     }
     setAttachment(file);
     setAttachmentError("");
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachment(null);
+    setAttachmentError("");
+    if (attachmentInputRef.current) {
+      attachmentInputRef.current.value = "";
+    }
+  };
+
+  const getErrorMessage = (error: unknown): string => {
+    if (!error || typeof error !== "object") {
+      return "Failed to post question.";
+    }
+
+    const maybeResponse = (error as { response?: { data?: unknown } }).response;
+    const data = maybeResponse?.data;
+
+    if (data && typeof data === "object") {
+      const typedData = data as { message?: unknown; error?: unknown };
+      if (typeof typedData.message === "string" && typedData.message.trim()) {
+        return typedData.message;
+      }
+      if (typeof typedData.error === "string" && typedData.error.trim()) {
+        return typedData.error;
+      }
+    }
+
+    const maybeMessage = (error as { message?: unknown }).message;
+    if (typeof maybeMessage === "string" && maybeMessage.trim()) {
+      return maybeMessage;
+    }
+
+    return "Failed to post question.";
   };
 
   /* ---------------- Submit ---------------- */
@@ -298,7 +376,7 @@ function QuestionCreate({
       const res = await import("../utils/store");
       await res.createQuestion({
         title,
-        description: descriptionEditableRef.current?.innerHTML || "",
+        description: description || descriptionEditableRef.current?.innerHTML || "",
         attachment,
       });
 
@@ -307,8 +385,8 @@ function QuestionCreate({
       setTimeout(() => {
         finalNavigate("/dashboard");
       }, 500);
-    } catch (err: any) {
-      setAttachmentError(err?.message || "Failed to post question.");
+    } catch (err: unknown) {
+      setAttachmentError(getErrorMessage(err));
     }
   };
 
@@ -745,23 +823,23 @@ function QuestionCreate({
               {/* Icon Row */}
               <div className="absolute left-3 bottom-2 flex items-center gap-4 z-10">
                 {/* Attach */}
-                <label htmlFor="attachment" className="cursor-pointer">
-                  <span className="sr-only">Attach file</span>
-                  <IconButton
-                    selected={!!attachment}
-                    title="Attach file"
-                    src={FileIcon}
-                    alt="Attach file"
-                    onClick={() => {
-                      const input = document.getElementById(
-                        "attachment"
-                      ) as HTMLInputElement | null;
-                      input?.click();
-                    }}
-                  />
-                </label>
+                <CustomTooltip text="Attach file">
+                  <label htmlFor="attachment" className="cursor-pointer">
+                    <span className="sr-only">Attach file</span>
+                    <IconButton
+                      selected={!!attachment}
+                      title="Attach file"
+                      src={FileIcon}
+                      alt="Attach file"
+                      onClick={() => {
+                        attachmentInputRef.current?.click();
+                      }}
+                    />
+                  </label>
+                </CustomTooltip>
                 <input
                   id="attachment"
+                  ref={attachmentInputRef}
                   type="file"
                   onChange={handleAttachmentChange}
                   className="hidden"
@@ -961,6 +1039,46 @@ function QuestionCreate({
                 </div>
               </div>
             </div>
+
+            {/* Attachment preview + errors */}
+            <div className="mt-4">
+              {attachment && (
+                <div className="flex items-center gap-2 rounded-md border border-[#D1DBDD] bg-white px-3 py-2 w-fit">
+                  <FaFileAlt className="mr-1 text-[#404955]" />
+                  {attachmentPreviewUrl && (
+                    <img
+                      src={attachmentPreviewUrl}
+                      alt="Attachment thumbnail"
+                      className="h-8 w-8 rounded object-cover border border-[#D1DBDD]"
+                    />
+                  )}
+                  <div className="text-sm text-gray-700">
+                    <span className="font-semibold">{attachment.name}</span>
+                    <span>
+                      {" "}
+                      ({(attachment.size / 1024 / 1024).toFixed(2)} MB){" "}
+                      
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveAttachment}
+                    className="ml-1 inline-flex items-center gap-1 rounded px-2 py-1 text-[#616161] hover:bg-[#FCEAEA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8DBFC7]"
+                    aria-label="Remove attachment"
+                    title="Remove attachment"
+                  >
+                    <FiTrash2 size={16} className="text-[#C62828]" />
+                    <span className="text-sm font-medium">Remove</span>
+                  </button>
+                </div>
+              )}
+
+              {attachmentError && (
+                <div className="mt-1 text-xs text-red-600" aria-live="polite">
+                  {attachmentError}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ---------------------- Category ---------------------- */}
@@ -1074,6 +1192,7 @@ function QuestionCreate({
             </button>
           </div>
 
+
           {/* Attachment preview + errors */}
           <div className="mt-4">
             {attachment && (
@@ -1094,6 +1213,7 @@ function QuestionCreate({
           <br/>
           <br/>
           <br/>
+
         </form>
       </div>
     </div>
