@@ -362,7 +362,7 @@ function QuestionCreate({
 
     if (!title.trim()) {
       setTitleError(
-        "Add your question. Try beginning with who, what, where, when, why, or how."
+        "Question title field is required. Add your question."
       );
       const field = document.getElementById(
         "questionTitle"
@@ -370,8 +370,6 @@ function QuestionCreate({
       field?.focus();
       return;
     }
-    setTitleError("");
-
     try {
       const res = await import("../utils/store");
       await res.createQuestion({
@@ -380,6 +378,7 @@ function QuestionCreate({
         attachment,
       });
 
+      setTitleError("");
       setShowSuccessSnackbar(true);
 
       setTimeout(() => {
@@ -704,11 +703,31 @@ function QuestionCreate({
               <span className="text-gray-500 font-normal">(required)</span>
             </label>
 
+            <p className="text-sm text-gray-500 mb-4">
+              Begin with who, what, where, when, why, or how.
+            </p>
+
+            <input
+              type="text"
+              id="questionTitle"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                onTitleChange?.(e.target.value);
+              }}
+              maxLength={MAX_TITLE}
+              className={`w-full  rounded-[10px] px-3 py-2 border outline-none transition
+                border-[#D1DBDD] bg-white text-gray-900
+                hover:border-[#929898] focus:border-[#929898] active:border-[#929898]
+                focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
+                ${titleError ? "border-red-500" : ""}
+              `}
+            />
             {titleError && (
               <div
-                className="mb-3 flex items-center"
+                className="mt-3 flex items-center"
                 style={{
-                  width: 582,
+                  width: "100%",
                   height: 32,
                   borderRadius: 2,
                   paddingTop: 10,
@@ -717,8 +736,6 @@ function QuestionCreate({
                   paddingLeft: 8,
                   background: "#FCE2E2",
                   gap: 17,
-                  position: "relative",
-                  top: -5,
                   opacity: 1,
                 }}
               >
@@ -741,33 +758,6 @@ function QuestionCreate({
                 </span>
               </div>
             )}
-
-            {!titleError && (
-              <p className="text-sm text-gray-500 mb-4">
-                Begin with who, what, where, when, why, or how.
-              </p>
-            )}
-
-            <input
-              type="text"
-              required
-              id="questionTitle"
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                onTitleChange?.(e.target.value);
-                if (titleError && e.target.value.trim()) {
-                  setTitleError("");
-                }
-              }}
-              maxLength={MAX_TITLE}
-              className={`w-full  rounded-[10px] px-3 py-2 border outline-none transition
-                border-[#D1DBDD] bg-white text-gray-900
-                hover:border-[#929898] focus:border-[#929898] active:border-[#929898]
-                focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
-                ${titleError ? "border-red-500" : ""}
-              `}
-            />
             <div className="mt-2 text-xs text-gray-500">
               {remainingTitle} characters allowed
             </div>
