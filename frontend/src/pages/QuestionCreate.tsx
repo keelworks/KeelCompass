@@ -24,7 +24,7 @@ import ErrorIcon from "../../src/assets/ErrorIcon.svg";
 import { getAllCategories } from "../utils/store";
 
 const SPACING = { sectionY: 48, labelGap: 16, helperGap: 16 };
-const MAX_TITLE = 80;
+const MAX_TITLE = 250;
 const MIN_DESC_HEIGHT = 153;
 
 /* -------------------------------------------------------------------------- */
