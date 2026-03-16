@@ -194,7 +194,9 @@ function QuestionCreate({
   const descriptionEditableRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const formattingPanelRef = useRef<HTMLDivElement | null>(null);
+  const formattingToggleRef = useRef<HTMLDivElement | null>(null);
   const emojiPanelRef = useRef<HTMLDivElement | null>(null);
+  const emojiToggleRef = useRef<HTMLDivElement | null>(null);
   const savedRangeRef = useRef<Range | null>(null);
   const catMenuRef = useRef<HTMLDivElement | null>(null);
   const isResizingRef = useRef(false);
@@ -617,18 +619,22 @@ function QuestionCreate({
   /* Close panels */
   useEffect(() => {
     function onDown(e: MouseEvent) {
+      const target = e.target as Node;
+
       if (catMenuRef.current && !catMenuRef.current.contains(e.target as Node))
         setCatOpen(false);
 
       if (
         formattingPanelRef.current &&
-        !formattingPanelRef.current.contains(e.target as Node)
+        !formattingPanelRef.current.contains(target) &&
+        !formattingToggleRef.current?.contains(target)
       )
         setShowFormattingPanel(false);
 
       if (
         emojiPanelRef.current &&
-        !emojiPanelRef.current.contains(e.target as Node)
+        !emojiPanelRef.current.contains(target) &&
+        !emojiToggleRef.current?.contains(target)
       )
         setShowEmojiPicker(false);
     }
@@ -695,7 +701,7 @@ function QuestionCreate({
           Ask Question
         </h1>
 
-        <form onSubmit={handleSubmitCreateQuestion}>
+        <form onSubmit={handleSubmitCreateQuestion} className="pb-20">
           {/* ---------------------- Question ---------------------- */}
           <div style={{ marginBottom: SPACING.sectionY }}>
             <label className="block mb-4 font-medium text-gray-700">
@@ -794,7 +800,7 @@ function QuestionCreate({
                 aria-label="Description"
                 tabIndex={0}
                 onInput={handleDescriptionInput}
-                className="px-3 pt-3 pb-16 outline-none text-[#063E53] rounded-[10px]"
+                className="px-3 pt-3 pb-16 outline-none text-[#063E53] rounded-[10px] [&_a]:text-[#05808F] [&_a]:underline [&_a:hover]:text-[#04606B]"
                 style={{
                   backgroundColor: "#FFFFFF",
                   minHeight: "100%", // Expands to fill wrapper
@@ -837,13 +843,15 @@ function QuestionCreate({
 
                 {/* Emoji */}
                 <div className="relative">
-                  <IconButton
-                    selected={showEmojiPicker}
-                    title="Add emoji"
-                    src={EmojiIcon}
-                    alt="Emoji"
-                    onClick={() => setShowEmojiPicker((s) => !s)}
-                  />
+                  <div ref={emojiToggleRef}>
+                    <IconButton
+                      selected={showEmojiPicker}
+                      title="Add emoji"
+                      src={EmojiIcon}
+                      alt="Emoji"
+                      onClick={() => setShowEmojiPicker((s) => !s)}
+                    />
+                  </div>
                   {showEmojiPicker && (
                     <div
                       ref={emojiPanelRef}
@@ -880,19 +888,21 @@ function QuestionCreate({
 
                 {/* Formatting - JOINED LOOK & CUSTOM TOOLTIPS */}
                 <div className="relative flex items-center">
-                  <IconButton
-                    selected={showFormattingPanel}
-                    title="Formatting"
-                    src={FormattingIcon}
-                    activeSrc={FormattingIconLeft}
-                    alt="Formatting"
-                    className={
-                      showFormattingPanel
-                        ? "rounded-l-md rounded-r-none"
-                        : "rounded-md"
-                    }
-                    onClick={() => setShowFormattingPanel((s) => !s)}
-                  />
+                  <div ref={formattingToggleRef}>
+                    <IconButton
+                      selected={showFormattingPanel}
+                      title="Formatting"
+                      src={FormattingIcon}
+                      activeSrc={FormattingIconLeft}
+                      alt="Formatting"
+                      className={
+                        showFormattingPanel
+                          ? "rounded-l-md rounded-r-none"
+                          : "rounded-md"
+                      }
+                      onClick={() => setShowFormattingPanel((s) => !s)}
+                    />
+                  </div>
 
                   {showFormattingPanel && (
                     <div
