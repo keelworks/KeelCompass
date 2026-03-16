@@ -696,7 +696,7 @@ function QuestionCreate({
           Ask Question
         </h1>
 
-        <form onSubmit={handleSubmitCreateQuestion}>
+        <form onSubmit={handleSubmitCreateQuestion} className="pb-20">
           {/* ---------------------- Question ---------------------- */}
           <div style={{ marginBottom: SPACING.sectionY }}>
             <label className="block mb-4 font-medium text-gray-700">
@@ -1191,11 +1191,6 @@ function QuestionCreate({
               Discard
             </button>
           </div>
-
-          <br />
-          <br />
-          <br />
-          <br />
 
         </form>
       </div>
