@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Interest } from "../../../utils/types";
 import { QuestionListItem, QuestionsResponse } from "../../../utils/types";
 import QuestionItem from "./QuestionItem";
@@ -6,7 +6,6 @@ import QuestionDetails from "./QuestionDetails";
 
 interface QuestionsSectionProps {
   questions: QuestionsResponse;
-  setQuestions: (questions: QuestionsResponse) => void;
   onQuestionUpdate: (
     updatedQuestion: Partial<QuestionListItem> & { id: number }
   ) => void;
@@ -24,14 +23,14 @@ interface QuestionsSectionProps {
   tab: "recent" | "popular";
   setTab: (tab: "recent" | "popular") => void;
   searchActive: boolean;
-  setSearchActive: (active: boolean) => void;
+  onSearchReset: () => void;
   hasMore: boolean;
-  pageSize: number;
+  isLoading: boolean;
+  onLoadMore: () => void;
 }
 
 function QuestionsSection({
   questions,
-  setQuestions,
   onQuestionUpdate,
   onQuestionDelete,
   onQuestionLike,
@@ -43,42 +42,52 @@ function QuestionsSection({
   tab,
   setTab,
   searchActive,
-  setSearchActive,
+  onSearchReset,
   hasMore,
-  pageSize,
+  isLoading,
+  onLoadMore,
 }: QuestionsSectionProps) {
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(
     null
   );
-  const [visibleCount, setVisibleCount] = useState(pageSize);
+  const listRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const handleTabChange = (newTab: "recent" | "popular") => {
     if (tab !== newTab) {
+      if (searchActive) {
+        onSearchReset();
+      }
       setTab(newTab);
-      setQuestions({ questions: [], offset: 0, count: pageSize });
-      setVisibleCount(pageSize);
     } else if (searchActive) {
-      setSearchActive(false);
-      setQuestions({ questions: [], offset: 0, count: pageSize });
-      setVisibleCount(pageSize);
+      onSearchReset();
     }
   };
 
-  const handleViewMore = () => {
-    if (visibleCount < questions.questions.length) {
-      setVisibleCount((vc) => vc + pageSize);
-    } else if (hasMore) {
-      setQuestions({
-        ...questions,
-        offset: questions.offset + pageSize,
-      });
-    }
-  };
-
-  // ✅ reset visible count when tab or question list changes
   useEffect(() => {
-    setVisibleCount(pageSize);
-  }, [tab, questions.questions, pageSize]);
+    if (!hasMore || isLoading || questions.questions.length === 0) return;
+
+    const listElement = listRef.current;
+    const sentinelElement = sentinelRef.current;
+
+    if (!listElement || !sentinelElement) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          onLoadMore();
+        }
+      },
+      {
+        root: listElement,
+        rootMargin: "0px 0px 200px 0px",
+      }
+    );
+
+    observer.observe(sentinelElement);
+
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, onLoadMore, questions.questions.length]);
 
   return (
     <div className="shadow-md rounded-lg p-4 mb-6 bg-gray-50 w-full h-full flex flex-col overflow-hidden">
@@ -110,14 +119,15 @@ function QuestionsSection({
       </div>
 
       {/* Scrollable Questions List */}
-      <div className="flex-1 overflow-y-auto pr-1 space-y-4">
-        {questions.questions.length === 0 ? (
+      <div ref={listRef} className="flex-1 overflow-y-auto pr-1 space-y-4">
+        {isLoading && questions.questions.length === 0 ? (
+          <p>Loading posts...</p>
+        ) : questions.questions.length === 0 ? (
           <p>No posts found.</p>
         ) : (
-          questions.questions.slice(0, visibleCount).map((question) => (
-            <>
+          questions.questions.map((question) => (
+            <div key={question.id}>
               <QuestionItem
-                key={question.id}
                 question={question}
                 onQuestionLike={onQuestionLike}
                 interests={interests}
@@ -126,21 +136,15 @@ function QuestionsSection({
                 setSelectedQuestionId={setSelectedQuestionId}
               />
               <hr />
-            </>
+            </div>
           ))
         )}
 
-        {/* VIEW MORE */}
-        {(hasMore || visibleCount < questions.questions.length) && (
-          <div className="mt-4 w-full flex justify-center p-4 box-border">
-            <button
-              onClick={handleViewMore}
-              className="flex items-center justify-center gap-2 min-w-[160px] px-6 py-3 text-teal-600 hover:text-teal-800 transition-colors text-sm font-medium whitespace-nowrap border border-transparent"
-            >
-              <span>View more posts</span>
-              <span className="inline-block w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent border-t-teal-500"></span>
-            </button>
-          </div>
+        <div ref={sentinelRef} className="h-1" aria-hidden="true" />
+        {isLoading && questions.questions.length > 0 && (
+          <p className="py-4 text-center text-sm text-gray-500">
+            Loading more posts...
+          </p>
         )}
       </div>
 

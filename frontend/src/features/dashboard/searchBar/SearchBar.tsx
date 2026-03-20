@@ -1,18 +1,17 @@
 import { useEffect, useState, useRef } from "react";
-import { Category, QuestionsResponse } from "../../../utils/types";
-import { searchQuestions } from "../../../utils/store";
+import { Category } from "../../../utils/types";
 
-type SearchBarProps = {
-  pageSize: number;
-  setQuestions: (questions: QuestionsResponse) => void;
-  setSearchActive: (active: boolean) => void;
+type SearchRequest = {
+  query: string;
+  categoriesIds: number[];
+  hasNone: boolean;
 };
 
-function SearchBar({
-  pageSize,
-  setQuestions,
-  setSearchActive,
-}: SearchBarProps) {
+type SearchBarProps = {
+  onSearchChange: (searchRequest: SearchRequest | null) => void;
+};
+
+function SearchBar({ onSearchChange }: SearchBarProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -39,7 +38,7 @@ function SearchBar({
     }
   };
 
-  const runSearch = async (
+  const runSearch = (
     query: string,
     categoryIds: number[],
     hasNone: boolean
@@ -47,58 +46,40 @@ function SearchBar({
     const trimmedQuery = query.trim();
     const hasFilters = hasNone || categoryIds.length > 0;
 
-    // Empty query + no filters means return to dashboard default list.
     if (!trimmedQuery && !hasFilters) {
-      setSearchActive(false);
-      setQuestions({
-        questions: [],
-        count: pageSize,
-        offset: 0,
-      });
+      onSearchChange(null);
       return;
     }
 
-    try {
-      const res = await searchQuestions({
-        query: trimmedQuery,
-        count: pageSize,
-        offset: 0,
-        categoriesIds: hasNone ? [] : categoryIds,
-        hasNone,
-      });
-      setQuestions({
-        questions: res.questions,
-        count: res.count,
-        offset: res.offset === -1 ? 0 : res.offset,
-      });
-      setSearchActive(true);
-    } catch (err) {
-      console.error(err);
-    }
+    onSearchChange({
+      query: trimmedQuery,
+      categoriesIds: hasNone ? [] : categoryIds,
+      hasNone,
+    });
   };
 
-  const handleSearch = async () => {
-    await runSearch(searchInput, appliedCategories, appliedNoCategory);
+  const handleSearch = () => {
+    runSearch(searchInput, appliedCategories, appliedNoCategory);
   };
 
-  const applyFilters = async () => {
+  const applyFilters = () => {
     setAppliedCategories(pendingCategories);
     setAppliedNoCategory(pendingNoCategory);
     setDropdownOpen(false);
-    await runSearch(searchInput, pendingCategories, pendingNoCategory);
+    runSearch(searchInput, pendingCategories, pendingNoCategory);
   };
 
-  const clearFilters = async () => {
+  const clearFilters = () => {
     setPendingCategories([]);
     setPendingNoCategory(false);
     setAppliedCategories([]);
     setAppliedNoCategory(false);
-    await runSearch(searchInput, [], false);
+    runSearch(searchInput, [], false);
   };
 
-  const clearSearch = async () => {
+  const clearSearch = () => {
     setSearchInput("");
-    await runSearch("", appliedCategories, appliedNoCategory);
+    runSearch("", appliedCategories, appliedNoCategory);
   };
 
   // fetch categories from localStorage
@@ -134,7 +115,19 @@ function SearchBar({
     }
 
     debounceRef.current = window.setTimeout(() => {
-      runSearch(searchInput, appliedCategories, appliedNoCategory);
+      const trimmedQuery = searchInput.trim();
+      const hasFilters = appliedNoCategory || appliedCategories.length > 0;
+
+      if (!trimmedQuery && !hasFilters) {
+        onSearchChange(null);
+        return;
+      }
+
+      onSearchChange({
+        query: trimmedQuery,
+        categoriesIds: appliedNoCategory ? [] : appliedCategories,
+        hasNone: appliedNoCategory,
+      });
     }, 350);
 
     return () => {
@@ -142,7 +135,7 @@ function SearchBar({
         window.clearTimeout(debounceRef.current);
       }
     };
-  }, [searchInput, appliedCategories, appliedNoCategory]);
+  }, [searchInput, appliedCategories, appliedNoCategory, onSearchChange]);
 
   // when opening dropdown, start from currently applied filter state
   useEffect(() => {
