@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { Interest, QuestionsResponse } from "../utils/types";
+import { useEffect, useRef, useState } from "react";
+import { Interest, QuestionListItem, QuestionsResponse } from "../utils/types";
 import {
   getAllCategories,
   getPopularQuestions,
   getRecentQuestions,
+  searchQuestions,
   getUserInterests,
 } from "../utils/store";
 import MainLayout from "../components/wrappers/MainLayout";
@@ -12,22 +13,65 @@ import QuestionsSection from "../features/dashboard/questions/QuestionsSection";
 import MyInterests from "../features/dashboard/interests/MyInterests";
 import QuestionCreate from "../pages/QuestionCreate"; // adjust the path to where your file is
 
-const PAGE_SIZE = 5;
+type SearchRequest = {
+  query: string;
+  categoriesIds: number[];
+  hasNone: boolean;
+};
+
+type FeedResponse = QuestionsResponse & {
+  total?: number;
+};
+
+const FETCH_BATCH_SIZE = 10;
+
+const INITIAL_QUESTIONS: QuestionsResponse = {
+  questions: [],
+  count: 0,
+  offset: 0,
+};
+
+const normalizeQuestionsResponse = (data: FeedResponse): QuestionsResponse => ({
+  questions: data.questions,
+  count: data.count ?? data.total ?? data.questions.length,
+  offset: data.offset,
+});
+
+const fetchDashboardQuestions = async (
+  tab: "recent" | "popular",
+  searchRequest: SearchRequest | null,
+  offset: number
+): Promise<QuestionsResponse> => {
+  if (searchRequest) {
+    const data = await searchQuestions({
+      ...searchRequest,
+      count: FETCH_BATCH_SIZE,
+      offset,
+    });
+    return normalizeQuestionsResponse(data);
+  }
+
+  const data =
+    tab === "popular"
+      ? await getPopularQuestions({ count: FETCH_BATCH_SIZE, offset })
+      : await getRecentQuestions({ count: FETCH_BATCH_SIZE, offset });
+
+  return normalizeQuestionsResponse(data);
+};
 
 const Dashboard = () => {
-  const [questions, setQuestions] = useState<QuestionsResponse>({
-    questions: [],
-    count: PAGE_SIZE,
-    offset: 0,
-  });
+  const [questions, setQuestions] = useState<QuestionsResponse>(INITIAL_QUESTIONS);
   const [interests, setInterests] = useState<Interest[]>([]);
   const [tab, setTab] = useState<"recent" | "popular">("recent");
-  const [searchActive, setSearchActive] = useState(false);
+  const [searchRequest, setSearchRequest] = useState<SearchRequest | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   const [showAsk, setShowAsk] = useState(false);
   const [askDisabled, setAskDisabled] = useState(false);
   const [questionTitle, setQuestionTitle] = useState("");
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const latestRequestRef = useRef(0);
+  const searchActive = searchRequest !== null;
 
   const handleHomeClickFromSidebar = () => {
     // If no title entered, go directly to dashboard
@@ -41,7 +85,7 @@ const Dashboard = () => {
   };
 
   const handleQuestionUpdate = (
-    updatedQuestion: Partial<QuestionsResponse> & { id: number }
+    updatedQuestion: Partial<QuestionListItem> & { id: number }
   ) => {
     setQuestions((prev) => ({
       ...prev,
@@ -114,47 +158,69 @@ const Dashboard = () => {
     handleInterestUpdate();
   }, []);
 
-  // exit search mode and fetch questions when tabs change
-  useEffect(() => {
-    setSearchActive(false);
-    setQuestions({ questions: [], count: PAGE_SIZE, offset: 0 });
-  }, [tab]);
-
   useEffect(() => {
     if (!showAsk) setAskDisabled(false);
   }, [showAsk]);
 
-  // fetch questions when tab, question.offset, or search mode changes
   useEffect(() => {
-    if (searchActive) return;
-    const fetchQuestions = async () => {
-      const offset = questions.offset || 0;
-      let data;
-      if (tab === "popular") {
-        data = await getPopularQuestions({ count: PAGE_SIZE, offset });
-      } else {
-        data = await getRecentQuestions({ count: PAGE_SIZE, offset });
+    const requestId = ++latestRequestRef.current;
+    setQuestions(INITIAL_QUESTIONS);
+    setHasMore(false);
+    setIsLoadingQuestions(true);
+
+    const loadInitialQuestions = async () => {
+      try {
+        const data = await fetchDashboardQuestions(tab, searchRequest, 0);
+        if (latestRequestRef.current !== requestId) return;
+
+        setQuestions(data);
+        setHasMore(data.offset !== -1);
+      } catch (error) {
+        if (latestRequestRef.current !== requestId) return;
+        console.error("Failed to fetch dashboard questions", error);
+        setHasMore(false);
+      } finally {
+        if (latestRequestRef.current === requestId) {
+          setIsLoadingQuestions(false);
+        }
       }
+    };
+
+    void loadInitialQuestions();
+  }, [tab, searchRequest]);
+
+  const handleLoadMoreQuestions = async () => {
+    if (isLoadingQuestions || !hasMore) return;
+
+    const nextOffset = questions.offset;
+    const requestId = ++latestRequestRef.current;
+    setIsLoadingQuestions(true);
+
+    try {
+      const data = await fetchDashboardQuestions(tab, searchRequest, nextOffset);
+      if (latestRequestRef.current !== requestId) return;
+
       setQuestions((prev) => ({
         ...data,
-        questions:
-          offset === 0
-            ? data.questions
-            : [...prev.questions, ...data.questions],
-        offset: data.offset === -1 ? prev.offset : data.offset,
+        questions: [...prev.questions, ...data.questions],
       }));
       setHasMore(data.offset !== -1);
-    };
-    fetchQuestions();
-  }, [tab, questions.offset, searchActive]);
+    } catch (error) {
+      if (latestRequestRef.current !== requestId) return;
+      console.error("Failed to load more dashboard questions", error);
+      setHasMore(false);
+    } finally {
+      if (latestRequestRef.current === requestId) {
+        setIsLoadingQuestions(false);
+      }
+    }
+  };
 
   return (
     <MainLayout
       searchBar={
         <SearchBar
-          pageSize={PAGE_SIZE}
-          setQuestions={setQuestions}
-          setSearchActive={setSearchActive}
+          onSearchChange={setSearchRequest}
         />
       }
       showAsk={showAsk}
@@ -172,7 +238,8 @@ const Dashboard = () => {
                   setShowAsk(false);
                   setQuestionTitle("");
                   setTab("recent");
-                  setQuestions({ questions: [], count: PAGE_SIZE, offset: 0 });
+                  setSearchRequest(null);
+                  setQuestions(INITIAL_QUESTIONS);
                 }
               }}
               onTitleChange={setQuestionTitle}
@@ -192,7 +259,6 @@ const Dashboard = () => {
                   };
                 }),
               }}
-              setQuestions={setQuestions}
               onQuestionUpdate={handleQuestionUpdate}
               onQuestionDelete={handleQuestionDelete}
               onQuestionLike={handleQuestionLike}
@@ -204,9 +270,10 @@ const Dashboard = () => {
               tab={tab}
               setTab={setTab}
               searchActive={searchActive}
-              setSearchActive={setSearchActive}
+              onSearchReset={() => setSearchRequest(null)}
               hasMore={hasMore}
-              pageSize={PAGE_SIZE}
+              isLoading={isLoadingQuestions}
+              onLoadMore={handleLoadMoreQuestions}
             />
           )}
         </div>
