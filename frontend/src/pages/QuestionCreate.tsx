@@ -429,11 +429,41 @@ function QuestionCreate({
   }, []);
 
   /* ---------------- Range / Selection Helpers ---------------- */
-  function restoreRange() {
+  function createRangeAtEnd(host: HTMLElement) {
+    const range = document.createRange();
+    const lastChild = host.lastChild;
+
+    if (!lastChild) {
+      range.selectNodeContents(host);
+      range.collapse(false);
+      return range;
+    }
+
+    if (lastChild.nodeType === Node.TEXT_NODE) {
+      range.setStart(lastChild, lastChild.textContent?.length ?? 0);
+      range.collapse(true);
+      return range;
+    }
+
+    range.selectNodeContents(lastChild);
+    range.collapse(false);
+    return range;
+  }
+
+  function restoreRange(rangeToRestore?: Range | null) {
+    const host = descriptionEditableRef.current;
     const sel = window.getSelection();
-    if (!sel || !savedRangeRef.current) return;
+    const nextRange =
+      rangeToRestore ??
+      savedRangeRef.current?.cloneRange() ??
+      (host ? createRangeAtEnd(host) : null);
+
+    if (!sel || !nextRange) return null;
+
     sel.removeAllRanges();
-    sel.addRange(savedRangeRef.current);
+    sel.addRange(nextRange);
+    savedRangeRef.current = nextRange.cloneRange();
+    return nextRange;
   }
 
   function closest<K extends keyof HTMLElementTagNameMap>(
@@ -501,7 +531,7 @@ function QuestionCreate({
     newRange.collapse(true);
     sel.removeAllRanges();
     sel.addRange(newRange);
-    savedRangeRef.current = newRange;
+    savedRangeRef.current = newRange.cloneRange();
   }
 
   /* ---------------- Formatting State ---------------- */
@@ -589,7 +619,9 @@ function QuestionCreate({
 
       setDescription(host.innerHTML);
       const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0) savedRangeRef.current = sel.getRangeAt(0);
+      if (sel && sel.rangeCount > 0) {
+        savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+      }
       updateActiveFormattingOnSelection();
     },
     [updateActiveFormattingOnSelection]
@@ -606,7 +638,7 @@ function QuestionCreate({
       if (sel && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
         if (descriptionEditableRef.current?.contains(range.startContainer)) {
-          savedRangeRef.current = range;
+          savedRangeRef.current = range.cloneRange();
         }
       }
       updateActiveFormattingOnSelection();
@@ -846,7 +878,7 @@ function QuestionCreate({
                   <div ref={emojiToggleRef}>
                     <IconButton
                       selected={showEmojiPicker}
-                      title="Add emoji"
+                      title="Attach emoji"
                       src={EmojiIcon}
                       alt="Emoji"
                       onClick={() => setShowEmojiPicker((s) => !s)}
@@ -863,21 +895,24 @@ function QuestionCreate({
                           const host = descriptionEditableRef.current;
                           if (!host) return;
 
+                          const savedRange = savedRangeRef.current?.cloneRange();
+
                           host.focus();
+
+                          const range = restoreRange(savedRange);
                           const sel = window.getSelection();
-                          if (!sel || sel.rangeCount === 0) return;
-                          const range = sel.getRangeAt(0);
+                          if (!range || !sel) return;
 
                           range.deleteContents();
                           const node = document.createTextNode(data.emoji);
                           range.insertNode(node);
 
-                          range.setStartAfter(node);
-                          range.setEndAfter(node);
-
+                          const cursorRange = document.createRange();
+                          cursorRange.setStartAfter(node);
+                          cursorRange.collapse(true);
                           sel.removeAllRanges();
-                          sel.addRange(range);
-                          savedRangeRef.current = range;
+                          sel.addRange(cursorRange);
+                          savedRangeRef.current = cursorRange.cloneRange();
 
                           setDescription(host.innerHTML);
                         }}
