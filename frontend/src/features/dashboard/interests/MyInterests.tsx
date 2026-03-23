@@ -144,17 +144,18 @@ const MyInterests = ({
         >
           {interests.length > 0 ? (
             (showAll ? interests : interests.slice(0, 3)).map((interest) => {
-              // 🔥 CHANGED: Always use live question data (no fallback to cached data)
               const liveQuestion = questions.find(
                 (q) => q.id === interest.question_id
               );
+              const interestTitle =
+                liveQuestion?.title || interest.question?.title || "";
 
               return (
                 <InterestItem
                   key={interest.id}
-                  title={liveQuestion?.title || ""}
+                  title={interestTitle}
                   date={formatLongDate(interest.created_at)}
-                  commentCount={liveQuestion?.commentCount || 0}
+                  commentCount={liveQuestion?.commentCount}
                   onClick={() =>
                     handleInterestItemClick(interest.question_id || 0)
                   }
@@ -198,7 +199,7 @@ const MyInterests = ({
               className="transition-colors duration-200 hover:text-[#005E64]"
             >
               <span>
-                {showAll ? "Show less interests" : "View more interests"}
+                {showAll ? "View less ^" : "View more interests"}
               </span>
               <span
                 style={{
@@ -206,7 +207,7 @@ const MyInterests = ({
                   marginBottom: "10px",
                 }}
               >
-                ⌄
+               {showAll ? "" : "⌄"}
               </span>
             </button>
           </div>

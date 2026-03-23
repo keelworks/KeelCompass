@@ -179,11 +179,13 @@ function IconButton({
 function QuestionCreate({
   navigate,
   onTitleChange,
+  onQuestionCreated,
   showDiscardModal: externalShowDiscardModal,
   setShowDiscardModal: externalSetShowDiscardModal,
 }: {
   navigate?: (path: string) => void;
   onTitleChange?: (title: string) => void;
+  onQuestionCreated?: (questionId: number) => void;
   showDiscardModal?: boolean;
   setShowDiscardModal?: (show: boolean) => void;
 }) {
@@ -375,11 +377,12 @@ function QuestionCreate({
     }
     try {
       const res = await import("../utils/store");
-      await res.createQuestion({
+      const questionId = await res.createQuestion({
         title,
         description: description || descriptionEditableRef.current?.innerHTML || "",
         attachment,
       });
+      onQuestionCreated?.(questionId);
 
       setTitleError("");
       setShowSuccessSnackbar(true);

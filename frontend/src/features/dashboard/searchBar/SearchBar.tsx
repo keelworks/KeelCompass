@@ -77,11 +77,6 @@ function SearchBar({ onSearchChange }: SearchBarProps) {
     runSearch(searchInput, [], false);
   };
 
-  const clearSearch = () => {
-    setSearchInput("");
-    runSearch("", appliedCategories, appliedNoCategory);
-  };
-
   // fetch categories from localStorage
   useEffect(() => {
     const catStr = localStorage.getItem("categories");
@@ -253,16 +248,6 @@ function SearchBar({ onSearchChange }: SearchBarProps) {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
-            {searchInput && (
-              <button
-                type="button"
-                onClick={clearSearch}
-                className="px-2 text-gray-400 hover:text-gray-700"
-                aria-label="Clear search"
-              >
-                x
-              </button>
-            )}
             <button
               type="submit"
               className="bg-[#EFEFEF] shadow-[0px_1px_2px_0px_#0A0D120D] text-cyan-600 text-sm rounded-lg px-5 py-2.5 transition-all"
