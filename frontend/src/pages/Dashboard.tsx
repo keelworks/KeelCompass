@@ -281,50 +281,61 @@ const Dashboard = () => {
 
       {/* Right Column - My Interests */}
       <div className="col-span-1 flex flex-col">
-        <div className="mb-8">
+        <div className="mb-8 pt-[4px] pr-[4px]">
           <button
             disabled={askDisabled}
-            className="w-full h-[48px] flex items-center justify-center gap-[8px]
+            className="w-full h-[38px] flex items-center justify-center gap-[8px]
     rounded-[9px] text-white font-medium text-[16px]
     transition-all duration-150 focus:outline-none
     disabled:cursor-not-allowed"
             style={{
               background: askDisabled ? "#007C8833" : "#007C88",
-              border: askDisabled ? "2px solid transparent" : "none",
+              border: "none",
               borderRadius: askDisabled ? "8px" : "9px",
               boxShadow: askDisabled ? "none" : "0px 6px 10px 0px #0000001A",
+              outline: "none",
+              outlineOffset: "0px",
               padding: "16px",
-              minWidth: "306px",
+              minWidth: "296px",
+              transform: askDisabled ? "translate(-4px, 4px)" : "none",
             }}
             onMouseEnter={(e) => {
               if (e.currentTarget.disabled) return;
               e.currentTarget.style.background = "#066A71";
-              e.currentTarget.style.border = "2px solid #007C88";
+              e.currentTarget.style.border = "none";
               e.currentTarget.style.boxShadow = "2px 3px 4px 0px #0000001A";
+              e.currentTarget.style.outline = "2px solid #007C88";
+              e.currentTarget.style.outlineOffset = "2px";
             }}
             onMouseLeave={(e) => {
               if (e.currentTarget.disabled) return;
               e.currentTarget.style.background = "#007C88";
               e.currentTarget.style.border = "none";
               e.currentTarget.style.boxShadow = "0px 6px 10px 0px #0000001A";
+              e.currentTarget.style.outline = "none";
+              e.currentTarget.style.outlineOffset = "0px";
             }}
             onMouseDown={(e) => {
               e.currentTarget.focus();
               if (e.currentTarget.disabled) return;
               e.currentTarget.style.background = "#409EA5";
-              e.currentTarget.style.border = "2px solid #007C88";
+              e.currentTarget.style.border = "none";
               e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.outline = "2px solid #007C88";
+              e.currentTarget.style.outlineOffset = "2px";
             }}
             onMouseUp={(e) => {
               if (e.currentTarget.disabled) return;
               e.currentTarget.style.background = "#066A71";
-              e.currentTarget.style.border = "2px solid #007C88";
+              e.currentTarget.style.border = "none";
               e.currentTarget.style.boxShadow = "2px 3px 4px 0px #0000001A";
+              e.currentTarget.style.outline = "2px solid #007C88";
+              e.currentTarget.style.outlineOffset = "2px";
             }}
             onFocus={(e) => {
               if (e.currentTarget.disabled) return;
               e.currentTarget.style.background = "#007C88";
-              e.currentTarget.style.border = "0.25px solid #B2E3E6";
+              e.currentTarget.style.border = "none";
               e.currentTarget.style.boxShadow = "0px 8px 12px 0px #0000001A";
             }}
             onBlur={(e) => {
@@ -333,8 +344,12 @@ const Dashboard = () => {
               e.currentTarget.style.border = "none";
               e.currentTarget.style.boxShadow = "0px 6px 10px 0px #0000001A";
             }}
-            onClick={() => {
+            onClick={(e) => {
               if (askDisabled) return;
+              const button = e.currentTarget;
+              button?.style.setProperty("outline", "none");
+              button?.style.setProperty("outline-offset", "0px");
+              button?.style.setProperty("border", "none");
               setAskDisabled(true);
               setShowAsk(true);
             }}
