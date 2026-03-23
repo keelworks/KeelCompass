@@ -206,6 +206,7 @@ function QuestionCreate({
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
   const [description, setDescription] = useState("");
+  const [isDescriptionFocused, setIsDescriptionFocused] = useState(false);
   const [boxHeight, setBoxHeight] = useState<number>(MIN_DESC_HEIGHT);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState<
@@ -782,14 +783,21 @@ function QuestionCreate({
             {/* WRAPPER (Resizable) */}
             <div
               ref={containerRef}
-              className="
+              className={`
                 group/desc relative rounded-[10px] border bg-white transition
-                border-[#D1DBDD] hover:border-[#929898]
-                focus-within:border-[#929898] active:border-[#929898]
-                has-[:focus-visible]:[box-shadow:0_0_0_2px_#A77CB2]
                 overflow-visible
-              "
-              style={{ minHeight: boxHeight }}
+                ${
+                  isDescriptionFocused
+                    ? "border-[#0CA3A6] hover:border-[#0CA3A6] active:border-[#0CA3A6]"
+                    : "border-[#D1DBDD] hover:border-[#929898] active:border-[#929898]"
+                }
+              `}
+              style={{
+                minHeight: boxHeight,
+                boxShadow: isDescriptionFocused
+                  ? "0 0 0 2px #F9F9F9, 0 0 0 4px #007c88"
+                  : "none",
+              }}
             >
               {/* Editable Textbox */}
               <div
@@ -800,6 +808,8 @@ function QuestionCreate({
                 aria-label="Description"
                 tabIndex={0}
                 onInput={handleDescriptionInput}
+                onFocus={() => setIsDescriptionFocused(true)}
+                onBlur={() => setIsDescriptionFocused(false)}
                 className="px-3 pt-3 pb-16 outline-none text-[#063E53] rounded-[10px] [&_a]:text-[#05808F] [&_a]:underline [&_a:hover]:text-[#04606B]"
                 style={{
                   backgroundColor: "#FFFFFF",
