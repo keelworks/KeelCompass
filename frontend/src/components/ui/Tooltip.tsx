@@ -1,5 +1,6 @@
 // frontend\src\components\ui\Tooltip.tsx
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 type TooltipPosition = "top" | "bottom" | "left" | "right" | "right-bottom";
 
@@ -21,6 +22,7 @@ function Tooltip({
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -37,13 +39,48 @@ function Tooltip({
     }
   }, []);
 
+  const computeCoords = useCallback(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const GAP = 10; // gap + arrow height
+
+    let top = 0;
+    let left = 0;
+
+    switch (position) {
+      case "top":
+        top = rect.top - GAP;
+        left = rect.left + rect.width / 2;
+        break;
+      case "bottom":
+        top = rect.bottom + GAP;
+        left = rect.left + rect.width / 2;
+        break;
+      case "left":
+        top = rect.top + rect.height / 2;
+        left = rect.left - GAP;
+        break;
+      case "right":
+        top = rect.top + rect.height / 2;
+        left = rect.right + GAP;
+        break;
+      case "right-bottom":
+        top = rect.top + 15;
+        left = rect.right + 30;
+        break;
+    }
+
+    setCoords({ top, left });
+  }, [position]);
+
   const showTooltip = useCallback(() => {
     clearTimers();
     showTimerRef.current = setTimeout(() => {
+      computeCoords();
       setShouldRender(true);
       setIsVisible(true);
     }, SHOW_DELAY);
-  }, [clearTimers]);
+  }, [clearTimers, computeCoords]);
 
   const hideTooltip = useCallback(() => {
     clearTimers();
@@ -89,14 +126,27 @@ function Tooltip({
     };
   }, [clearTimers]);
 
-  // Position classes with 4px gap (carrot tip to target edge)
-  // Total offset = 4px gap + 6px arrow height = 10px
-  const positionClasses: Record<TooltipPosition, string> = {
-    top: "bottom-full left-1/2 -translate-x-1/2 mb-[10px]",
-    bottom: "top-full left-1/2 -translate-x-1/2 mt-[10px]",
-    left: "right-full top-1/2 -translate-y-1/2 mr-[10px]",
-    right: "left-full top-1/2 -translate-y-1/2 ml-[10px]",
-    "right-bottom": "left-full top-[15px] ml-[30px]",
+  const getTooltipStyle = (): React.CSSProperties => {
+    if (!coords) return { display: "none" };
+
+    const base: React.CSSProperties = {
+      position: "fixed",
+      backgroundColor: "#825E8B",
+      zIndex: 9999,
+    };
+
+    switch (position) {
+      case "top":
+        return { ...base, bottom: `calc(100vh - ${coords.top}px)`, left: coords.left, transform: "translateX(-50%)" };
+      case "bottom":
+        return { ...base, top: coords.top, left: coords.left, transform: "translateX(-50%)" };
+      case "left":
+        return { ...base, top: coords.top, right: `calc(100vw - ${coords.left}px)`, transform: "translateY(-50%)" };
+      case "right":
+        return { ...base, top: coords.top, left: coords.left, transform: "translateY(-50%)" };
+      case "right-bottom":
+        return { ...base, top: coords.top, left: coords.left };
+    }
   };
 
   const arrowClasses: Record<TooltipPosition, string> = {
@@ -145,18 +195,16 @@ function Tooltip({
       onBlur={hideTooltip}
     >
       {children}
-      {shouldRender && (
+      {shouldRender && createPortal(
         <div
           ref={tooltipRef}
           className={`
-            absolute ${positionClasses[position]}
             py-1 px-2 rounded whitespace-nowrap
             text-white text-sm font-normal
             transition-opacity duration-150
-            z-50
             ${isVisible ? "opacity-100" : "opacity-0"}
           `}
-          style={{ backgroundColor: "#825E8B" }}
+          style={getTooltipStyle()}
           role="tooltip"
           aria-hidden={!isVisible}
           onMouseEnter={handleMouseEnterTooltip}
@@ -168,7 +216,8 @@ function Tooltip({
             className={`absolute w-0 h-0 ${arrowClasses[position]}`}
             style={arrowStyles[position]}
           />
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
