@@ -135,7 +135,7 @@ function QuestionItem({
   return (
     <article
       className={`
-        w-full max-w-[646px] p-4 flex flex-col gap-4 rounded cursor-pointer
+        w-full p-4 flex flex-col gap-4 rounded cursor-pointer
         border-2 border-transparent bg-transparent
         transition-all duration-150 ease-in-out
         hover:bg-[#F0F0F0] hover:border-[#E8E8E8]
