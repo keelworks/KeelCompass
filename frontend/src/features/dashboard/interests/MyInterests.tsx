@@ -8,13 +8,13 @@ interface MyInterstProps {
   interests: Interest[];
   questions: QuestionListItem[];
   onQuestionUpdate?: (
-    updatedQuestion: Partial<QuestionListItem> & { id: number }
+    updatedQuestion: Partial<QuestionListItem> & { id: number },
   ) => void;
   onQuestionDelete?: (deletedId: number) => void;
   onQuestionLike?: (
     questionId: number,
     hasLiked: boolean,
-    likeCount: number
+    likeCount: number,
   ) => void;
   setInterests?: (interests: Interest[]) => void;
   onInterestUpdate?: () => void;
@@ -35,20 +35,20 @@ const MyInterests = ({
 }: MyInterstProps) => {
   const [showAll, setShowAll] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(
-    null
+    null,
   );
 
   const formatLongDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
+      month: "short",
       day: "numeric",
+      year: "numeric",
     });
   };
 
   const handleQuestionUpdateLocal = (
-    updatedQuestion: Partial<QuestionListItem> & { id: number }
+    updatedQuestion: Partial<QuestionListItem> & { id: number },
   ) => {
     if (onQuestionUpdate) {
       onQuestionUpdate(updatedQuestion);
@@ -65,7 +65,7 @@ const MyInterests = ({
   const handleQuestionLikeLocal = (
     questionId: number,
     hasLiked: boolean,
-    likeCount: number
+    likeCount: number,
   ) => {
     if (onQuestionLike) {
       onQuestionLike(questionId, hasLiked, likeCount);
@@ -145,7 +145,7 @@ const MyInterests = ({
           {interests.length > 0 ? (
             (showAll ? interests : interests.slice(0, 3)).map((interest) => {
               const liveQuestion = questions.find(
-                (q) => q.id === interest.question_id
+                (q) => q.id === interest.question_id,
               );
               const interestTitle =
                 liveQuestion?.title || interest.question?.title || "";
@@ -198,16 +198,14 @@ const MyInterests = ({
               }}
               className="transition-colors duration-200 hover:text-[#005E64]"
             >
-              <span>
-                {showAll ? "View less ^" : "View more interests"}
-              </span>
+              <span>{showAll ? "View less ^" : "View more interests"}</span>
               <span
                 style={{
                   fontSize: "18px",
                   marginBottom: "10px",
                 }}
               >
-               {showAll ? "" : "⌄"}
+                {showAll ? "" : "⌄"}
               </span>
             </button>
           </div>
