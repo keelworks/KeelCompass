@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Interest,
   QuestionDetail,
@@ -14,6 +15,7 @@ import {
   getUserInterests,
 } from "../utils/store";
 import MainLayout from "../components/wrappers/MainLayout";
+import Snackbar from "../components/Snackbar";
 import SearchBar from "../features/dashboard/searchBar/SearchBar";
 import QuestionsSection from "../features/dashboard/questions/QuestionsSection";
 import MyInterests from "../features/dashboard/interests/MyInterests";
@@ -27,6 +29,10 @@ type SearchRequest = {
 
 type FeedResponse = QuestionsResponse & {
   total?: number;
+};
+
+type DashboardLocationState = {
+  showQuestionPostedSnackbar?: boolean;
 };
 
 const FETCH_BATCH_SIZE = 10;
@@ -103,7 +109,10 @@ const Dashboard = () => {
   const [askDisabled, setAskDisabled] = useState(false);
   const [questionTitle, setQuestionTitle] = useState("");
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
   const latestRequestRef = useRef(0);
+  const location = useLocation();
+  const navigate = useNavigate();
   const searchActive = searchRequest !== null;
 
   const handleHomeClickFromSidebar = () => {
@@ -226,6 +235,19 @@ const Dashboard = () => {
   useEffect(() => {
     if (!showAsk) setAskDisabled(false);
   }, [showAsk]);
+
+  useEffect(() => {
+    const shouldShowSuccessSnackbar = (
+      location.state as DashboardLocationState | null
+    )?.showQuestionPostedSnackbar;
+
+    if (!shouldShowSuccessSnackbar) {
+      return;
+    }
+
+    setShowSuccessSnackbar(true);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
     const interestQuestionIds = new Set(
@@ -387,11 +409,14 @@ const Dashboard = () => {
         <div className="flex-1 overflow-hidden">
           {showAsk ? (
             <QuestionCreate
-              navigate={(path: string) => {
+              navigate={(path: string, options) => {
                 if (path === "/dashboard") {
                   setShowAsk(false);
                   setQuestionTitle("");
                   setShowDiscardModal(false);
+                  if (options?.state?.showQuestionPostedSnackbar) {
+                    setShowSuccessSnackbar(true);
+                  }
                 }
               }}
               onQuestionCreated={handleQuestionCreated}
@@ -525,6 +550,13 @@ const Dashboard = () => {
           />
         </div>
       </div>
+
+      <Snackbar
+        message="Success - Your question posted!"
+        isOpen={showSuccessSnackbar}
+        onClose={() => setShowSuccessSnackbar(false)}
+        duration={4000}
+      />
     </MainLayout>
   );
 };
