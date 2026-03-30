@@ -27,6 +27,14 @@ const SPACING = { sectionY: 48, labelGap: 16, helperGap: 16 };
 const MAX_TITLE = 80;
 const MIN_DESC_HEIGHT = 153;
 
+type QuestionCreateNavigationState = {
+  showQuestionPostedSnackbar?: boolean;
+};
+
+type QuestionCreateNavigateOptions = {
+  state?: QuestionCreateNavigationState;
+};
+
 /* -------------------------------------------------------------------------- */
 /* SUB COMPONENTS                              */
 /* -------------------------------------------------------------------------- */
@@ -183,14 +191,17 @@ function QuestionCreate({
   showDiscardModal: externalShowDiscardModal,
   setShowDiscardModal: externalSetShowDiscardModal,
 }: {
-  navigate?: (path: string) => void;
+  navigate?: (path: string, options?: QuestionCreateNavigateOptions) => void;
   onTitleChange?: (title: string) => void;
   onQuestionCreated?: (questionId: number) => void;
   showDiscardModal?: boolean;
   setShowDiscardModal?: (show: boolean) => void;
 }) {
   const defaultNavigate = useNavigate();
-  const finalNavigate = navigate || defaultNavigate;
+  const finalNavigate =
+    navigate ||
+    ((path: string, options?: QuestionCreateNavigateOptions) =>
+      defaultNavigate(path, options));
 
   /* Refs */
   const descriptionEditableRef = useRef<HTMLDivElement | null>(null);
@@ -388,7 +399,9 @@ function QuestionCreate({
       setShowSuccessSnackbar(true);
 
       setTimeout(() => {
-        finalNavigate("/dashboard");
+        finalNavigate("/dashboard", {
+          state: { showQuestionPostedSnackbar: true },
+        });
       }, 500);
     } catch (err: unknown) {
       setAttachmentError(getErrorMessage(err));
