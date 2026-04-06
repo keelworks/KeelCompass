@@ -13,7 +13,7 @@ function InterestItem({
 }: InterestItemProps) {
   return (
     <div
-      className="bg-white shadow-md rounded-lg border border-gray-200 p-6 mb-4 cursor-pointer hover:shadow-lg transition-shadow duration-200"
+      className="bg-white shadow-md rounded-lg border border-gray-200 p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200"
       onClick={onClick}
     >
       {/* Title */}
@@ -22,7 +22,7 @@ function InterestItem({
       </h3>
 
       {/* Date and Comments below title */}
-      <div
+      {/* <div
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -32,7 +32,9 @@ function InterestItem({
           alignItems: "center",
         }}
         className="text-sm text-gray-500"
-      >
+      > */}
+
+      <div className="flex items-center justify-between w-full text-sm text-gray-500 flex-wrap gap-2">
         <span>{date}</span>
         {commentCount !== undefined && (
           <span>

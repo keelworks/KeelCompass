@@ -101,7 +101,7 @@ const MyInterests = ({
         style={{ background: "#EFEFEF" }}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2
+          {/* <h2
             style={{
               width: "229px",
               height: "28px",
@@ -115,7 +115,8 @@ const MyInterests = ({
               verticalAlign: "middle",
               color: "#212121",
             }}
-          >
+          > */}
+          <h2 className="text-xl font-medium uppercase tracking-wide">
             My Interests
           </h2>
 
