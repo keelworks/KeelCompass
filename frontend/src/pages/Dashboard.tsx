@@ -15,7 +15,6 @@ import {
   getUserInterests,
 } from "../utils/store";
 import MainLayout from "../components/wrappers/MainLayout";
-import Snackbar from "../components/Snackbar";
 import SearchBar from "../features/dashboard/searchBar/SearchBar";
 import QuestionsSection from "../features/dashboard/questions/QuestionsSection";
 import MyInterests from "../features/dashboard/interests/MyInterests";
@@ -452,6 +451,8 @@ const Dashboard = () => {
               hasMore={hasMore}
               isLoading={isLoadingQuestions}
               onLoadMore={handleLoadMoreQuestions}
+              showSuccessSnackbar={showSuccessSnackbar}
+              onSuccessSnackbarClose={() => setShowSuccessSnackbar(false)}
             />
           )}
         </div>
@@ -551,12 +552,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <Snackbar
-        message="Success - Your question posted!"
-        isOpen={showSuccessSnackbar}
-        onClose={() => setShowSuccessSnackbar(false)}
-        duration={4000}
-      />
     </MainLayout>
   );
 };

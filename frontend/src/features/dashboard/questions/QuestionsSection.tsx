@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Interest } from "../../../utils/types";
 import { QuestionListItem, QuestionsResponse } from "../../../utils/types";
+import Snackbar from "../../../components/Snackbar";
 import QuestionItem from "./QuestionItem";
 import QuestionDetails from "./QuestionDetails";
 
@@ -27,6 +28,8 @@ interface QuestionsSectionProps {
   hasMore: boolean;
   isLoading: boolean;
   onLoadMore: () => void;
+  showSuccessSnackbar: boolean;
+  onSuccessSnackbarClose: () => void;
 }
 
 function QuestionsSection({
@@ -46,6 +49,8 @@ function QuestionsSection({
   hasMore,
   isLoading,
   onLoadMore,
+  showSuccessSnackbar,
+  onSuccessSnackbarClose,
 }: QuestionsSectionProps) {
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(
     null
@@ -93,6 +98,13 @@ function QuestionsSection({
     <div className="shadow-md rounded-lg p-4 mb-6 bg-gray-50 w-full h-full flex flex-col overflow-hidden">
       {/* Fixed Heading + Tabs */}
       <div className="mb-4 flex-shrink-0">
+        <Snackbar
+          message="Success - Your question posted!"
+          isOpen={showSuccessSnackbar}
+          onClose={onSuccessSnackbarClose}
+          duration={4000}
+          variant="inline"
+        />
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-medium uppercase tracking-wide">Posts</h2>
           <div className="flex items-center bg-gray-100 rounded-md w-fit p-0.5 border border-gray-300">

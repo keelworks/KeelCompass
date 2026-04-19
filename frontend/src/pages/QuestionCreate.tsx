@@ -13,7 +13,6 @@ import {
 } from "react-icons/fi";
 import { BsListOl } from "react-icons/bs";
 import DiscardModal from "../components/DiscardModal";
-import Snackbar from "../components/Snackbar";
 
 /* SVG assets */
 import EmojiIcon from "../assets/Emojiicon.svg";
@@ -239,8 +238,6 @@ function QuestionCreate({
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [catOpen, setCatOpen] = useState(false);
 
-  const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
-
   const [activeFormatting, setActiveFormatting] = useState({
     bold: false,
     italic: false,
@@ -396,13 +393,9 @@ function QuestionCreate({
       onQuestionCreated?.(questionId);
 
       setTitleError("");
-      setShowSuccessSnackbar(true);
-
-      setTimeout(() => {
-        finalNavigate("/dashboard", {
-          state: { showQuestionPostedSnackbar: true },
-        });
-      }, 500);
+      finalNavigate("/dashboard", {
+        state: { showQuestionPostedSnackbar: true },
+      });
     } catch (err: unknown) {
       setAttachmentError(getErrorMessage(err));
     }
@@ -733,13 +726,6 @@ function QuestionCreate({
         isOpen={showDiscardModal}
         onCancel={cancelDiscard}
         onConfirm={confirmDiscard}
-      />
-
-      <Snackbar
-        message="Success - Your question posted!"
-        isOpen={showSuccessSnackbar}
-        onClose={() => setShowSuccessSnackbar(false)}
-        duration={4000}
       />
 
       <div className="p-8">

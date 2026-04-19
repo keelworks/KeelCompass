@@ -5,6 +5,7 @@ interface SnackbarProps {
   isOpen: boolean;
   onClose: () => void;
   duration?: number;
+  variant?: "fixed" | "inline";
 }
 
 const Snackbar: React.FC<SnackbarProps> = ({
@@ -12,27 +13,45 @@ const Snackbar: React.FC<SnackbarProps> = ({
   isOpen,
   onClose,
   duration = 5000,
+  variant = "fixed",
 }) => {
+  const onCloseRef = React.useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (isOpen) {
-      const timer = setTimeout(() => {
-        onClose();
+      const timer = window.setTimeout(() => {
+        onCloseRef.current();
       }, duration);
 
-      return () => clearTimeout(timer);
+      return () => window.clearTimeout(timer);
     }
-  }, [isOpen, duration, onClose]);
+  }, [isOpen, duration]);
 
   if (!isOpen) return null;
 
+  const isInline = variant === "inline";
+
   return (
     <div
-      className="fixed z-50 flex items-center justify-between"
+      className={`flex items-center justify-between ${
+        isInline ? "mb-4 max-w-full" : "fixed z-50"
+      }`}
       style={{
-        bottom: 96,
-        right: 24,
-        width: 343,
-        height: 48,
+        ...(isInline
+          ? {
+              width: "100%",
+              minHeight: 48,
+            }
+          : {
+              bottom: 96,
+              right: 24,
+              width: 343,
+              height: 48,
+            }),
         borderRadius: 4,
         paddingTop: 3,
         paddingRight: 16,
@@ -70,7 +89,7 @@ const Snackbar: React.FC<SnackbarProps> = ({
             lineHeight: "100%",
             letterSpacing: 0,
             color: "#212121",
-            whiteSpace: "nowrap",
+            whiteSpace: isInline ? "normal" : "nowrap",
           }}
         >
           {message}
