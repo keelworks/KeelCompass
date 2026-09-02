@@ -2,6 +2,7 @@ import { useState } from "react";
 import BookmarkIcon from "../../../assets/bookmark.svg";
 import QuestionDetails from "../questions/QuestionDetails";
 import { Interest, QuestionListItem } from "../../../utils/types";
+import { formatDate } from "../../../utils/format";
 import InterestItem from "./InterestItem";
 
 interface MyInterstProps {
@@ -37,15 +38,6 @@ const MyInterests = ({
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(
     null,
   );
-
-  const formatLongDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
 
   const handleQuestionUpdateLocal = (
     updatedQuestion: Partial<QuestionListItem> & { id: number },
@@ -155,7 +147,7 @@ const MyInterests = ({
                 <InterestItem
                   key={interest.id}
                   title={interestTitle}
-                  date={formatLongDate(interest.created_at)}
+                  date={formatDate(interest.created_at)}
                   commentCount={liveQuestion?.commentCount}
                   onClick={() =>
                     handleInterestItemClick(interest.question_id || 0)

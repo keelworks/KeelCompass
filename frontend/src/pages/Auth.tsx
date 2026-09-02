@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { register, login } from "../utils/store";
-import Snackbar from "../components/ui/Snackbar";
+import Snackbar from "../components/Snackbar";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -146,7 +146,7 @@ const Auth = () => {
       </div>
 
       {showSnackbar && error && (
-        <Snackbar message={error} onClose={() => setShowSnackbar(false)} />
+        <Snackbar message={error} onClose={() => setShowSnackbar(false)} variant="error" />
       )}
     </div>
   );
