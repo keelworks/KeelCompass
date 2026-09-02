@@ -17,19 +17,17 @@ const logger = createLogger({
   ],
 });
 
-// add console logging if not production
-if (process.env.NODE_ENV !== "production") {
-  logger.add(
-    new transports.Console({
-      format: format.combine(
-        format.colorize(),
-        format.timestamp(),
-        format.printf(({ timestamp, level, message }) => {
-          return `${timestamp} [${level}]: ${message}`;
-        })
-      ),
-    })
-  );
-}
+// also log to console so `docker compose logs` shows output in every environment
+logger.add(
+  new transports.Console({
+    format: format.combine(
+      format.colorize(),
+      format.timestamp(),
+      format.printf(({ timestamp, level, message }) => {
+        return `${timestamp} [${level}]: ${message}`;
+      })
+    ),
+  })
+);
 
 module.exports = logger;
