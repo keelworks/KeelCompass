@@ -1,102 +1,139 @@
-# Deploying to the Linode VM
+# Deployment
 
-This deploys the production stack (`docker-compose.prod.yml`) to the Linode
-instance at `172.234.233.223`. It serves the app over plain HTTP on port 80
-since there's no domain yet — add HTTPS later by pointing a domain at this IP
-and putting Certbot in front of the `frontend` Nginx container.
+KeelCompass runs in production on a Linode VM (`172.234.233.223`) as three
+Docker containers (`database`, `backend`, `frontend`), defined in
+[`docker-compose.prod.yml`](docker-compose.prod.yml). There's no domain yet,
+so the app is served over plain HTTP on the bare IP.
 
-## 1. One-time server setup
+## How production traffic actually flows
 
-SSH in:
+This VM is shared with an unrelated project, and already had a system-level
+Nginx installed and bound to port 80 before KeelCompass was containerized. To
+avoid touching anything outside this app's scope, our stack does **not**
+publish port 80 directly:
 
-```bash
-ssh -i ~/.ssh/id_ed25519_keelcompass nahmed@172.234.233.223
+```
+Internet → host Nginx (port 80, /etc/nginx/sites-available/keelcompass)
+         → our "frontend" container, published only on 127.0.0.1:3002
+              → serves the built React app
+              → proxies /api and /static to the "backend" container (internal Docker network only)
+                   → MySQL ("database" container, internal Docker network only)
 ```
 
-Install Docker Engine + Compose plugin (Debian/Ubuntu):
+The `database` and `backend` containers publish no host ports at all — they're
+only reachable from other containers on the compose network. Only the host
+Nginx (port 80) and SSH (port 22) are open to the internet.
+
+If this app ever moves to its own dedicated VM, `docker-compose.prod.yml`'s
+`frontend` service could instead publish `"80:80"` directly and the host Nginx
+step below could be skipped entirely.
+
+## Continuous deployment
+
+Every push to `main` automatically deploys via
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml): a GitHub
+Actions runner SSHes into the VM (using the `PROD_HOST`, `PROD_USER`, and
+`PROD_SSH_KEY` repository secrets) and runs:
 
 ```bash
-curl -fsSL https://get.docker.com | sudo sh
-sudo usermod -aG docker $USER
-```
-
-Log out and back in (so the group change takes effect), then confirm:
-
-```bash
-docker compose version
-```
-
-Open only SSH and HTTP in the host firewall:
-
-```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 80/tcp
-sudo ufw enable
-```
-
-If this Linode also has a **Cloud Firewall** attached (via the Linode
-dashboard, not the OS), make sure it allows inbound TCP 22 and 80 too — the
-dashboard firewall is separate from `ufw` and both must allow the traffic.
-
-## 2. Get the code onto the server
-
-```bash
-git clone https://github.com/keelworks/KeelCompass.git
-cd KeelCompass
-```
-
-(Use this HTTPS URL rather than the `git@github.com:...` SSH form used in the
-README, unless you've added a deploy key to this VM.)
-
-## 3. Configure production secrets
-
-```bash
-cp .env.production.example .env
-```
-
-Edit `.env` and set real values for `MYSQL_ROOT_PASSWORD` and `JWT_SECRET`
-(e.g. `openssl rand -base64 32` for each). Leave `MYSQL_DATABASE` as-is or
-rename it.
-
-## 4. Build and start the stack
-
-```bash
+cd ~/KeelCompass
+git fetch origin main
+git checkout main
+git reset --hard origin/main
 docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml exec -T backend npx sequelize-cli db:migrate
 ```
 
-This starts three containers: `keelcompass-database` (MySQL, not exposed
-publicly), `keelcompass-backend` (Express API, not exposed publicly), and
-`keelcompass-frontend` (Nginx serving the built React app on port 80, and
-reverse-proxying `/api` and `/static` to the backend).
+Migrations are safe to run on every deploy (`sequelize-cli` skips ones already
+applied). Seeding is **not** run automatically — it's not idempotent, so
+re-running it would duplicate sample data.
 
-## 5. Run database migrations (first deploy, and after any schema change)
+Watch a deploy under the repo's **Actions** tab on GitHub. If the workflow
+fails, the error output there will show which step broke.
+
+## Manual deploy (fallback / troubleshooting)
+
+If you need to deploy without waiting on CI, SSH into the VM and run the same
+commands the workflow runs:
 
 ```bash
+ssh <user>@172.234.233.223
+cd ~/KeelCompass
+git checkout main && git pull
+docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml exec backend npx sequelize-cli db:migrate
 ```
 
-Seed data if you want it (optional, safe to skip in prod unless you want the
-sample data):
+`nahmed` has passwordless Docker access (member of the `docker` group), so
+none of this needs `sudo`.
 
-```bash
-docker compose -f docker-compose.prod.yml exec backend npx sequelize-cli db:seed:all
-```
+## One-time server setup
 
-## 6. Verify
+These steps only need to be redone if the app moves to a new box, or a new
+deploy user/key is needed.
 
-Open `http://172.234.233.223` in a browser. You should see the KeelCompass
-app, and it should be able to log in / hit the API without CORS issues
-(frontend and backend are served same-origin through Nginx).
+1. **Install Docker**:
+   ```bash
+   curl -fsSL https://get.docker.com | sudo sh
+   sudo usermod -aG docker <user>
+   ```
+   Log out and back in for the group change to apply, then confirm `docker ps`
+   works without `sudo`.
 
-## Redeploying after code changes
+2. **Firewall**: only SSH and HTTP need to be open.
+   ```bash
+   sudo ufw allow OpenSSH
+   sudo ufw allow 80/tcp
+   sudo ufw enable
+   ```
+   If the VM also has a Linode Cloud Firewall attached (separate from `ufw`),
+   it needs matching rules for inbound TCP 22 and 80.
 
-```bash
-cd KeelCompass
-git pull
-docker compose -f docker-compose.prod.yml up -d --build
-# only if a new migration was added:
-docker compose -f docker-compose.prod.yml exec backend npx sequelize-cli db:migrate
-```
+3. **Secrets**: copy `.env.production.example` to `.env` in the repo root on
+   the server and fill in real values:
+   ```bash
+   cp .env.production.example .env
+   openssl rand -base64 32   # use for MYSQL_ROOT_PASSWORD
+   openssl rand -base64 32   # use for JWT_SECRET
+   ```
+
+4. **Host Nginx**, pointed at the frontend container's published port:
+   ```bash
+   sudo tee /etc/nginx/sites-available/keelcompass > /dev/null <<'EOF'
+   server {
+       listen 80;
+       server_name 172.234.233.223;
+
+       location / {
+           proxy_pass http://127.0.0.1:3002;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+       }
+   }
+   EOF
+   sudo ln -sf /etc/nginx/sites-available/keelcompass /etc/nginx/sites-enabled/keelcompass
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
+
+5. **First deploy** (build the stack and set up the database):
+   ```bash
+   git clone https://github.com/keelworks/KeelCompass.git
+   cd KeelCompass
+   docker compose -f docker-compose.prod.yml up -d --build
+   docker compose -f docker-compose.prod.yml exec backend npx sequelize-cli db:migrate
+   docker compose -f docker-compose.prod.yml exec backend npx sequelize-cli db:seed:all   # optional, sample data
+   ```
+
+6. **CI/CD deploy key** (lets GitHub Actions redeploy automatically):
+   ```bash
+   ssh-keygen -t ed25519 -f ~/.ssh/keelcompass_deploy -N "" -C "github-actions-deploy"
+   cat ~/.ssh/keelcompass_deploy.pub >> ~/.ssh/authorized_keys
+   cat ~/.ssh/keelcompass_deploy   # copy this into the PROD_SSH_KEY GitHub secret
+   ```
+   Then, in the repo's GitHub Settings → Secrets and variables → Actions, add
+   `PROD_SSH_KEY` (the private key above), `PROD_HOST`, and `PROD_USER`.
 
 ## Logs / troubleshooting
 
@@ -104,11 +141,12 @@ docker compose -f docker-compose.prod.yml exec backend npx sequelize-cli db:migr
 docker compose -f docker-compose.prod.yml logs -f backend
 docker compose -f docker-compose.prod.yml logs -f frontend
 docker compose -f docker-compose.prod.yml logs -f database
+docker compose -f docker-compose.prod.yml ps
 ```
 
 ## Stopping / resetting
 
 ```bash
-docker compose -f docker-compose.prod.yml down          # stop, keep data
-docker compose -f docker-compose.prod.yml down --volumes # stop and wipe the DB
+docker compose -f docker-compose.prod.yml down           # stop, keep data
+docker compose -f docker-compose.prod.yml down --volumes  # stop and wipe the database
 ```
