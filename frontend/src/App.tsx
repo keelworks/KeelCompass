@@ -30,26 +30,6 @@ const isValidToken = (token: string | null) => {
   }
 };
 
-/*function App() {
-  return (
-    <Routes>
-      <Route path="/" element={
-        localStorage.getItem("token")
-          ? <Navigate to="/dashboard" replace />
-          : <Auth />
-      } />
-      <Route element={<AuthGuard><Outlet /></AuthGuard>}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/qna" element={<QnA />} />
-        <Route path="/questions/new" element={<QuestionCreate />} />
-      </Route>
-      
-      
-      <Route path="*" element={<Fallback />} />
-    </Routes>
-  );
-}*/
-
 function App() {
   return (
     <Routes>

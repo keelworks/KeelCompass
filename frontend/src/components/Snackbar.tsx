@@ -2,18 +2,20 @@ import React, { useEffect } from "react";
 
 interface SnackbarProps {
   message: string;
-  isOpen: boolean;
   onClose: () => void;
+  isOpen?: boolean;
   duration?: number;
-  variant?: "fixed" | "inline";
+  layout?: "fixed" | "inline";
+  variant?: "success" | "error";
 }
 
 const Snackbar: React.FC<SnackbarProps> = ({
   message,
-  isOpen,
   onClose,
-  duration = 5000,
-  variant = "fixed",
+  isOpen = true,
+  duration,
+  layout = "fixed",
+  variant = "success",
 }) => {
   const onCloseRef = React.useRef(onClose);
 
@@ -22,7 +24,7 @@ const Snackbar: React.FC<SnackbarProps> = ({
   }, [onClose]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && duration) {
       const timer = window.setTimeout(() => {
         onCloseRef.current();
       }, duration);
@@ -33,7 +35,18 @@ const Snackbar: React.FC<SnackbarProps> = ({
 
   if (!isOpen) return null;
 
-  const isInline = variant === "inline";
+  if (variant === "error") {
+    return (
+      <div className="fixed bottom-5 right-5 z-50 flex items-center justify-between gap-4 bg-red-500 text-white px-4 py-3 rounded shadow-lg animate-slide-in">
+        <span>{message}</span>
+        <button onClick={onClose} className="font-bold hover:text-gray-200">
+          &times;
+        </button>
+      </div>
+    );
+  }
+
+  const isInline = layout === "inline";
 
   return (
     <div

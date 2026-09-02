@@ -103,7 +103,7 @@ function QuestionsSection({
           isOpen={showSuccessSnackbar}
           onClose={onSuccessSnackbarClose}
           duration={4000}
-          variant="inline"
+          layout="inline"
         />
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-medium uppercase tracking-wide">Posts</h2>
