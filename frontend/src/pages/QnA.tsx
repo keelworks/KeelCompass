@@ -57,11 +57,6 @@ const QnA = () => {
     <MainLayout>
       {/* Left Column */}
       <div className="col-span-2 flex flex-col">
-        <div
-          className="flex items-center justify-between mb-6"
-          style={{ width: "676px", height: "44px" }}
-        ></div>
-
         <div className="mb-4">
           <CategoryFilter
             categories={categories}
@@ -82,8 +77,7 @@ const QnA = () => {
         <div className="mb-4 mt-11">
           <button
             onClick={handleAskQuestionClick}
-            className="rounded-md text-white font-lato text-sm w-[231px] h-[45px]"
-            style={{ backgroundColor: "#D2EEF0", color: "#00929C" }}
+            className="rounded-md text-white font-lato text-sm w-full max-w-[231px] h-[45px] bg-[#D2EEF0] dark:bg-teal-900/40 text-[#00929C] dark:text-teal-300"
           >
             Ask Question
           </button>

@@ -24,32 +24,30 @@ const QnACard2 = ({
 
   return (
     <div
-      className="shadow-md rounded-md p-6 flex"
+      className="shadow-md rounded-md p-6 flex w-full bg-white dark:bg-gray-800"
       style={{
-        width: "740px",
-        height: "480.13px",
+        minHeight: "480.13px",
         borderRadius: "7px",
         padding: "24px",
         marginTop: "10px",
         gap: "10px",
-        background: "linear-gradient(0deg, #FFFFFF 0%, #FFFFFF 100%)",
       }}
     >
       <div
-        className="flex flex-col bg-[#FFFFFF] p-4 rounded-md"
-        style={{ width: "692px", height: "432.13px", gap: "32px" }}
+        className="flex flex-col bg-white dark:bg-gray-800 p-4 rounded-md w-full"
+        style={{ gap: "32px" }}
       >
         <div
-          className="flex space-x-4 bg-[#F0F0F0] p-2 rounded-md"
-          style={{ width: "333.92px", height: "42.13px", padding: "4px" }}
+          className="flex flex-wrap gap-4 bg-[#F0F0F0] dark:bg-gray-700 p-2 rounded-md w-fit max-w-full"
+          style={{ padding: "4px" }}
         >
           {subcategories.map((subcategory) => (
             <button
               key={subcategory}
               className={`flex items-center justify-center px-4 h-full text-lg transition-all duration-200 rounded-md shadow-sm ${
                 selectedSubcategory === subcategory
-                  ? "text-[#306E74] bg-white shadow-md"
-                  : "text-[#306E74] bg-transparent hover:bg-[#E0E0E0]"
+                  ? "text-[#306E74] dark:text-teal-300 bg-white dark:bg-gray-900 shadow-md"
+                  : "text-[#306E74] dark:text-teal-300 bg-transparent hover:bg-[#E0E0E0] dark:hover:bg-gray-600"
               }`}
               onClick={() => handleSubcategoryChange(subcategory)}
               style={{

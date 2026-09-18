@@ -172,13 +172,13 @@ function CommentItem({
  const getBackgroundClass = () => {
    switch (level) {
      case 0:
-       return 'bg-gray-100';
+       return 'bg-gray-100 dark:bg-gray-700';
      case 1:
-       return 'bg-blue-50';
+       return 'bg-blue-50 dark:bg-blue-950/40';
      case 2:
-       return 'bg-green-50 border border-green-200';
+       return 'bg-green-50 border border-green-200 dark:bg-green-950/30 dark:border-green-800';
      default:
-       return 'bg-gray-100';
+       return 'bg-gray-100 dark:bg-gray-700';
    }
  };
 
@@ -207,7 +207,7 @@ function CommentItem({
          <div className="flex items-start justify-between">
            {/* Username and Date */}
            <div>
-             <span className="font-semibold text-[#004466]">
+             <span className="font-semibold text-[#004466] dark:text-teal-300">
                {comment.user.username}
              </span>
              {/*level > 0 && (
@@ -215,7 +215,7 @@ function CommentItem({
                  Level {level} Reply
                </span>
              )*/}
-             <div className="text-xs text-gray-500 mt-1">
+             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                {formatDateTime(comment.createdAt)}
              </div>
            </div>
@@ -242,14 +242,14 @@ function CommentItem({
          {editMode ? (
            <div className="mt-2">
              <textarea
-               className="w-full p-2 border rounded mb-2"
+               className="w-full p-2 border dark:border-gray-600 rounded mb-2 bg-white dark:bg-gray-800 dark:text-gray-100"
                value={editForm.content}
                onChange={(e) => setEditForm({ content: e.target.value })}
                rows={2}
              />
              <div className="flex gap-2 justify-end">
                <button
-                 className="px-3 py-1 bg-gray-200 rounded"
+                 className="px-3 py-1 bg-gray-200 dark:bg-gray-600 dark:text-gray-100 rounded"
                  onClick={handleCancelCommentEdit}
                >
                  Cancel
@@ -263,23 +263,23 @@ function CommentItem({
              </div>
            </div>
          ) : (
-           <div className="mt-2 text-sm text-[#616161]">{comment.content}</div>
+           <div className="mt-2 text-sm text-[#616161] dark:text-gray-300">{comment.content}</div>
          )}
 
 
          {/* NEW: Reply Input */}
          {isReplying && (
-           <div className="mt-3 bg-white p-3 rounded border-2 border-blue-200">
+           <div className="mt-3 bg-white dark:bg-gray-800 p-3 rounded border-2 border-blue-200 dark:border-blue-800">
              <textarea
                value={replyContent}
                onChange={(e) => setReplyContent(e.target.value)}
                placeholder={`Reply to ${comment.user.username}...`}
-               className="w-full border p-2 rounded text-sm focus:outline-none focus:border-blue-400"
+               className="w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-400"
                rows={2}
              />
              <div className="flex justify-end space-x-2 mt-2">
                <button
-                 className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs"
+                 className="px-3 py-1 bg-gray-200 dark:bg-gray-600 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-500 rounded text-xs"
                  onClick={handleCancelReply}
                >
                  Cancel
@@ -301,7 +301,7 @@ function CommentItem({
              {/*  Reply button */}
              {canReply && (
                <button
-                 className="text-sm text-gray-600 hover:text-blue-600 cursor-pointer select-none"
+                 className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer select-none"
                  onClick={handleStartReply}
                >
                  Reply
@@ -312,7 +312,7 @@ function CommentItem({
              {/*  Show/Hide replies for top-level comments */}
              {level === 0 && replyCount > 0 && (
                <button
-                 className="text-sm text-gray-600 hover:text-blue-600 cursor-pointer select-none"
+                 className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer select-none"
                  onClick={() => setShowReplies(!showReplies)}
                >
                  {showReplies ? 'Hide' : 'Show'} {replyCount}{' '}
@@ -325,7 +325,7 @@ function CommentItem({
            <div className="flex items-center gap-6">
              <div
                className={`flex items-center text-sm cursor-pointer select-none ${
-                 liked ? 'text-blue-600' : 'text-gray-600'
+                 liked ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'
                }`}
                onClick={handleCommentLike}
              >
@@ -335,7 +335,7 @@ function CommentItem({
                  : 0}{' '}
                Like
              </div>
-             <div className="flex items-center text-gray-600 text-sm">
+             <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
                <FaRegCommentDots className="mr-1" />
                {replyCount} Replies
              </div>
@@ -383,14 +383,14 @@ function CommentItem({
        {/* Delete Confirmation Modal */}
        {showDeleteConfirmation && (
          <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
-           <div className="bg-white p-6 rounded shadow-md max-w-sm w-full">
-             <h2 className="text-lg font-semibold mb-4">
+           <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-md max-w-sm w-full">
+             <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
                Are you sure you want to delete this comment?
              </h2>
              <div className="flex justify-end space-x-2">
                <button
                  onClick={() => setShowDeleteConfirmation(false)}
-                 className="px-3 py-1 bg-gray-200 rounded"
+                 className="px-3 py-1 bg-gray-200 dark:bg-gray-700 dark:text-gray-100 rounded"
                >
                  Cancel
                </button>

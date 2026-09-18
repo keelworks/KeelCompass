@@ -4,6 +4,7 @@ import AuthGuard from "./pages/AuthGuard";
 import Dashboard from "./pages/Dashboard";
 import QuestionCreate from "./pages/QuestionCreate";
 import QnA from "./pages/QnA";
+import Interests from "./pages/Interests";
 import Fallback from "./pages/Fallback";
 
 
@@ -41,6 +42,7 @@ function App() {
       <Route element={<AuthGuard><Outlet /></AuthGuard>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/qna" element={<QnA />} />
+        <Route path="/interests" element={<Interests />} />
         <Route path="/questions/new" element={<QuestionCreate />} />
       </Route>
       

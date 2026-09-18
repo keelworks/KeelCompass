@@ -138,9 +138,9 @@ function QuestionItem({
         w-full p-4 flex flex-col gap-4 rounded cursor-pointer
         border-2 border-transparent bg-transparent
         transition-all duration-150 ease-in-out
-        hover:bg-[#F0F0F0] hover:border-[#E8E8E8]
+        hover:bg-[#F0F0F0] dark:hover:bg-white/5 hover:border-[#E8E8E8] dark:hover:border-white/10
         focus:outline-none focus:border-[#007C88]
-        ${isPressed ? "!bg-[#E5E5E5]" : ""}
+        ${isPressed ? "!bg-[#E5E5E5] dark:!bg-white/10" : ""}
       `}
       onClick={() => setSelectedQuestionId(id)}
       onMouseDown={() => setIsPressed(true)}
@@ -155,16 +155,16 @@ function QuestionItem({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Profile Picture */}
-          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 font-semibold text-sm">
+          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold text-sm">
             {user.username.charAt(0).toUpperCase()}
           </div>
 
           {/* Username and date */}
-          <span className="text-[14px] text-[#666A6F] font-normal font-lato leading-none">
+          <span className="text-[14px] text-[#666A6F] dark:text-gray-300 font-normal font-lato leading-none">
             {user.username}
           </span>
-          <span className="text-sm text-gray-500">•</span>
-          <span className="text-sm text-gray-500">{formatDate(createdAt)}</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">•</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">{formatDate(createdAt)}</span>
         </div>
 
         {/* Bookmark Button with Tooltip */}
@@ -173,8 +173,8 @@ function QuestionItem({
             className={`
               w-10 h-10 flex items-center justify-center rounded-full
               transition-all duration-150 ease-in-out
-              hover:bg-[#EDF2F2] hover:border hover:border-[#E8F4F5]
-              active:bg-[#C8E9E9]
+              hover:bg-[#EDF2F2] dark:hover:bg-white/10 hover:border hover:border-[#E8F4F5] dark:hover:border-white/10
+              active:bg-[#C8E9E9] dark:active:bg-teal-900/40
               focus:outline-none focus:ring-2 focus:ring-[#007C88]
             `}
             onClick={handleInterestQuestion}
@@ -191,14 +191,14 @@ function QuestionItem({
       </div>
 
       {/* Title */}
-      <h3 className="text-lg font-semibold text-[#00545C] leading-relaxed m-0">
+      <h3 className="text-lg font-semibold text-[#00545C] dark:text-teal-300 leading-relaxed m-0">
         {title}
       </h3>
 
       {/* Description (sanitized HTML, 2-line clamp) - hidden for long titles */}
       {shouldShowDescription && (
         <p
-          className="post-content text-sm text-[#555] leading-normal m-0 line-clamp-2"
+          className="post-content text-sm text-[#555] dark:text-gray-300 leading-normal m-0 line-clamp-2"
           dangerouslySetInnerHTML={{ __html: cleanHtml }}
         />
       )}
@@ -210,9 +210,9 @@ function QuestionItem({
           {categories && categories.length > 0
             ? categories.map((cat, index) => (
                 <React.Fragment key={cat.id}>
-                  <span className="text-gray-600">{cat.name}</span>
+                  <span className="text-gray-600 dark:text-gray-300">{cat.name}</span>
                   {index < categories.length - 1 && (
-                    <span className="text-gray-300">|</span>
+                    <span className="text-gray-300 dark:text-gray-600">|</span>
                   )}
                 </React.Fragment>
               ))
@@ -223,7 +223,7 @@ function QuestionItem({
         <div className="flex items-center gap-2">
           <span
             className={`cursor-pointer select-none ${
-              hasLiked ? "text-blue-600" : "text-gray-500"
+              hasLiked ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
             }`}
             onClick={handleLikeQuestion}
             role="button"
@@ -237,9 +237,9 @@ function QuestionItem({
           >
             {likeCount} likes
           </span>
-          <span className="text-gray-500">•</span>
+          <span className="text-gray-500 dark:text-gray-400">•</span>
           <span
-            className="text-gray-500 cursor-pointer"
+            className="text-gray-500 dark:text-gray-400 cursor-pointer"
             onClick={(e) => e.stopPropagation()}
           >
             {commentCount} comments

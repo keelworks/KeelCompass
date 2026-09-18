@@ -278,10 +278,9 @@ function QuestionDetails({
       />
       <div
         ref={modalRef}
-        className="relative z-50 p-6 flex flex-col items-center space-y-4 overflow-y-auto max-h-[90vh] cursor-auto"
+        className="relative z-50 p-6 flex flex-col items-center space-y-4 overflow-y-auto max-h-[90vh] cursor-auto bg-white dark:bg-gray-900"
         style={{
           width: "676px",
-          backgroundColor: "#FFFFFF",
           borderRadius: "7px",
           boxShadow: "0px 6px 18px 0px #442756",
         }}
@@ -308,24 +307,24 @@ function QuestionDetails({
         {/* Content */}
         {question && (
           <>
-            <div className="w-full text-left bg-[#f6f6f6] rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-[#004466] mb-2">
+            <div className="w-full text-left bg-[#f6f6f6] dark:bg-gray-800 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-[#004466] dark:text-teal-300 mb-2">
                 {question.user.username}
               </h3>
-              <p className="text-xs text-gray-500 mb-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
                 {formatDateTime(question.createdAt)}
               </p>
 
               {/* Title */}
               {editMode ? (
                 <input
-                  className="w-full mb-2 p-2 border rounded"
+                  className="w-full mb-2 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-900 dark:text-gray-100"
                   value={editForm.title}
                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                   placeholder="Title"
                 />
               ) : (
-                <h3 className="text-lg font-semibold text-[#004466] mb-2">
+                <h3 className="text-lg font-semibold text-[#004466] dark:text-teal-300 mb-2">
                   {question.title}
                 </h3>
               )}
@@ -333,7 +332,7 @@ function QuestionDetails({
               {/* Description */}
               {editMode ? (
                 <textarea
-                  className="w-full mb-2 p-2 border rounded"
+                  className="w-full mb-2 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-900 dark:text-gray-100"
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                   placeholder="Description"
@@ -341,7 +340,7 @@ function QuestionDetails({
                 />
               ) : (
                 <div
-                  className="post-content text-sm text-[#616161] mb-2"
+                  className="post-content text-sm text-[#616161] dark:text-gray-300 mb-2"
                   dangerouslySetInnerHTML={{ __html: cleanHtml }}
                 />
               )}
@@ -428,7 +427,7 @@ function QuestionDetails({
                 <div>
                   {question.comments && question.comments.length > 2 && !showAllReplies && (
                     <button
-                      className="text-sm font-medium border px-3 py-1 rounded bg-white hover:bg-gray-50 transition"
+                      className="text-sm font-medium border dark:border-gray-600 px-3 py-1 rounded bg-white dark:bg-gray-900 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                       onClick={() => setShowAllReplies(true)}
                     >
                       Show all replies
@@ -438,7 +437,7 @@ function QuestionDetails({
                 <div className="flex items-center space-x-4">
                   <div
                     className={`flex items-center text-sm select-none ${
-                      question.hasLiked ? "text-blue-600" : "text-gray-600"
+                      question.hasLiked ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-400"
                     }`}
                     onClick={handleQuestionLike}
                     style={{ cursor: "pointer" }}
@@ -446,7 +445,7 @@ function QuestionDetails({
                     {question.hasLiked ? <FaThumbsUp className="mr-1" /> : <FaRegThumbsUp className="mr-1" />}
                     {question.likeCount} Likes
                   </div>
-                  <div className="flex items-center text-gray-600 text-sm">
+                  <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
                     <FaRegCommentDots className="mr-1" /> {question.commentCount} Comments
                   </div>
                 </div>
@@ -481,10 +480,10 @@ function QuestionDetails({
       {/* Delete confirmation */}
       {showDeleteConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-md max-w-sm w-full">
-            <h2 className="text-lg font-semibold mb-4">Are you sure you want to delete this question?</h2>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-md max-w-sm w-full">
+            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Are you sure you want to delete this question?</h2>
             <div className="flex justify-end space-x-2">
-              <button onClick={() => setShowDeleteConfirmation(false)} className="px-3 py-1 bg-gray-200 rounded">
+              <button onClick={() => setShowDeleteConfirmation(false)} className="px-3 py-1 bg-gray-200 dark:bg-gray-700 dark:text-gray-100 rounded">
                 Cancel
               </button>
               <button onClick={handleQuestionDelete} className="px-3 py-1 bg-red-500 text-white rounded">

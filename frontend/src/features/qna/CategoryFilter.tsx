@@ -21,14 +21,14 @@ const CategoryFilter = ({
   return (
     <div className="flex flex-col space-y-4 font-lato">
       {/* Main Categories with underline for selected */}
-      <div className="flex space-x-4" style={{ width: "752px", height: "30px" }}>
+      <div className="flex flex-wrap gap-x-4 gap-y-2 w-full">
         {categories.map((category) => (
           <button
             key={category}
             className={`relative flex items-center justify-center px-4 h-[30px] text-lg transition-all duration-200 ${
               selectedCategory === category
-                ? "text-black"
-                : "text-gray-500 hover:text-gray-700"
+                ? "text-black dark:text-white"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
             }`}
             onClick={() => handleCategoryChange(category)}
             style={{
@@ -47,7 +47,7 @@ const CategoryFilter = ({
             >
               {category}
               {selectedCategory === category && (
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500 dark:bg-teal-400"></div>
             )}
             </span>
             

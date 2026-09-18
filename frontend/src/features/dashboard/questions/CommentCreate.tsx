@@ -23,10 +23,10 @@ function CommentCreate({ questionId, onCommentCreate }: CommentCreateProps) {
 
   return (
     <div
+      className="bg-[#F5F5F5] dark:bg-gray-700"
       style={{
         width: "100%",
         height: "36px",
-        backgroundColor: "#F5F5F5",
         borderRadius: "4px",
         display: "flex",
         alignItems: "center",
@@ -39,24 +39,24 @@ function CommentCreate({ questionId, onCommentCreate }: CommentCreateProps) {
         placeholder="Add a comment..."
         value={comment}
         onChange={(e) => setComment(e.target.value)}
+        className="text-[#374151] dark:text-gray-100"
         style={{
           flex: 1,
           background: "transparent",
           outline: "none",
           border: "none",
           fontSize: "0.95rem",
-          color: "#374151",
           height: "100%",
         }}
       />
       <button
+        className="text-[#116989] dark:text-teal-300"
         style={{
           display: "flex",
           alignItems: "center",
           gap: "4px",
           background: "none",
           border: "none",
-          color: "#116989",
           fontSize: "0.95rem",
           cursor: "pointer",
           height: "100%",

@@ -2,14 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Interest,
-  QuestionDetail,
   QuestionListItem,
   QuestionsResponse,
 } from "../utils/types";
 import {
   getAllCategories,
   getPopularQuestions,
-  getQuestion,
   getRecentQuestions,
   searchQuestions,
   getUserInterests,
@@ -17,7 +15,6 @@ import {
 import MainLayout from "../components/wrappers/MainLayout";
 import SearchBar from "../features/dashboard/searchBar/SearchBar";
 import QuestionsSection from "../features/dashboard/questions/QuestionsSection";
-import MyInterests from "../features/dashboard/interests/MyInterests";
 import QuestionCreate from "../pages/QuestionCreate"; // adjust the path to where your file is
 
 type SearchRequest = {
@@ -48,29 +45,6 @@ const normalizeQuestionsResponse = (data: FeedResponse): QuestionsResponse => ({
   offset: data.offset,
 });
 
-const mergeQuestionCache = (
-  currentQuestions: QuestionListItem[],
-  incomingQuestions: Array<QuestionListItem | QuestionDetail>
-): QuestionListItem[] => {
-  if (incomingQuestions.length === 0) {
-    return currentQuestions;
-  }
-
-  const questionMap = new Map(
-    currentQuestions.map((question) => [question.id, question])
-  );
-
-  incomingQuestions.forEach((question) => {
-    const existingQuestion = questionMap.get(question.id);
-    questionMap.set(
-      question.id,
-      existingQuestion ? { ...existingQuestion, ...question } : question
-    );
-  });
-
-  return Array.from(questionMap.values());
-};
-
 const fetchDashboardQuestions = async (
   tab: "recent" | "popular",
   searchRequest: SearchRequest | null,
@@ -96,9 +70,6 @@ const fetchDashboardQuestions = async (
 const Dashboard = () => {
   const [questions, setQuestions] = useState<QuestionsResponse>(INITIAL_QUESTIONS);
   const [interests, setInterests] = useState<Interest[]>([]);
-  const [interestQuestions, setInterestQuestions] = useState<QuestionListItem[]>(
-    []
-  );
   const [tab, setTab] = useState<"recent" | "popular">("recent");
   const [searchRequest, setSearchRequest] = useState<SearchRequest | null>(null);
   const [questionsRefreshKey, setQuestionsRefreshKey] = useState(0);
@@ -134,11 +105,6 @@ const Dashboard = () => {
         q.id === updatedQuestion.id ? { ...q, ...updatedQuestion } : q
       ),
     }));
-    setInterestQuestions((prev) =>
-      prev.map((q) =>
-        q.id === updatedQuestion.id ? { ...q, ...updatedQuestion } : q
-      )
-    );
   };
 
   const handleQuestionDelete = (deletedId: number) => {
@@ -146,7 +112,6 @@ const Dashboard = () => {
       ...prev,
       questions: prev.questions.filter((q) => q.id !== deletedId),
     }));
-    setInterestQuestions((prev) => prev.filter((q) => q.id !== deletedId));
     setInterests((prev) => prev.filter((interest) => interest.question_id !== deletedId));
   };
 
@@ -161,11 +126,6 @@ const Dashboard = () => {
         q.id === questionId ? { ...q, hasLiked, likeCount } : q
       ),
     }));
-    setInterestQuestions((prev) =>
-      prev.map((q) =>
-        q.id === questionId ? { ...q, hasLiked, likeCount } : q
-      )
-    );
   };
 
   const handleInterestUpdate = async () => {
@@ -187,13 +147,6 @@ const Dashboard = () => {
           : q
       ),
     }));
-    setInterestQuestions((prev) =>
-      prev.map((q) =>
-        q.id === questionId
-          ? { ...q, commentCount: (q.commentCount ?? 0) + 1 }
-          : q
-      )
-    );
   };
 
   const handleCommentDelete = (questionId: number) => {
@@ -205,13 +158,6 @@ const Dashboard = () => {
           : q
       ),
     }));
-    setInterestQuestions((prev) =>
-      prev.map((q) =>
-        q.id === questionId
-          ? { ...q, commentCount: Math.max((q.commentCount ?? 0) - 1, 0) }
-          : q
-      )
-    );
   };
 
   // fetch categories and interest
@@ -247,95 +193,6 @@ const Dashboard = () => {
     setShowSuccessSnackbar(true);
     navigate(location.pathname, { replace: true, state: null });
   }, [location.pathname, location.state, navigate]);
-
-  useEffect(() => {
-    const interestQuestionIds = new Set(
-      interests
-        .map((interest) => interest.question_id)
-        .filter(
-          (questionId): questionId is number =>
-            typeof questionId === "number" && !Number.isNaN(questionId)
-        )
-    );
-
-    if (interestQuestionIds.size === 0 || questions.questions.length === 0) {
-      return;
-    }
-
-    const matchingQuestions = questions.questions.filter((question) =>
-      interestQuestionIds.has(question.id)
-    );
-
-    if (matchingQuestions.length === 0) {
-      return;
-    }
-
-    setInterestQuestions((prev) => mergeQuestionCache(prev, matchingQuestions));
-  }, [interests, questions.questions]);
-
-  useEffect(() => {
-    const interestQuestionIds = interests
-      .map((interest) => interest.question_id)
-      .filter(
-        (questionId): questionId is number =>
-          typeof questionId === "number" && !Number.isNaN(questionId)
-      );
-
-    if (interestQuestionIds.length === 0) {
-      return;
-    }
-
-    const cachedQuestionIds = new Set(
-      interestQuestions.map((question) => question.id)
-    );
-    const missingQuestionIds = interestQuestionIds.filter(
-      (questionId) => !cachedQuestionIds.has(questionId)
-    );
-
-    if (missingQuestionIds.length === 0) {
-      return;
-    }
-
-    let isCancelled = false;
-
-    const loadMissingInterestQuestions = async () => {
-      const loadedQuestions = await Promise.all(
-        missingQuestionIds.map(async (questionId) => {
-          try {
-            return await getQuestion({ id: questionId });
-          } catch (error) {
-            console.error(
-              `Failed to fetch interest question ${questionId}`,
-              error
-            );
-            return null;
-          }
-        })
-      );
-
-      if (isCancelled) {
-        return;
-      }
-
-      const fetchedQuestions = loadedQuestions.filter(
-        (question): question is QuestionDetail => question !== null
-      );
-
-      if (fetchedQuestions.length === 0) {
-        return;
-      }
-
-      setInterestQuestions((prev) =>
-        mergeQuestionCache(prev, fetchedQuestions)
-      );
-    };
-
-    void loadMissingInterestQuestions();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [interests, interestQuestions]);
 
   useEffect(() => {
     const requestId = ++latestRequestRef.current;
@@ -536,19 +393,6 @@ const Dashboard = () => {
             <span className="text-[18px] font-medium">+</span>
             Ask Question
           </button>
-        </div>
-        <div className="flex-grow">
-          <MyInterests
-            interests={interests}
-            questions={interestQuestions}
-            onQuestionUpdate={handleQuestionUpdate}
-            onQuestionDelete={handleQuestionDelete}
-            onQuestionLike={handleQuestionLike}
-            setInterests={setInterests}
-            onInterestUpdate={handleInterestUpdate}
-            onCommentCreate={handleCommentCreate}
-            onCommentDelete={handleCommentDelete}
-          />
         </div>
       </div>
 

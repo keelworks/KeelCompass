@@ -95,7 +95,7 @@ function QuestionsSection({
   }, [hasMore, isLoading, onLoadMore, questions.questions.length]);
 
   return (
-    <div className="shadow-md rounded-lg p-4 mb-6 bg-gray-50 w-full h-full flex flex-col overflow-hidden">
+    <div className="shadow-md rounded-lg p-4 mb-6 bg-gray-50 dark:bg-gray-800 w-full h-full flex flex-col overflow-hidden">
       {/* Fixed Heading + Tabs */}
       <div className="mb-4 flex-shrink-0">
         <Snackbar
@@ -105,9 +105,9 @@ function QuestionsSection({
           duration={4000}
           layout="inline"
         />
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-medium uppercase tracking-wide">Posts</h2>
-          <div className="flex items-center bg-gray-100 rounded-md w-fit p-0.5 border border-gray-300">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-medium uppercase tracking-wide text-gray-900 dark:text-gray-100">Posts</h2>
+          <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md w-fit p-0.5 border border-gray-300 dark:border-gray-600">
             {[
               { label: "Most Recent", value: "recent" },
               { label: "Popular", value: "popular" },
@@ -119,8 +119,8 @@ function QuestionsSection({
                 }
                 className={`px-6 py-[6px] text-[14px] font-medium leading-6 font-sans rounded-md transition duration-200 ${
                   tab === tabOption.value
-                    ? "bg-white text-[#007575] shadow-md"
-                    : "bg-transparent text-[#5F6C7B] hover:bg-[#E5E7EB]"
+                    ? "bg-white dark:bg-gray-900 text-[#007575] dark:text-teal-300 shadow-md"
+                    : "bg-transparent text-[#5F6C7B] dark:text-gray-300 hover:bg-[#E5E7EB] dark:hover:bg-gray-600"
                 }`}
               >
                 {tabOption.label}
@@ -133,9 +133,9 @@ function QuestionsSection({
       {/* Scrollable Questions List */}
       <div ref={listRef} className="flex-1 overflow-y-auto pr-1 space-y-4">
         {isLoading && questions.questions.length === 0 ? (
-          <p>Loading posts...</p>
+          <p className="text-gray-600 dark:text-gray-300">Loading posts...</p>
         ) : questions.questions.length === 0 ? (
-          <p>No posts found.</p>
+          <p className="text-gray-600 dark:text-gray-300">No posts found.</p>
         ) : (
           questions.questions.map((question) => (
             <div key={question.id}>
@@ -147,14 +147,14 @@ function QuestionsSection({
                 onInterestUpdate={onInterestUpdate}
                 setSelectedQuestionId={setSelectedQuestionId}
               />
-              <hr />
+              <hr className="border-gray-200 dark:border-gray-700" />
             </div>
           ))
         )}
 
         <div ref={sentinelRef} className="h-1" aria-hidden="true" />
         {isLoading && questions.questions.length > 0 && (
-          <p className="py-4 text-center text-sm text-gray-500">
+          <p className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
             Loading more posts...
           </p>
         )}

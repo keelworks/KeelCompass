@@ -88,27 +88,9 @@ const MyInterests = ({
 
   return (
     <div className="flex flex-col h-full">
-      <div
-        className="flex flex-col h-full p-6 bg-white shadow-md rounded-lg"
-        style={{ background: "#EFEFEF" }}
-      >
+      <div className="flex flex-col h-full p-6 bg-[#EFEFEF] dark:bg-gray-800 shadow-md rounded-lg">
         <div className="flex items-center justify-between mb-6">
-          {/* <h2
-            style={{
-              width: "229px",
-              height: "28px",
-              opacity: 1,
-              fontFamily: "Raleway, sans-serif",
-              fontWeight: 600,
-              fontStyle: "normal",
-              fontSize: "24px",
-              lineHeight: "100%",
-              letterSpacing: "0%",
-              verticalAlign: "middle",
-              color: "#212121",
-            }}
-          > */}
-          <h2 className="text-xl font-medium uppercase tracking-wide">
+          <h2 className="text-xl font-medium uppercase tracking-wide text-gray-900 dark:text-gray-100">
             My Interests
           </h2>
 
@@ -157,7 +139,7 @@ const MyInterests = ({
             })
           ) : (
             <div className="flex justify-center items-center flex-grow">
-              <p className="text-gray-500">No interests found</p>
+              <p className="text-gray-500 dark:text-gray-400">No interests found</p>
             </div>
           )}
         </div>
@@ -175,7 +157,6 @@ const MyInterests = ({
                 gap: "4px",
                 opacity: 1,
                 background: "transparent",
-                color: "#2C7A7B",
                 fontFamily: "Lato, sans-serif",
                 fontWeight: 500,
                 fontSize: "18px",
@@ -189,7 +170,7 @@ const MyInterests = ({
                 justifyContent: "center",
                 whiteSpace: "nowrap",
               }}
-              className="transition-colors duration-200 hover:text-[#005E64]"
+              className="transition-colors duration-200 text-[#2C7A7B] dark:text-teal-300 hover:text-[#005E64] dark:hover:text-teal-200"
             >
               <span>{showAll ? "View less ^" : "View more interests"}</span>
               <span

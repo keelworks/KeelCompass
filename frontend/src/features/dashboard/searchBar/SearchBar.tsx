@@ -150,17 +150,17 @@ function SearchBar({ onSearchChange }: SearchBarProps) {
         }}
       >
         <div className="flex w-full">
-          <div className="relative items-center w-full bg-white flex px-1 py-1 rounded-lg border mx-auto">
+          <div className="relative items-center w-full bg-white dark:bg-gray-800 flex px-1 py-1 rounded-lg border border-gray-200 dark:border-gray-700 mx-auto">
             {/* Category Dropdown */}
             <div className="flex-shrink-0 relative" ref={dropdownRef}>
               <button
                 type="button"
                 onClick={() => setDropdownOpen((open) => !open)}
-                className="ml-2 mr-5 flex items-center justify-between gap-2
-              px-2.5 py-1.5 w-[63px] h-[30px] bg-white border border-[#00929C1A] rounded-[3px]"
+                className="ml-2 mr-3 sm:mr-5 flex items-center justify-between gap-2
+              px-2.5 py-1.5 w-[63px] h-[30px] bg-white dark:bg-gray-800 border border-[#00929C1A] dark:border-gray-600 rounded-[3px]"
               >
-                <span className="text-gray-800 text-sm">All</span>
-                <div className="w-[18px] h-[18px] rounded-full bg-[#9BAAAB1A] flex items-center justify-center">
+                <span className="text-gray-800 dark:text-gray-200 text-sm">All</span>
+                <div className="w-[18px] h-[18px] rounded-full bg-[#9BAAAB1A] dark:bg-white/10 flex items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className={`w-[6.67px] h-[4px] transform ${
@@ -181,7 +181,7 @@ function SearchBar({ onSearchChange }: SearchBarProps) {
               </button>
 
               {dropdownOpen && (
-                <div className="absolute mt-2 w-55 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-10">
+                <div className="absolute mt-2 w-55 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 z-10">
                   <label className="flex items-center space-x-2 py-1">
                     <input
                       type="checkbox"
@@ -190,7 +190,7 @@ function SearchBar({ onSearchChange }: SearchBarProps) {
                       onChange={handleNoCategoryChange}
                       className="form-checkbox text-cyan-600 border-gray-300 focus:ring-cyan-600"
                     />
-                    <span className="text-gray-600 text-sm">No Category</span>
+                    <span className="text-gray-600 dark:text-gray-300 text-sm">No Category</span>
                   </label>
                   {categories.map((category) => (
                     <label
@@ -205,7 +205,7 @@ function SearchBar({ onSearchChange }: SearchBarProps) {
                         disabled={pendingNoCategory}
                         className="form-checkbox text-cyan-600 border-gray-300 focus:ring-cyan-600"
                       />
-                      <span className="text-gray-600 text-sm">
+                      <span className="text-gray-600 dark:text-gray-300 text-sm">
                         {category.name}
                       </span>
                     </label>
@@ -215,7 +215,7 @@ function SearchBar({ onSearchChange }: SearchBarProps) {
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className="px-2 py-1 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
+                      className="px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       Clear all
                     </button>
@@ -235,8 +235,7 @@ function SearchBar({ onSearchChange }: SearchBarProps) {
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 192.904 192.904"
-              width="35px"
-              className="text-gray-400"
+              className="w-[18px] h-[18px] shrink-0 text-gray-400 dark:text-gray-500"
               fill="currentColor"
             >
               <path d="m190.707 180.101-47.078-47.077c11.702-14.072 18.752-32.142 18.752-51.831C162.381 36.423 125.959 0 81.191 0 36.422 0 0 36.423 0 81.193c0 44.767 36.422 81.187 81.191 81.187 19.688 0 37.759-7.049 51.831-18.751l47.079 47.078a7.474 7.474 0 0 0 5.303 2.197 7.498 7.498 0 0 0 5.303-12.803zM15 81.193C15 44.694 44.693 15 81.191 15c36.497 0 66.189 29.694 66.189 66.193 0 36.496-29.692 66.187-66.189 66.187C44.693 147.38 15 117.689 15 81.193z"></path>
@@ -244,13 +243,13 @@ function SearchBar({ onSearchChange }: SearchBarProps) {
             <input
               type="search"
               placeholder="Search something..."
-              className="w-full outline-none bg-white pl-4 text-sm"
+              className="w-full min-w-0 outline-none bg-white dark:bg-gray-800 dark:text-gray-100 pl-3 text-sm"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
             <button
               type="submit"
-              className="bg-[#EFEFEF] shadow-[0px_1px_2px_0px_#0A0D120D] text-cyan-600 text-sm rounded-lg px-5 py-2.5 transition-all"
+              className="shrink-0 ml-2 bg-[#EFEFEF] dark:bg-gray-700 shadow-[0px_1px_2px_0px_#0A0D120D] text-cyan-600 dark:text-teal-300 text-sm rounded-lg px-4 sm:px-5 py-2.5 transition-all"
             >
               Search
             </button>

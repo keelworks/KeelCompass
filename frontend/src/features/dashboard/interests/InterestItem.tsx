@@ -13,28 +13,15 @@ function InterestItem({
 }: InterestItemProps) {
   return (
     <div
-      className="bg-white shadow-md rounded-lg border border-gray-200 p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200"
+      className="bg-white dark:bg-gray-900 shadow-md rounded-lg border border-gray-200 dark:border-gray-700 p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200"
       onClick={onClick}
     >
       {/* Title */}
-      <h3 className="text-lg font-semibold text-[#004466] leading-relaxed mb-3">
+      <h3 className="text-lg font-semibold text-[#004466] dark:text-teal-300 leading-relaxed mb-3">
         {title}
       </h3>
 
-      {/* Date and Comments below title */}
-      {/* <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          width: "300px",
-          height: "10px",
-          opacity: 1,
-          alignItems: "center",
-        }}
-        className="text-sm text-gray-500"
-      > */}
-
-      <div className="flex items-center justify-between w-full text-sm text-gray-500 flex-wrap gap-2">
+      <div className="flex items-center justify-between w-full text-sm text-gray-500 dark:text-gray-400 flex-wrap gap-2">
         <span>{date}</span>
         {commentCount !== undefined && (
           <span>

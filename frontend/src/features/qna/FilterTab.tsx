@@ -1,12 +1,10 @@
 
 const FilterTab = () => {
   return (
-    <div className=""
+    <div className="w-full max-w-[229px] bg-white dark:bg-gray-800"
       style={{
-        width: "229px",
         height: "432px",
         borderRadius: "10px",
-        backgroundColor: "#FFFFFF",
         boxShadow: "0px 2px 8px 1px rgba(10, 10, 31, 0.1)",
         padding: "16px",
       }}
@@ -20,13 +18,13 @@ const FilterTab = () => {
         }}
       >
         <h1
+          className="text-[#5A6566] dark:text-gray-300"
           style={{
             width: "77px",
             height: "14px",
             fontWeight: "500",
             fontSize: "20px",
             lineHeight: "23.48px",
-            color: "#5A6566",
           }}
         >
           FILTERS
@@ -53,13 +51,13 @@ const FilterTab = () => {
             }}
           />
           <p
+            className="text-[#525252] dark:text-gray-300"
             style={{
               width: "100px",
               height: "11px",
               fontWeight: "500",
               fontSize: "16px",
               lineHeight: "19.2px",
-              color: "#525252",
             }}
           >
             Last Month
@@ -87,13 +85,13 @@ const FilterTab = () => {
             }}
           />
           <p
+            className="text-[#525252] dark:text-gray-300"
             style={{
               width: "100px",
               height: "11px",
               fontWeight: "500",
               fontSize: "16px",
               lineHeight: "19.2px",
-              color: "#525252",
             }}
           >
             Last Month
@@ -121,13 +119,13 @@ const FilterTab = () => {
             }}
           />
           <p
+            className="text-[#525252] dark:text-gray-300"
             style={{
               width: "100px",
               height: "11px",
               fontWeight: "500",
               fontSize: "16px",
               lineHeight: "19.2px",
-              color: "#525252",
             }}
           >
             Last Month
