@@ -30,6 +30,13 @@ services:
       - DB_DIALECT=mysql
       - JWT_SECRET=${JWT_SECRET}
       - LOG_PATH=logs/app.log
+      - ALLOWED_SIGNUP_DOMAIN=${ALLOWED_SIGNUP_DOMAIN}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
     depends_on:
       database:
         condition: service_healthy

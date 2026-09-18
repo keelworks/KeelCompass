@@ -60,23 +60,25 @@ app.use((_req, _res, next) => {
   next(notFoundError);
 });
 
+// error status text for known HTTP status codes thrown via HttpError
+const ERROR_STATUS_TEXT = {
+  400: "Bad Request",
+  401: "Unauthorized",
+  403: "Forbidden",
+  404: "Not Found",
+  409: "Conflict",
+  410: "Gone",
+  429: "Too Many Requests",
+};
+
 // global error handler
 app.use((err, _req, res, _next) => {
   logger.error("Unhandled error:", err);
 
-  // forbidden error
-  if (err.status === 403 || err.statusCode === 403) {
-    return res.status(403).json({
-      status: 403,
-      error: "Forbidden",
-      message: err.message || "You do not have permission to access this resource."
-    });
-  }
-
-  // internal server error
-  res.status(500).json({
-    status: 500,
-    error: "Internal Server Error",
+  const statusCode = err.statusCode || err.status || 500;
+  res.status(statusCode).json({
+    status: statusCode,
+    error: ERROR_STATUS_TEXT[statusCode] || "Internal Server Error",
     message: err.message || "An unexpected error occurred."
   });
 });

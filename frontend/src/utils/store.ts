@@ -13,13 +13,34 @@ export async function register(params: {
   username: string;
   email: string;
   password: string;
+}): Promise<{ email: string; expiresInSeconds: number }> {
+  const res = await axiosInstance.post<{ email: string; expiresInSeconds: number }>(
+    '/auth/register',
+    params
+  );
+  return res.data;
+}
+
+export async function verifyEmail(params: {
+  email: string;
+  code: string;
 }): Promise<string> {
-  const res = await axiosInstance.post<string>('/auth/register', params);
+  const res = await axiosInstance.post<string>('/auth/verify-email', params);
+  return res.data;
+}
+
+export async function resendCode(params: {
+  email: string;
+}): Promise<{ email: string; expiresInSeconds: number }> {
+  const res = await axiosInstance.post<{ email: string; expiresInSeconds: number }>(
+    '/auth/resend-code',
+    params
+  );
   return res.data;
 }
 
 export async function login(params: {
-  email: string;
+  identifier: string;
   password: string;
 }): Promise<string> {
   const res = await axiosInstance.post<string>('/auth/login', params);
