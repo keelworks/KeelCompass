@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Interest, QuestionDetail, QuestionListItem } from "../utils/types";
 import { getQuestion, getUserInterests } from "../utils/store";
 import MainLayout from "../components/wrappers/MainLayout";
 import MyInterests from "../features/dashboard/interests/MyInterests";
+import AskQuestionButton from "../components/ui/AskQuestionButton";
 
 const InterestsPage = () => {
+  const navigate = useNavigate();
   const [interests, setInterests] = useState<Interest[]>([]);
   const [interestQuestions, setInterestQuestions] = useState<QuestionListItem[]>([]);
 
@@ -79,7 +82,12 @@ const InterestsPage = () => {
 
   return (
     <MainLayout>
-      <div className="col-span-1 lg:col-span-3">
+      {/* Right-side panel: Ask Question + My Interests widget */}
+      <div className="col-span-1 lg:col-start-3 flex flex-col gap-6">
+        <div className="pt-[20px] pr-[4px]">
+          <AskQuestionButton onClick={() => navigate("/questions/new")} />
+        </div>
+
         <MyInterests
           interests={interests}
           questions={interestQuestions}

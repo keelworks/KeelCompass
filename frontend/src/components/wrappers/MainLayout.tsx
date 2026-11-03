@@ -155,7 +155,7 @@ const MainLayout = ({
                 </div>
               )}
               <div className="leading-tight hidden sm:block">
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 -mb-1">
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
                   {displayName || username || "User"}
                 </p>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400">{fullRoleTag || "Member"}</p>

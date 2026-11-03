@@ -308,9 +308,24 @@ function QuestionDetails({
         {question && (
           <>
             <div className="w-full text-left bg-[#f6f6f6] dark:bg-gray-800 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-[#004466] dark:text-teal-300 mb-2">
-                {question.user.username}
-              </h3>
+              <div className="flex items-center gap-2 mb-2">
+                {question.user.pictureUrl ? (
+                  <img
+                    src={question.user.pictureUrl}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold text-sm">
+                    {(question.user.displayName || question.user.username).charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <h3 className="text-lg font-semibold text-[#004466] dark:text-teal-300">
+                  {question.user.displayName || question.user.username}
+                  {question.user.email ? ` <${question.user.email}>` : ""}
+                </h3>
+              </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
                 {formatDateTime(question.createdAt)}
               </p>

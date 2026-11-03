@@ -64,7 +64,7 @@ const getRecentQuestions = async (userId, count = 10, offset = 0, viewerTag = nu
       await Question.findAndCountAll({
         where: hiddenQuestionIds.length > 0 ? { id: { [db.Sequelize.Op.notIn]: hiddenQuestionIds } } : undefined,
         include: [
-          { model: User, as: "user", attributes: ["id", "username"] },
+          { model: User, as: "user", attributes: ["id", "username", "email", "display_name", "picture_url"] },
           {
             model: UserQuestionAction,
             as: "userQuestionActions",
@@ -110,7 +110,12 @@ const getRecentQuestions = async (userId, count = 10, offset = 0, viewerTag = nu
 
       return {
         id: q.id,
-        user: { username: q.user?.username },
+        user: {
+          username: q.user?.username,
+          email: q.user?.email,
+          displayName: q.user?.display_name,
+          pictureUrl: q.user?.picture_url,
+        },
         title: q.title,
         description: q.description,
         status: q.status,
@@ -151,7 +156,7 @@ const getPopularQuestions = async (userId, count = 10, offset = 0, viewerTag = n
 
     const allQuestions = await Question.findAll({
       include: [
-        { model: User, as: "user", attributes: ["id", "username"] },
+        { model: User, as: "user", attributes: ["id", "username", "email", "display_name", "picture_url"] },
         {
           model: UserQuestionAction,
           as: "userQuestionActions",
@@ -189,7 +194,12 @@ const getPopularQuestions = async (userId, count = 10, offset = 0, viewerTag = n
       const tags = Array.isArray(q.tags) ? q.tags.map((t) => t.tag) : [];
       return {
         id: q.id,
-        user: { username: q.user?.username },
+        user: {
+          username: q.user?.username,
+          email: q.user?.email,
+          displayName: q.user?.display_name,
+          pictureUrl: q.user?.picture_url,
+        },
         title: q.title,
         description: q.description,
         status: q.status,
@@ -241,7 +251,7 @@ const getPendingQuestions = async (userId, count = 10, offset = 0) => {
       await Question.findAndCountAll({
         where: { status: "pending" },
         include: [
-          { model: User, as: "user", attributes: ["id", "username"] },
+          { model: User, as: "user", attributes: ["id", "username", "email", "display_name", "picture_url"] },
           {
             model: UserQuestionAction,
             as: "userQuestionActions",
@@ -278,7 +288,12 @@ const getPendingQuestions = async (userId, count = 10, offset = 0) => {
       const commentCount = comments.length;
       return {
         id: q.id,
-        user: { username: q.user?.username },
+        user: {
+          username: q.user?.username,
+          email: q.user?.email,
+          displayName: q.user?.display_name,
+          pictureUrl: q.user?.picture_url,
+        },
         title: q.title,
         description: q.description,
         status: q.status,
@@ -314,7 +329,7 @@ const getQuestion = async (userId, questionId, viewerTag = null, isAdmin = false
   try {
     const question = await Question.findByPk(questionId, {
       include: [
-        { model: User, as: "user", attributes: ["id", "username"] },
+        { model: User, as: "user", attributes: ["id", "username", "email", "display_name", "picture_url"] },
         {
           model: UserQuestionAction,
           as: "userQuestionActions",
@@ -329,7 +344,7 @@ const getQuestion = async (userId, questionId, viewerTag = null, isAdmin = false
           model: Comment,
           as: "comments",
           include: [
-            { model: User, as: "user", attributes: ["id", "username"] },
+            { model: User, as: "user", attributes: ["id", "username", "email", "display_name", "picture_url"] },
             {
               model: Attachment,
               as: "attachment",
@@ -403,7 +418,13 @@ const getQuestion = async (userId, questionId, viewerTag = null, isAdmin = false
 
     return {
       id: question.id,
-      user: { id: question.user?.id, username: question.user?.username },
+      user: {
+        id: question.user?.id,
+        username: question.user?.username,
+        email: question.user?.email,
+        displayName: question.user?.display_name,
+        pictureUrl: question.user?.picture_url,
+      },
       title: question.title,
       description: question.description,
       status: question.status,

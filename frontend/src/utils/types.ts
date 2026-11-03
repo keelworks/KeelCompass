@@ -60,7 +60,12 @@ export interface QuestionsResponse {
 
 export interface QuestionListItem {
   id: number;
-  user: { username: string };
+  user: {
+    username: string;
+    email?: string;
+    displayName?: string | null;
+    pictureUrl?: string | null;
+  };
   title: string;
   description: string;
   status: QuestionStatus;

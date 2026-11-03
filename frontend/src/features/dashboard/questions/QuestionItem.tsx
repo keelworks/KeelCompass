@@ -55,6 +55,9 @@ function QuestionItem({
   const isInterested = question.isInterested;
   const interestId = question.interestId;
 
+  const nameLabel = user.displayName || user.username;
+  const authorLabel = user.email ? `${nameLabel} <${user.email}>` : nameLabel;
+
   // Hide description if title is long (to keep card height consistent)
   // or if description is empty
   const TITLE_LENGTH_THRESHOLD = 80; // Titles beyond this length will hide description
@@ -156,13 +159,22 @@ function QuestionItem({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Profile Picture */}
-          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold text-sm">
-            {user.username.charAt(0).toUpperCase()}
-          </div>
+          {user.pictureUrl ? (
+            <img
+              src={user.pictureUrl}
+              alt=""
+              referrerPolicy="no-referrer"
+              className="w-8 h-8 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold text-sm">
+              {nameLabel.charAt(0).toUpperCase()}
+            </div>
+          )}
 
-          {/* Username and date */}
+          {/* Name <email> and date */}
           <span className="text-[14px] text-[#666A6F] dark:text-gray-300 font-normal font-lato leading-none">
-            {user.username}
+            {authorLabel}
           </span>
           <span className="text-sm text-gray-500 dark:text-gray-400">•</span>
           <span className="text-sm text-gray-500 dark:text-gray-400">{formatDate(createdAt)}</span>
@@ -196,20 +208,6 @@ function QuestionItem({
         {title}
       </h3>
 
-      {/* Visibility tags */}
-      {tags && tags.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap -mt-2">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#E8F4F5] text-[#007C88] dark:bg-teal-900/40 dark:text-teal-300"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-
       {/* Description (sanitized HTML, 2-line clamp) - hidden for long titles */}
       {shouldShowDescription && (
         <p
@@ -218,20 +216,27 @@ function QuestionItem({
         />
       )}
 
-      {/* Footer: Categories and Stats */}
-      <div className="flex justify-between items-center text-sm">
-        {/* Categories */}
-        <div className="flex items-center gap-2">
-          {categories && categories.length > 0
-            ? categories.map((cat, index) => (
+      {/* Footer: Categories, Tags and Stats */}
+      <div className="flex justify-between items-end text-sm">
+        {/* Categories and Tags */}
+        <div className="flex flex-col gap-1">
+          {categories && categories.length > 0 && (
+            <div className="flex items-center gap-2">
+              {categories.map((cat, index) => (
                 <React.Fragment key={cat.id}>
                   <span className="text-gray-600 dark:text-gray-300">{cat.name}</span>
                   {index < categories.length - 1 && (
                     <span className="text-gray-300 dark:text-gray-600">|</span>
                   )}
                 </React.Fragment>
-              ))
-            : null}
+              ))}
+            </div>
+          )}
+          {tags && tags.length > 0 && (
+            <div className="text-gray-600 dark:text-gray-300">
+              Tags: {tags.join(", ")}
+            </div>
+          )}
         </div>
 
         {/* Stats */}
