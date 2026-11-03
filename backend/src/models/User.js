@@ -42,6 +42,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(100),
         allowNull: true,
       },
+      full_role_tag: {
+        type: DataTypes.STRING(150),
+        allowNull: true,
+      },
+      display_name: {
+        type: DataTypes.STRING(150),
+        allowNull: true,
+      },
     },
     { 
       tableName: "Users", 

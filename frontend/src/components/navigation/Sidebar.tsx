@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { BsChevronBarLeft, BsChevronBarRight } from "react-icons/bs";
 import { IoClose } from "react-icons/io5";
 import { FiBookmark, FiHome, FiShield } from "react-icons/fi";
-import Logo from "../../assets/logo.png";
+import Logo from "../../assets/compass-mark.png";
 import Tooltip from "../../components/ui/Tooltip";
 import type { Theme } from "../../utils/theme";
 
@@ -285,7 +285,7 @@ function Sidebar({
             }`}
           >
             <h1 className="text-[18px] font-semibold text-[#212121] dark:text-gray-100">
-              KCompass
+              KeelCompass
             </h1>
             <p className="text-[13px] text-[#825E8C] dark:text-[#C9A8D6]">
               Knowledge Base

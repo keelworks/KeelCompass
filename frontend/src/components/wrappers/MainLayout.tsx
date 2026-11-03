@@ -24,6 +24,8 @@ const MainLayout = ({
 }: MainLayoutProps) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [username, setUsername] = useState<string | null>("User");
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [fullRoleTag, setFullRoleTag] = useState<string | null>(null);
   const [pictureUrl, setPictureUrl] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -46,6 +48,8 @@ const MainLayout = ({
         const user = await getMe();
         console.log("Fetched user data:", user);
         setUsername(user.username);
+        setDisplayName(user.display_name);
+        setFullRoleTag(user.full_role_tag);
         setPictureUrl(user.picture_url);
         setIsAdmin(user.roles?.includes("admin") ?? false);
       } catch (error) {
@@ -152,9 +156,9 @@ const MainLayout = ({
               )}
               <div className="leading-tight hidden sm:block">
                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 -mb-1">
-                  {username || "User"}
+                  {displayName || username || "User"}
                 </p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400">Student</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400">{fullRoleTag || "Member"}</p>
               </div>
               <FiChevronDown
                 size={16}

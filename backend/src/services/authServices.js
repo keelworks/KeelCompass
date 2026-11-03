@@ -4,7 +4,7 @@ const logger = require("../utils/logger");
 const logEverything = require("../utils/logEverything");
 const { HttpError } = require("../utils/httpError");
 const { generateToken } = require("../utils/jwtUtils");
-const { parseRoleTag } = require("../utils/roleTags");
+const { parseRoleTag, parseFullRoleTag, stripRoleTag } = require("../utils/roleTags");
 
 const db = require("../models");
 const User = db.User;
@@ -65,13 +65,22 @@ const googleAuth = async (credential) => {
     }
 
     const rawTag = parseRoleTag(payload.family_name);
+    const fullRoleTag = parseFullRoleTag(payload.family_name);
+    const cleanFamilyName = stripRoleTag(payload.family_name);
+    const displayName = [payload.given_name, cleanFamilyName].filter(Boolean).join(" ").trim() || null;
 
     let user = await User.findOne({ where: { google_id: payload.sub } });
 
     if (!user) {
       user = await User.findOne({ where: { email } });
       if (user) {
-        await user.update({ google_id: payload.sub, picture_url: payload.picture || null, raw_role_tag: rawTag });
+        await user.update({
+          google_id: payload.sub,
+          picture_url: payload.picture || null,
+          raw_role_tag: rawTag,
+          full_role_tag: fullRoleTag,
+          display_name: displayName,
+        });
       }
     }
 
@@ -81,6 +90,8 @@ const googleAuth = async (credential) => {
         google_id: payload.sub,
         picture_url: payload.picture || null,
         raw_role_tag: rawTag,
+        full_role_tag: fullRoleTag,
+        display_name: displayName,
         role: "volunteer",
       });
       logger.info(`New user created via Google SSO: ${email}`);
@@ -88,6 +99,8 @@ const googleAuth = async (credential) => {
       const updates = {};
       if (payload.picture && payload.picture !== user.picture_url) updates.picture_url = payload.picture;
       if (rawTag !== user.raw_role_tag) updates.raw_role_tag = rawTag;
+      if (fullRoleTag !== user.full_role_tag) updates.full_role_tag = fullRoleTag;
+      if (displayName !== user.display_name) updates.display_name = displayName;
       if (Object.keys(updates).length > 0) await user.update(updates);
     }
 

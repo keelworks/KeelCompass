@@ -90,11 +90,13 @@ export async function createQuestion(params: {
   title: string;
   description: string;
   attachment?: File | null;
+  tags?: string[];
 }): Promise<number> {
   const formData = new FormData();
   formData.append('title', params.title);
   formData.append('description', params.description);
   if (params.attachment) formData.append('attachment', params.attachment);
+  if (params.tags) formData.append('tags', JSON.stringify(params.tags));
   const res = await axiosInstance.post<number>('/questions', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
@@ -106,17 +108,25 @@ export async function updateQuestion(params: {
   title?: string;
   description?: string;
   attachment?: File | null;
+  tags?: string[];
 }): Promise<number> {
   const formData = new FormData();
   if (params.title !== undefined) formData.append('title', params.title);
   if (params.description !== undefined)
     formData.append('description', params.description);
   if (params.attachment) formData.append('attachment', params.attachment);
+  if (params.tags) formData.append('tags', JSON.stringify(params.tags));
   const res = await axiosInstance.put<number>(
     `/questions/${params.id}`,
     formData,
     { headers: { 'Content-Type': 'multipart/form-data' } }
   );
+  return res.data;
+}
+
+// list every known tag a question can be restricted to
+export async function getKnownTags(): Promise<string[]> {
+  const res = await axiosInstance.get<string[]>('/questions/tags');
   return res.data;
 }
 

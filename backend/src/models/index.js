@@ -41,6 +41,7 @@ db.User = require("./User.js")(sequelize, Sequelize.DataTypes);
 db.Category = require("./Category.js")(sequelize, Sequelize.DataTypes);
 db.Question = require("./Question.js")(sequelize, Sequelize.DataTypes);
 db.QuestionCategory = require("./QuestionCategory.js")(sequelize, Sequelize.DataTypes);
+db.QuestionTag = require("./QuestionTag.js")(sequelize, Sequelize.DataTypes);
 db.UserQuestionAction = require("./UserQuestionAction.js")(sequelize, Sequelize.DataTypes);
 db.Comment = require("./Comment.js")(sequelize, Sequelize.DataTypes);
 db.UserCommentAction = require("./UserCommentAction.js")(sequelize, Sequelize.DataTypes);

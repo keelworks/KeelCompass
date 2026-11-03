@@ -7,7 +7,7 @@ const db = require("../models");
 const User = db.User;
 const UserRole = db.UserRole;
 
-const USER_ATTRIBUTES = ['id', 'username', 'email', 'role', 'picture_url', 'raw_role_tag', 'created_at', 'updated_at'];
+const USER_ATTRIBUTES = ['id', 'username', 'email', 'role', 'picture_url', 'raw_role_tag', 'full_role_tag', 'display_name', 'created_at', 'updated_at'];
 
 // flatten the `userRoles` association into a plain `roles: string[]` field
 const withRoles = (user) => {

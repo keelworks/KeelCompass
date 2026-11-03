@@ -2,13 +2,28 @@ const logger = require("../utils/logger");
 
 const questionService = require("../services/questionServices");
 
+// multipart form fields arrive as strings; parse a JSON-encoded tags array
+// sent from the create/edit question forms
+const parseTags = (raw) => {
+  if (raw === undefined) return undefined;
+  if (Array.isArray(raw)) return raw;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 // get recent questions
 const getRecentQuestions = async (req, res, next) => {
   try {
     const userId = req.user?.id;
     const { count, offset } = req.query;
+    const isAdmin = req.user?.roles?.includes("admin") ?? false;
+    const viewerTag = req.user?.raw_role_tag ?? null;
 
-    const result = await questionService.getRecentQuestions(userId, count, offset);
+    const result = await questionService.getRecentQuestions(userId, count, offset, viewerTag, isAdmin);
     return res.status(200).json(result);
   } catch (error) {
     logger.error(`Caught in getRecentQuestions controller: ${error.message}`);
@@ -21,8 +36,10 @@ const getPopularQuestions = async (req, res, next) => {
   try {
     const userId = req.user?.id;
     const { count, offset } = req.query;
+    const isAdmin = req.user?.roles?.includes("admin") ?? false;
+    const viewerTag = req.user?.raw_role_tag ?? null;
 
-    const result = await questionService.getPopularQuestions(userId, count, offset);
+    const result = await questionService.getPopularQuestions(userId, count, offset, viewerTag, isAdmin);
     return res.status(200).json(result);
   } catch (error) {
     logger.error(`Caught in getPopularQuestions controller: ${error.message}`);
@@ -33,23 +50,37 @@ const getPopularQuestions = async (req, res, next) => {
 // get pending questions (facilitator)
 const getPendingQuestions = async (req, res, next) => {
 try {
+    const userId = req.user?.id;
     const { count, offset } = req.query;
 
-    const result = await questionService.getPendingQuestions(count, offset);
+    const result = await questionService.getPendingQuestions(userId, count, offset);
     return res.status(200).json(result);
   } catch (error) {
     logger.error(`Caught in getPendingQuestions controller: ${error.message}`);
     next(error);
   }
 };
-  
+
+// list every known tag a question can be restricted to
+const getKnownTags = async (req, res, next) => {
+  try {
+    const tags = await questionService.getKnownTags();
+    return res.status(200).json(tags);
+  } catch (error) {
+    logger.error(`Caught in getKnownTags controller: ${error.message}`);
+    next(error);
+  }
+};
+
 // get question by id
 const getQuestionById = async (req, res, next) => {
   try {
     const userId = req.user?.id;
     const { id } = req.params;
+    const isAdmin = req.user?.roles?.includes("admin") ?? false;
+    const viewerTag = req.user?.raw_role_tag ?? null;
 
-    const result = await questionService.getQuestion(userId, id);
+    const result = await questionService.getQuestion(userId, id, viewerTag, isAdmin);
     return res.status(200).json(result);
   } catch (error) {
     logger.error(`Caught in getQuestionById controller: ${error.message}`);
@@ -61,10 +92,10 @@ const getQuestionById = async (req, res, next) => {
 const createQuestion = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { categoryIds, title, description } = req.body;
+    const { categoryIds, title, description, tags } = req.body;
     const attachment = req.file;
 
-    const questionId = await questionService.createQuestion(userId, categoryIds, title, description, attachment);
+    const questionId = await questionService.createQuestion(userId, categoryIds, title, description, attachment, parseTags(tags) ?? []);
     return res.status(201).json(questionId);
   } catch (error) {
     logger.error(`Caught in createQuestion controller: ${error.message}`);
@@ -77,10 +108,10 @@ const updateQuestion = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const questionId = req.params.id;
-    const { title, description } = req.body;
+    const { title, description, tags } = req.body;
     const attachment = req.file;
 
-    const updatedId = await questionService.updateQuestion(userId, questionId, title, description, attachment);
+    const updatedId = await questionService.updateQuestion(userId, questionId, title, description, attachment, parseTags(tags));
     return res.status(200).json(updatedId);
   } catch (error) {
     logger.error(`Caught in updateQuestion controller: ${error.message}`);
@@ -125,4 +156,5 @@ module.exports = {
   updateQuestion,
   updateQuestionStatus,
   deleteQuestion,
+  getKnownTags,
 };

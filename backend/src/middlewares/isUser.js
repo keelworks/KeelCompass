@@ -17,7 +17,13 @@ module.exports = async function isUser(req, res, next) {
 
     const userRoles = await UserRole.findAll({ where: { user_id: user.id } });
 
-    req.user = { id: user.id, email: user.email, role: user.role, roles: userRoles.map((r) => r.role) };
+    req.user = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      roles: userRoles.map((r) => r.role),
+      raw_role_tag: user.raw_role_tag,
+    };
     next();
   } catch (error) {
     logger.error(`Caught in isUser middleware: ${error.message}`);

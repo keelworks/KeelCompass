@@ -49,6 +49,7 @@ module.exports = (sequelize, DataTypes) => {
     Question.hasMany(models.Interest, { foreignKey: 'question_id', as: 'interests' });
     Question.hasMany(models.UserQuestionAction, { foreignKey: 'question_id', as: 'userQuestionActions' });
     Question.hasMany(models.Notification, { foreignKey: 'question_id', as: 'notifications' });
+    Question.hasMany(models.QuestionTag, { foreignKey: 'question_id', as: 'tags' });
   };
 
   return Question;

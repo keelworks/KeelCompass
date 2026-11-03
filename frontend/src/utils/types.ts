@@ -22,6 +22,8 @@ export interface User {
   email: string;
   picture_url: string | null;
   raw_role_tag: string | null;
+  full_role_tag: string | null;
+  display_name: string | null;
   roles: string[];
   createdAt: string;
   updatedAt: string;
@@ -70,6 +72,7 @@ export interface QuestionListItem {
   commentCount: number;
   popularityScore?: number;
   categories?: Category[];
+  tags?: string[];
 }
 
 // response for get question details

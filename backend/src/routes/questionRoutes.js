@@ -24,6 +24,7 @@ const createQuestionValidation = [
   body("categoryIds").optional().isArray().withMessage("Invalid category IDs.").bail(),
   body("title").notEmpty().withMessage("Title is required").bail().isString().withMessage("Invalid title"),
   body("description").notEmpty().withMessage("Description is required").bail().isString().withMessage("Invalid description"),
+  body("tags").optional().isString().withMessage("Invalid tags.").bail(),
   handleValidationErrors,
 ];
 
@@ -31,6 +32,7 @@ const updateQuestionValidation = [
   body("title").notEmpty().withMessage("Title is required.").bail().isString().withMessage("Invalid title."),
   body("description").notEmpty().withMessage("Description is required.").bail().isString().withMessage("Invalid description."),
   body("categoryIds").optional().isArray().withMessage("Invalid category IDs.").bail(),
+  body("tags").optional().isString().withMessage("Invalid tags.").bail(),
   handleValidationErrors,
 ];
 
@@ -53,6 +55,9 @@ router.get("/popular", getQuestionsValidation, questionControllers.getPopularQue
 
 // get pending questions (facilitator)
 router.get("/pending", isFacilitator, getQuestionsValidation, questionControllers.getPendingQuestions);
+
+// list known tags a question can be restricted to
+router.get("/tags", questionControllers.getKnownTags);
 
 // get question by id
 router.get("/:id", getQuestionByIdValidation, questionControllers.getQuestionById);

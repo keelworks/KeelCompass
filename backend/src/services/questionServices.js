@@ -10,18 +10,59 @@ const Attachment = db.Attachment;
 const Comment = db.Comment;
 const Category = db.Category;
 const Interest = db.Interest;
+const QuestionTag = db.QuestionTag;
+const RoleTagMapping = db.RoleTagMapping;
 const attachmentService = require("./attachmentServices");
 
+// list every known tag a question can be restricted to (sourced from the
+// admin-managed role mappings, so authors pick from the same tag vocabulary
+// Google-derived roles already use)
+const getKnownTags = async () => {
+  try {
+    const mappings = await RoleTagMapping.findAll({
+      attributes: ["tag"],
+      order: [["tag", "ASC"]],
+    });
+    return mappings.map((m) => m.tag);
+  } catch (error) {
+    logEverything(error, "questionServices");
+    throw new HttpError(500, "Error fetching known tags");
+  }
+};
+
+// a tagged question is only visible to a viewer whose own raw Google tag
+// matches one of the question's tags (or an admin, who can see everything);
+// an untagged question is visible to everyone - this is the default
+const getHiddenQuestionIds = async (viewerTag, isAdmin) => {
+  if (isAdmin) return [];
+
+  const rows = await QuestionTag.findAll({ attributes: ["question_id", "tag"] });
+  const tagsByQuestion = new Map();
+  for (const row of rows) {
+    if (!tagsByQuestion.has(row.question_id)) tagsByQuestion.set(row.question_id, []);
+    tagsByQuestion.get(row.question_id).push(row.tag);
+  }
+
+  const hidden = [];
+  for (const [questionId, tags] of tagsByQuestion) {
+    if (!viewerTag || !tags.includes(viewerTag)) hidden.push(questionId);
+  }
+  return hidden;
+};
+
 // get recent questions
-const getRecentQuestions = async (userId, count = 10, offset = 0) => {
+const getRecentQuestions = async (userId, count = 10, offset = 0, viewerTag = null, isAdmin = false) => {
   try {
     count = parseInt(count, 10);
     offset = parseInt(offset, 10);
     if (isNaN(count) || count <= 0) count = 10;
     if (isNaN(offset) || offset < 0) offset = 0;
 
+    const hiddenQuestionIds = await getHiddenQuestionIds(viewerTag, isAdmin);
+
     const { count: totalCount, rows: questions } =
       await Question.findAndCountAll({
+        where: hiddenQuestionIds.length > 0 ? { id: { [db.Sequelize.Op.notIn]: hiddenQuestionIds } } : undefined,
         include: [
           { model: User, as: "user", attributes: ["id", "username"] },
           {
@@ -37,6 +78,7 @@ const getRecentQuestions = async (userId, count = 10, offset = 0) => {
           { model: Comment, as: "comments", attributes: ["id"] },
           { model: Interest, as: "interests", attributes: ["id", "user_id"] },
           { model: Category, attributes: ["id", "name"] }, // Add this line
+          { model: QuestionTag, as: "tags", attributes: ["tag"] },
         ],
         order: [["created_at", "DESC"]],
         limit: count,
@@ -64,6 +106,7 @@ const getRecentQuestions = async (userId, count = 10, offset = 0) => {
       const categories = Array.isArray(q.Categories)
         ? q.Categories.map((cat) => ({ id: cat.id, name: cat.name }))
         : [];
+      const tags = Array.isArray(q.tags) ? q.tags.map((t) => t.tag) : [];
 
       return {
         id: q.id,
@@ -79,6 +122,7 @@ const getRecentQuestions = async (userId, count = 10, offset = 0) => {
         likeCount,
         commentCount,
         categories, // Add this line
+        tags,
       };
     });
 
@@ -100,8 +144,11 @@ const getRecentQuestions = async (userId, count = 10, offset = 0) => {
 };
 
 // get popular questions
-const getPopularQuestions = async (userId, count = 10, offset = 0) => {
+const getPopularQuestions = async (userId, count = 10, offset = 0, viewerTag = null, isAdmin = false) => {
   try {
+    const hiddenQuestionIds = await getHiddenQuestionIds(viewerTag, isAdmin);
+    const hiddenSet = new Set(hiddenQuestionIds);
+
     const allQuestions = await Question.findAll({
       include: [
         { model: User, as: "user", attributes: ["id", "username"] },
@@ -117,10 +164,13 @@ const getPopularQuestions = async (userId, count = 10, offset = 0) => {
         },
         { model: Comment, as: "comments", attributes: ["id"] },
         { model: Interest, as: "interests", attributes: ["user_id"] },
+        { model: QuestionTag, as: "tags", attributes: ["tag"] },
       ],
     });
 
-    const questionsWithScores = allQuestions.map((q) => {
+    const questionsWithScores = allQuestions
+      .filter((q) => !hiddenSet.has(q.id))
+      .map((q) => {
       const uqas = Array.isArray(q.userQuestionActions)
         ? q.userQuestionActions
         : [];
@@ -136,6 +186,7 @@ const getPopularQuestions = async (userId, count = 10, offset = 0) => {
       const comments = Array.isArray(q.comments) ? q.comments : [];
       const commentCount = comments.length;
       const popularityScore = likeCount + commentCount;
+      const tags = Array.isArray(q.tags) ? q.tags.map((t) => t.tag) : [];
       return {
         id: q.id,
         user: { username: q.user?.username },
@@ -150,6 +201,7 @@ const getPopularQuestions = async (userId, count = 10, offset = 0) => {
         likeCount,
         commentCount,
         popularityScore,
+        tags,
       };
     });
 
@@ -178,7 +230,7 @@ const getPopularQuestions = async (userId, count = 10, offset = 0) => {
 };
 
 // get pending questions (facilitator)
-const getPendingQuestions = async (count = 10, offset = 0) => {
+const getPendingQuestions = async (userId, count = 10, offset = 0) => {
   try {
     count = parseInt(count, 10);
     offset = parseInt(offset, 10);
@@ -258,7 +310,7 @@ const getPendingQuestions = async (count = 10, offset = 0) => {
 };
 
 // get question by id
-const getQuestion = async (userId, questionId) => {
+const getQuestion = async (userId, questionId, viewerTag = null, isAdmin = false) => {
   try {
     const question = await Question.findByPk(questionId, {
       include: [
@@ -291,10 +343,15 @@ const getQuestion = async (userId, questionId) => {
           ],
         },
         { model: Interest, as: "interests", attributes: ["id", "user_id"] },
+        { model: QuestionTag, as: "tags", attributes: ["tag"] },
       ],
       order: [[{ model: Comment, as: "comments" }, "created_at", "ASC"]],
     });
     if (!question) throw new HttpError(404, "Question not found");
+
+    const tags = Array.isArray(question.tags) ? question.tags.map((t) => t.tag) : [];
+    const isVisible = isAdmin || tags.length === 0 || (viewerTag && tags.includes(viewerTag));
+    if (!isVisible) throw new HttpError(404, "Question not found");
 
     const uqas = Array.isArray(question.userQuestionActions)
       ? question.userQuestionActions
@@ -370,6 +427,7 @@ const getQuestion = async (userId, questionId) => {
       likeCount,
       comments,
       commentCount,
+      tags,
     };
   } catch (error) {
     logEverything(error, "questionServices");
@@ -378,13 +436,21 @@ const getQuestion = async (userId, questionId) => {
   }
 };
 
+// de-dupe/trim a raw tags list into the form stored on QuestionTag rows
+const normalizeTags = (tags) => {
+  if (!Array.isArray(tags)) return [];
+  const trimmed = tags.map((t) => (typeof t === "string" ? t.trim() : "")).filter(Boolean);
+  return [...new Set(trimmed)];
+};
+
 // create question
 const createQuestion = async (
   userId,
   categoryIds,
   title,
   description,
-  attachment = null
+  attachment = null,
+  tags = []
 ) => {
   try {
     const newQuestion = await Question.create({
@@ -396,6 +462,14 @@ const createQuestion = async (
     // set categories
     if (categoryIds && categoryIds.length > 0) {
       await newQuestion.setCategories(categoryIds);
+    }
+
+    // set tags (restricts visibility to users with a matching raw role tag)
+    const normalizedTags = normalizeTags(tags);
+    if (normalizedTags.length > 0) {
+      await QuestionTag.bulkCreate(
+        normalizedTags.map((tag) => ({ question_id: newQuestion.id, tag }))
+      );
     }
 
     // create attachment
@@ -420,7 +494,8 @@ const updateQuestion = async (
   questionId,
   title,
   description,
-  attachment = null
+  attachment = null,
+  tags
 ) => {
   try {
     const question = await Question.findByPk(questionId);
@@ -431,6 +506,17 @@ const updateQuestion = async (
     question.title = title;
     question.description = description;
     await question.save();
+
+    // replace tags, only if the caller actually sent a tags field
+    if (tags !== undefined) {
+      await QuestionTag.destroy({ where: { question_id: question.id } });
+      const normalizedTags = normalizeTags(tags);
+      if (normalizedTags.length > 0) {
+        await QuestionTag.bulkCreate(
+          normalizedTags.map((tag) => ({ question_id: question.id, tag }))
+        );
+      }
+    }
 
     // update attachment
     const existingAttachment = await Attachment.findOne({
@@ -501,4 +587,5 @@ module.exports = {
   updateQuestion,
   updateQuestionStatus,
   deleteQuestion,
+  getKnownTags,
 };

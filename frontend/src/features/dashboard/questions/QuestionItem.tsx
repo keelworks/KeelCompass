@@ -49,6 +49,7 @@ function QuestionItem({
     likeCount,
     commentCount,
     categories,
+    tags,
   } = question;
 
   const isInterested = question.isInterested;
@@ -194,6 +195,20 @@ function QuestionItem({
       <h3 className="text-lg font-semibold text-[#00545C] dark:text-teal-300 leading-relaxed m-0">
         {title}
       </h3>
+
+      {/* Visibility tags */}
+      {tags && tags.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap -mt-2">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#E8F4F5] text-[#007C88] dark:bg-teal-900/40 dark:text-teal-300"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Description (sanitized HTML, 2-line clamp) - hidden for long titles */}
       {shouldShowDescription && (

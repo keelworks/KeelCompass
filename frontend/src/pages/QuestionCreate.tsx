@@ -20,7 +20,7 @@ import FileIcon from "../assets/Fileicon.svg";
 import FormattingIcon from "../assets/Formatingicon.svg";
 import FormattingIconLeft from "../assets/Formatingiconleft.png";
 import ErrorIcon from "../../src/assets/ErrorIcon.svg";
-import { getAllCategories } from "../utils/store";
+import { getAllCategories, getKnownTags } from "../utils/store";
 
 const SPACING = { sectionY: 48, labelGap: 16, helperGap: 16 };
 const MAX_TITLE = 80;
@@ -238,6 +238,11 @@ function QuestionCreate({
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [catOpen, setCatOpen] = useState(false);
 
+  const [knownTags, setKnownTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tagOpen, setTagOpen] = useState(false);
+  const tagMenuRef = useRef<HTMLDivElement | null>(null);
+
   const [activeFormatting, setActiveFormatting] = useState({
     bold: false,
     italic: false,
@@ -260,6 +265,17 @@ function QuestionCreate({
     };
 
     loadCategories();
+
+    const loadTags = async () => {
+      try {
+        const fetchedTags = await getKnownTags();
+        if (isMounted) setKnownTags(fetchedTags);
+      } catch {
+        if (isMounted) setKnownTags([]);
+      }
+    };
+
+    loadTags();
 
     return () => {
       isMounted = false;
@@ -389,6 +405,7 @@ function QuestionCreate({
         title,
         description: description || descriptionEditableRef.current?.innerHTML || "",
         attachment,
+        tags: selectedTags,
       });
       onQuestionCreated?.(questionId);
 
@@ -421,6 +438,7 @@ function QuestionCreate({
     setShowEmojiPicker(false);
     setShowFormattingPanel(false);
     setSelectedCategoryIds([]);
+    setSelectedTags([]);
     setShowDiscardModal(false);
     finalNavigate("/dashboard");
   };
@@ -666,6 +684,9 @@ function QuestionCreate({
       if (catMenuRef.current && !catMenuRef.current.contains(e.target as Node))
         setCatOpen(false);
 
+      if (tagMenuRef.current && !tagMenuRef.current.contains(e.target as Node))
+        setTagOpen(false);
+
       if (
         formattingPanelRef.current &&
         !formattingPanelRef.current.contains(target) &&
@@ -684,6 +705,7 @@ function QuestionCreate({
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         setCatOpen(false);
+        setTagOpen(false);
         setShowFormattingPanel(false);
         setShowEmojiPicker(false);
         setShowDiscardModal(false);
@@ -715,6 +737,16 @@ function QuestionCreate({
           .join(", ");
 
   const hasSelection = selectedCategoryIds.length > 0;
+
+  /* ---------------- Tags (visibility restriction) ---------------- */
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const selectedTagsLabel = selectedTags.join(", ");
+  const hasTagSelection = selectedTags.length > 0;
 
   /* ---------------- RETURN UI ---------------- */
   return (
@@ -1200,6 +1232,90 @@ function QuestionCreate({
                       </label>
                     );
                   })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ---------------------- Visibility Tags ---------------------- */}
+          <div className="mb-12">
+            <label className="block mb-4 font-medium text-gray-800">
+              Visibility
+            </label>
+
+            <p className="text-sm text-gray-500 mb-4">
+              Optionally restrict this post to one or more groups. Only
+              people whose own tag matches will be able to see it. Leave
+              empty to make it visible to everyone.
+            </p>
+
+            <div
+              ref={tagMenuRef}
+              className="relative inline-block"
+              style={{ width: 280 }}
+            >
+              {/* Select Box */}
+              <button
+                type="button"
+                onClick={() => setTagOpen((s) => !s)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-[3px] border
+                  outline-none transition bg-white text-[#063E53] ${
+                    tagOpen || hasTagSelection
+                      ? "border-[#A77CB2]"
+                      : "border-[#D1DBDD]"
+                  } hover:border-[#929898] focus:border-[#A77CB2]
+                  active:border-[#A77CB2] focus-visible:[box-shadow:0_0_0_2px_#A77CB2]`}
+                style={{ height: 48 }}
+              >
+                <span
+                  className={`${
+                    selectedTagsLabel ? "text-[#063E53]" : "text-gray-400"
+                  } whitespace-nowrap overflow-hidden text-ellipsis block`}
+                  style={{ maxWidth: "210px" }}
+                >
+                  {selectedTagsLabel || "Visible to everyone"}
+                </span>
+
+                <Chevron open={tagOpen} />
+              </button>
+
+              {/* Dropdown */}
+              {tagOpen && (
+                <div
+                  className="absolute z-20 rounded-[10px] bg-white shadow-md"
+                  style={{
+                    width: "100%",
+                    border: "1px solid #D1DBDD",
+                    bottom: "calc(100% + 8px)",
+                    maxHeight: "250px",
+                    overflowY: "auto",
+                  }}
+                >
+                  {knownTags.length === 0 ? (
+                    <div className="px-4 py-3 text-sm text-gray-400">
+                      No tags available
+                    </div>
+                  ) : (
+                    knownTags.map((tag) => {
+                      const checked = selectedTags.includes(tag);
+                      return (
+                        <label
+                          key={tag}
+                          className={`flex items-center gap-3 px-4 py-2 cursor-pointer ${
+                            checked ? "bg-[#C7C7C7]" : "hover:bg-[#C7C7C7]"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleTag(tag)}
+                            className="w-4 h-4 accent-[#A77CB2]"
+                          />
+                          <span className="text-gray-800">{tag}</span>
+                        </label>
+                      );
+                    })
+                  )}
                 </div>
               )}
             </div>
