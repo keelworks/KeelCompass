@@ -17,6 +17,7 @@ import SearchBar from "../features/dashboard/searchBar/SearchBar";
 import QuestionsSection from "../features/dashboard/questions/QuestionsSection";
 import QuestionCreate from "../pages/QuestionCreate"; // adjust the path to where your file is
 import AskQuestionButton from "../components/ui/AskQuestionButton";
+import MyInterests from "../features/dashboard/interests/MyInterests";
 
 type SearchRequest = {
   query: string;
@@ -317,8 +318,8 @@ const Dashboard = () => {
       </div>
 
       {/* Right Column - My Interests */}
-      <div className="col-span-1 flex flex-col">
-        <div className="mb-8 pt-[20px] pr-[4px]">
+      <div className="col-span-1 flex flex-col gap-6">
+        <div className="pt-[20px] pr-[4px]">
           <AskQuestionButton
             disabled={askDisabled}
             onClick={() => {
@@ -327,6 +328,18 @@ const Dashboard = () => {
             }}
           />
         </div>
+
+        <MyInterests
+          interests={interests}
+          questions={questions.questions}
+          onQuestionUpdate={handleQuestionUpdate}
+          onQuestionDelete={handleQuestionDelete}
+          onQuestionLike={handleQuestionLike}
+          setInterests={setInterests}
+          onInterestUpdate={handleInterestUpdate}
+          onCommentCreate={handleCommentCreate}
+          onCommentDelete={handleCommentDelete}
+        />
       </div>
 
     </MainLayout>

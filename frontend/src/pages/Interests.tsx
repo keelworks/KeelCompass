@@ -3,13 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { Interest, QuestionDetail, QuestionListItem } from "../utils/types";
 import { getQuestion, getUserInterests } from "../utils/store";
 import MainLayout from "../components/wrappers/MainLayout";
-import MyInterests from "../features/dashboard/interests/MyInterests";
 import AskQuestionButton from "../components/ui/AskQuestionButton";
+import QuestionItem from "../features/dashboard/questions/QuestionItem";
+import QuestionDetails from "../features/dashboard/questions/QuestionDetails";
 
 const InterestsPage = () => {
   const navigate = useNavigate();
   const [interests, setInterests] = useState<Interest[]>([]);
   const [interestQuestions, setInterestQuestions] = useState<QuestionListItem[]>([]);
+  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
 
   const refreshInterests = async () => {
     setInterests(await getUserInterests());
@@ -80,23 +82,77 @@ const InterestsPage = () => {
     );
   };
 
+  const handleCommentCreate = (questionId: number) => {
+    setInterestQuestions((prev) =>
+      prev.map((q) =>
+        q.id === questionId ? { ...q, commentCount: (q.commentCount ?? 0) + 1 } : q
+      )
+    );
+  };
+
+  const handleCommentDelete = (questionId: number) => {
+    setInterestQuestions((prev) =>
+      prev.map((q) =>
+        q.id === questionId
+          ? { ...q, commentCount: Math.max((q.commentCount ?? 0) - 1, 0) }
+          : q
+      )
+    );
+  };
+
   return (
     <MainLayout>
-      {/* Right-side panel: Ask Question + My Interests widget */}
-      <div className="col-span-1 lg:col-start-3 flex flex-col gap-6">
+      {/* Left Column - full post cards, same as the Home page */}
+      <div className="col-span-2 flex flex-col h-full overflow-hidden">
+        <div className="shadow-md rounded-lg p-4 mb-6 bg-gray-50 dark:bg-gray-800 w-full h-full flex flex-col overflow-hidden">
+          <div className="mb-4 flex-shrink-0">
+            <h2 className="text-xl font-medium uppercase tracking-wide text-gray-900 dark:text-gray-100">
+              My Interests
+            </h2>
+          </div>
+
+          <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+            {interestQuestions.length === 0 ? (
+              <p className="text-gray-600 dark:text-gray-300">No interests found.</p>
+            ) : (
+              interestQuestions.map((question) => (
+                <div key={question.id}>
+                  <QuestionItem
+                    question={question}
+                    onQuestionLike={handleQuestionLike}
+                    interests={interests}
+                    setInterests={setInterests}
+                    onInterestUpdate={refreshInterests}
+                    setSelectedQuestionId={setSelectedQuestionId}
+                  />
+                  <hr className="border-gray-200 dark:border-gray-700" />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {typeof selectedQuestionId === "number" && !isNaN(selectedQuestionId) && (
+          <QuestionDetails
+            questionId={selectedQuestionId}
+            onQuestionUpdate={handleQuestionUpdate}
+            onQuestionDelete={handleQuestionDelete}
+            onQuestionLike={handleQuestionLike}
+            interests={interests}
+            setInterests={setInterests}
+            onInterestsUpdate={refreshInterests}
+            onCommentCreate={handleCommentCreate}
+            onCommentDelete={handleCommentDelete}
+            onClose={() => setSelectedQuestionId(null)}
+          />
+        )}
+      </div>
+
+      {/* Right Column */}
+      <div className="col-span-1 flex flex-col">
         <div className="pt-[20px] pr-[4px]">
           <AskQuestionButton onClick={() => navigate("/questions/new")} />
         </div>
-
-        <MyInterests
-          interests={interests}
-          questions={interestQuestions}
-          onQuestionUpdate={handleQuestionUpdate}
-          onQuestionDelete={handleQuestionDelete}
-          onQuestionLike={handleQuestionLike}
-          setInterests={setInterests}
-          onInterestUpdate={refreshInterests}
-        />
       </div>
     </MainLayout>
   );

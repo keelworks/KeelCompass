@@ -233,9 +233,9 @@ function QuestionItem({
             </div>
           )}
           {tags && tags.length > 0 && (
-            <div className="text-gray-600 dark:text-gray-300">
+            <span className="inline-block w-fit text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#E8F4F5] text-[#007C88] dark:bg-teal-900/40 dark:text-teal-300">
               Tags: {tags.join(", ")}
-            </div>
+            </span>
           )}
         </div>
 
