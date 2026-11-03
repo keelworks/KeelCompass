@@ -288,7 +288,7 @@ function Sidebar({
               KeelCompass
             </h1>
             <p className="text-[13px] text-[#825E8C] dark:text-[#C9A8D6]">
-              Knowledge Base
+              Forum Board
             </p>
           </div>
         </div>

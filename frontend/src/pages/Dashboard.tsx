@@ -317,7 +317,7 @@ const Dashboard = () => {
 
       {/* Right Column - My Interests */}
       <div className="col-span-1 flex flex-col">
-        <div className="mb-8 pt-[4px] pr-[4px]">
+        <div className="mb-8 pt-[20px] pr-[4px]">
           <button
             disabled={askDisabled}
             className="w-full h-[38px] flex items-center justify-center gap-[8px]

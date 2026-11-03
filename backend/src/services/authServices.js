@@ -24,8 +24,22 @@ const syncUserRoles = async (user, email, rawTag) => {
   const roles = new Set();
 
   if (rawTag) {
-    const mapping = await RoleTagMapping.findOne({ where: { tag: rawTag } });
-    roles.add(mapping ? mapping.role : "viewer");
+    let mapping = await RoleTagMapping.findOne({ where: { tag: rawTag } });
+    if (!mapping) {
+      // first time this tag has ever been seen - auto-register it as
+      // Viewer so it shows up in the admin's role mappings list (and the
+      // question tag picker) without anyone having to add it by hand;
+      // an admin can bump its role later.
+      try {
+        mapping = await RoleTagMapping.create({ tag: rawTag, role: "viewer" });
+        logger.info(`Auto-registered new role tag: "${rawTag}" -> viewer`);
+      } catch (err) {
+        // another concurrent sign-in with the same new tag may have won the race
+        mapping = await RoleTagMapping.findOne({ where: { tag: rawTag } });
+        if (!mapping) throw err;
+      }
+    }
+    roles.add(mapping.role);
   } else {
     roles.add("viewer");
   }

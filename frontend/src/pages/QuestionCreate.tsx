@@ -745,7 +745,6 @@ function QuestionCreate({
     );
   };
 
-  const selectedTagsLabel = selectedTags.join(", ");
   const hasTagSelection = selectedTags.length > 0;
 
   /* ---------------- RETURN UI ---------------- */
@@ -1258,23 +1257,34 @@ function QuestionCreate({
               <button
                 type="button"
                 onClick={() => setTagOpen((s) => !s)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-[3px] border
+                className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-[3px] border
                   outline-none transition bg-white text-[#063E53] ${
                     tagOpen || hasTagSelection
                       ? "border-[#A77CB2]"
                       : "border-[#D1DBDD]"
                   } hover:border-[#929898] focus:border-[#A77CB2]
                   active:border-[#A77CB2] focus-visible:[box-shadow:0_0_0_2px_#A77CB2]`}
-                style={{ height: 48 }}
+                style={{ minHeight: 48 }}
               >
-                <span
-                  className={`${
-                    selectedTagsLabel ? "text-[#063E53]" : "text-gray-400"
-                  } whitespace-nowrap overflow-hidden text-ellipsis block`}
+                <div
+                  className="flex items-center gap-1.5 flex-wrap"
                   style={{ maxWidth: "210px" }}
                 >
-                  {selectedTagsLabel || "Visible to everyone"}
-                </span>
+                  {hasTagSelection ? (
+                    selectedTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#E8F4F5] text-[#007C88] whitespace-nowrap"
+                      >
+                        {tag}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#E8F4F5] text-[#007C88] whitespace-nowrap">
+                      Everyone
+                    </span>
+                  )}
+                </div>
 
                 <Chevron open={tagOpen} />
               </button>
@@ -1291,31 +1301,39 @@ function QuestionCreate({
                     overflowY: "auto",
                   }}
                 >
-                  {knownTags.length === 0 ? (
-                    <div className="px-4 py-3 text-sm text-gray-400">
-                      No tags available
-                    </div>
-                  ) : (
-                    knownTags.map((tag) => {
-                      const checked = selectedTags.includes(tag);
-                      return (
-                        <label
-                          key={tag}
-                          className={`flex items-center gap-3 px-4 py-2 cursor-pointer ${
-                            checked ? "bg-[#C7C7C7]" : "hover:bg-[#C7C7C7]"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleTag(tag)}
-                            className="w-4 h-4 accent-[#A77CB2]"
-                          />
-                          <span className="text-gray-800">{tag}</span>
-                        </label>
-                      );
-                    })
-                  )}
+                  <label
+                    className={`flex items-center gap-3 px-4 py-2 cursor-pointer ${
+                      !hasTagSelection ? "bg-[#C7C7C7]" : "hover:bg-[#C7C7C7]"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!hasTagSelection}
+                      onChange={() => setSelectedTags([])}
+                      className="w-4 h-4 accent-[#A77CB2]"
+                    />
+                    <span className="text-gray-800">Everyone</span>
+                  </label>
+
+                  {knownTags.map((tag) => {
+                    const checked = selectedTags.includes(tag);
+                    return (
+                      <label
+                        key={tag}
+                        className={`flex items-center gap-3 px-4 py-2 cursor-pointer ${
+                          checked ? "bg-[#C7C7C7]" : "hover:bg-[#C7C7C7]"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleTag(tag)}
+                          className="w-4 h-4 accent-[#A77CB2]"
+                        />
+                        <span className="text-gray-800">{tag}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </div>
