@@ -10,9 +10,11 @@ const userCommentActionRoutes = require("./userCommentActionRoutes");
 const interestRoutes = require("./interestRoutes");
 const notificationRoutes = require("./notificationRoutes");
 const userRoutes = require("./userRoutes");
+const adminRoutes = require("./adminRoutes");
 
 // routes
 router.use("/api/auth", authRoutes);
+router.use("/api/admin", adminRoutes);
 router.use("/api/categories", categoryRoutes);
 router.use("/api/search", searchRoutes);
 router.use("/api/questions", questionRoutes);

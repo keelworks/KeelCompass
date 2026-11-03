@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       username: {
         type: DataTypes.STRING(50),
-        allowNull: false,
+        allowNull: true,
       },
       email: {
         type: DataTypes.STRING(100),
@@ -27,29 +27,20 @@ module.exports = (sequelize, DataTypes) => {
       },
       password: {
         type: DataTypes.STRING(255),
-        allowNull: false,
+        allowNull: true,
       },
-      is_verified: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
-      verification_code: {
+      google_id: {
         type: DataTypes.STRING(255),
         allowNull: true,
+        unique: true,
       },
-      verification_code_expires_at: {
-        type: DataTypes.DATE,
+      picture_url: {
+        type: DataTypes.STRING(512),
         allowNull: true,
       },
-      verification_code_sent_at: {
-        type: DataTypes.DATE,
+      raw_role_tag: {
+        type: DataTypes.STRING(100),
         allowNull: true,
-      },
-      verification_attempts: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
       },
     },
     { 
@@ -67,6 +58,7 @@ module.exports = (sequelize, DataTypes) => {
     User.hasMany(models.UserCommentAction, { foreignKey: 'user_id', as: 'userCommentActions' });
     User.hasMany(models.Interest, { foreignKey: 'user_id', as: 'interests' });
     User.hasMany(models.Notification, { foreignKey: 'user_id', as: 'notifications' });
+    User.hasMany(models.UserRole, { foreignKey: 'user_id', as: 'userRoles' });
   };
 
   return User;

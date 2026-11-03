@@ -31,12 +31,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - LOG_PATH=logs/app.log
       - ALLOWED_SIGNUP_DOMAIN=${ALLOWED_SIGNUP_DOMAIN}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_SECURE=${SMTP_SECURE}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASS=${SMTP_PASS}
-      - SMTP_FROM=${SMTP_FROM}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - BOOTSTRAP_ADMIN_EMAIL=${BOOTSTRAP_ADMIN_EMAIL}
     depends_on:
       database:
         condition: service_healthy
@@ -50,6 +46,7 @@ services:
       dockerfile: Dockerfile.prod
       args:
         VITE_API_URL: /api
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
     restart: unless-stopped
     ports:
       - "127.0.0.1:3002:80"

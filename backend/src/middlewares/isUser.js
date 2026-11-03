@@ -2,6 +2,7 @@ const logger = require("../utils/logger");
 const { verifyToken } = require("../utils/jwtUtils");
 const db = require("../models");
 const User = db.User;
+const UserRole = db.UserRole;
 
 module.exports = async function isUser(req, res, next) {
   const token = req.header("Authorization")?.replace("Bearer ", "");
@@ -14,7 +15,9 @@ module.exports = async function isUser(req, res, next) {
     const user = await User.findByPk(decoded.id);
     if (!user) return res.status(401).json({ error: "User not found" });
 
-    req.user = { id: user.id, email: user.email, role: user.role };
+    const userRoles = await UserRole.findAll({ where: { user_id: user.id } });
+
+    req.user = { id: user.id, email: user.email, role: user.role, roles: userRoles.map((r) => r.role) };
     next();
   } catch (error) {
     logger.error(`Caught in isUser middleware: ${error.message}`);

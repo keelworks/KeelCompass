@@ -47,6 +47,8 @@ db.UserCommentAction = require("./UserCommentAction.js")(sequelize, Sequelize.Da
 db.Attachment = require("./Attachment.js")(sequelize, Sequelize.DataTypes);
 db.Interest = require("./Interest.js")(sequelize, Sequelize.DataTypes);
 db.Notification = require("./Notification.js")(sequelize, Sequelize.DataTypes);
+db.UserRole = require("./UserRole.js")(sequelize, Sequelize.DataTypes);
+db.RoleTagMapping = require("./RoleTagMapping.js")(sequelize, Sequelize.DataTypes);
 
 // initialize associations
 Object.keys(db).forEach(modelName => {

@@ -28,7 +28,22 @@ const getUserById = async (req, res, next) => {
   }
 };
 
+// complete profile setup (choose a username)
+const updateMe = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { username } = req.body;
+
+    const token = await userService.updateMe(userId, username);
+    res.status(200).json(token);
+  } catch (error) {
+    logger.error(`Caught in updateMe controller: ${error.message}`);
+    next(error);
+  }
+};
+
 module.exports = {
   getMe,
   getUserById,
+  updateMe,
 };

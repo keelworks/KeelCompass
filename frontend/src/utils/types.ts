@@ -18,10 +18,29 @@ export enum UserActionType {
 export interface User {
   id: number;
   role: UserType;
-  username: string;
+  username: string | null;
   email: string;
+  picture_url: string | null;
+  raw_role_tag: string | null;
+  roles: string[];
   createdAt: string;
   updatedAt: string;
+}
+
+export type KcRole = "admin" | "manager" | "staff" | "viewer";
+
+export interface RoleMapping {
+  id: number;
+  tag: string;
+  role: KcRole;
+}
+
+export interface AdminUser {
+  id: number;
+  username: string | null;
+  email: string;
+  raw_role_tag: string | null;
+  roles: KcRole[];
 }
 
 // response for category

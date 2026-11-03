@@ -3,12 +3,162 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { BsChevronBarLeft, BsChevronBarRight } from "react-icons/bs";
 import { IoClose } from "react-icons/io5";
-import { FiBookmark, FiHome } from "react-icons/fi";
+import { FiBookmark, FiHome, FiShield } from "react-icons/fi";
 import Logo from "../../assets/logo.png";
 import Tooltip from "../../components/ui/Tooltip";
 import type { Theme } from "../../utils/theme";
 
 const TOGGLE_TEAL = "#0E8B87";
+
+interface MenuItemData {
+  name: string;
+  iconType: "home" | "interests" | "admin";
+  path: string;
+  disabled: boolean;
+}
+
+// extracted so each item owns its own hover/press/focus state - calling useState
+// inside the menuItems.map() callback directly would change the number of hooks
+// rendered whenever the list's length changes (e.g. the Admin item appearing
+// conditionally), which violates the Rules of Hooks and crashes React.
+function SidebarMenuItem({
+  item,
+  selected,
+  collapsed,
+  isDark,
+  showAsk,
+  onHomeClick,
+  onMobileClose,
+  navigate,
+}: {
+  item: MenuItemData;
+  selected: boolean;
+  collapsed: boolean;
+  isDark: boolean;
+  showAsk?: boolean;
+  onHomeClick?: () => void;
+  onMobileClose?: () => void;
+  navigate: (path: string) => void;
+}) {
+  const isDisabled = item.disabled;
+  const isHome = item.name === "Home";
+  const [isHovered, setIsHovered] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // === Dynamic colors per state ===
+  const getStateStyles = () => {
+    if (isFocused)
+      return isDark
+        ? { bg: "#123B3D", border: "1.5px solid #4FD1D9", text: "#E5F6F6", iconBorder: "#E5F6F6", fontWeight: 600 }
+        : { bg: "#C8E9E9", border: "1.5px solid #007C88", text: "#414141", iconBorder: "#414141", fontWeight: 600 };
+    if (selected)
+      return isDark
+        ? { bg: "#123B3D", border: "none", text: "#8FE3D9", iconBorder: "#8FE3D9", fontWeight: 600 }
+        : { bg: "#C8E9E9", border: "none", text: "#53385A", iconBorder: "#53385A", fontWeight: 600 };
+    if (isPressed)
+      return isDark
+        ? { bg: "#0F2E2E", border: "1px solid #17403F", text: "#CBD5D6", iconBorder: "#CBD5D6", fontWeight: 400 }
+        : { bg: "#DCF1F1", border: "1px solid #D3EEEE", text: "#404955", iconBorder: "#404955", fontWeight: 400 };
+    if (isHovered)
+      return isDark
+        ? { bg: "#152F2F", border: "1px solid #1D3B3B", text: "#5FD9DC", iconBorder: "#5FD9DC", fontWeight: 500, boxShadow: "none" }
+        : { bg: "#DFE6E6", border: "1px solid #E8F0F0", text: "#007C88", iconBorder: "#007C88", fontWeight: 500, boxShadow: "0px 0px 2px 0px #21212114" };
+
+    return isDark
+      ? { bg: "transparent", border: "none", text: "#B0B8BA", iconBorder: "#B0B8BA", fontWeight: 400 }
+      : { bg: "transparent", border: "none", text: "#404955", iconBorder: "#404955", fontWeight: 400 };
+  };
+
+  const state = getStateStyles();
+
+  const handleActivate = () => {
+    if (isDisabled) return;
+    if (isHome && showAsk && onHomeClick) {
+      onHomeClick();
+    } else {
+      navigate(item.path);
+    }
+    onMobileClose?.();
+  };
+
+  const menuItemElement = (
+    <div
+      tabIndex={isDisabled ? -1 : 0}
+      aria-current={selected ? "page" : undefined}
+      className={`group relative flex items-center rounded-[6px] h-[44px] mb-[8px] transition-all duration-150 cursor-pointer
+        ${collapsed ? "justify-center px-0" : "px-[12px]"}
+        ${isDisabled ? "opacity-50 pointer-events-none" : ""}
+        ${selected ? "bg-[#C8E9E9]" : "hover:bg-[#DFE6E6]"}
+      `}
+      style={{
+        background: state.bg,
+        border: state.border,
+        boxShadow: state.boxShadow || "none",
+      }}
+      onClick={handleActivate}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setIsPressed(false);
+      }}
+      onMouseDown={() => setIsPressed(true)}
+      onMouseUp={() => setIsPressed(false)}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleActivate();
+        }
+      }}
+    >
+      {/* === Icon === */}
+      <div
+        className={`relative flex items-center justify-center min-w-[20px] h-[20px] ${
+          collapsed ? "" : "mr-[8px]"
+        }`}
+      >
+        {item.iconType === "home" ? (
+          <FiHome size={18} color={state.iconBorder} />
+        ) : item.iconType === "admin" ? (
+          <FiShield size={18} color={state.iconBorder} />
+        ) : (
+          <FiBookmark size={18} color={state.iconBorder} />
+        )}
+      </div>
+
+      {/* === Text === */}
+      {!collapsed && (
+        <span
+          style={{
+            color: state.text,
+            fontFamily: "Lato",
+            fontWeight: state.fontWeight,
+            fontSize: "18px",
+            lineHeight: "10px",
+            letterSpacing: isHovered ? "1%" : "normal",
+            opacity: 1,
+            transition: "all 0.15s ease-in-out",
+          }}
+        >
+          {item.name}
+        </span>
+      )}
+    </div>
+  );
+
+  // Only wrap with Tooltip when sidebar is collapsed
+  if (collapsed) {
+    return (
+      <Tooltip text={item.name} position="right" className="block">
+        {menuItemElement}
+      </Tooltip>
+    );
+  }
+
+  return menuItemElement;
+}
 
 function Sidebar({
   showAsk,
@@ -16,6 +166,7 @@ function Sidebar({
   mobileOpen = false,
   onMobileClose,
   theme = "light",
+  isAdmin = false,
 }: {
   showAsk?: boolean;
   questionTitle?: string;
@@ -23,6 +174,7 @@ function Sidebar({
   mobileOpen?: boolean;
   onMobileClose?: () => void;
   theme?: Theme;
+  isAdmin?: boolean;
 }) {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
@@ -42,6 +194,16 @@ function Sidebar({
       path: "/interests",
       disabled: false,
     },
+    ...(isAdmin
+      ? [
+          {
+            name: "Admin",
+            iconType: "admin" as const,
+            path: "/admin",
+            disabled: false,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -133,137 +295,19 @@ function Sidebar({
 
       {/* === Menu Section === */}
       <nav className="mt-[32px] flex-1 px-[12px]">
-        {menuItems.map((item, i) => {
-          const selected = location.pathname === item.path && !showAsk;
-          const isDisabled = item.disabled;
-          const isHome = item.name === "Home";
-          const [isHovered, setIsHovered] = useState(false);
-          const [isPressed, setIsPressed] = useState(false);
-          const [isFocused, setIsFocused] = useState(false);
-
-          // === Dynamic colors per state ===
-          const getStateStyles = () => {
-            if (isFocused)
-              return isDark
-                ? { bg: "#123B3D", border: "1.5px solid #4FD1D9", text: "#E5F6F6", iconBorder: "#E5F6F6", fontWeight: 600 }
-                : { bg: "#C8E9E9", border: "1.5px solid #007C88", text: "#414141", iconBorder: "#414141", fontWeight: 600 };
-            if (selected)
-              return isDark
-                ? { bg: "#123B3D", border: "none", text: "#8FE3D9", iconBorder: "#8FE3D9", fontWeight: 600 }
-                : { bg: "#C8E9E9", border: "none", text: "#53385A", iconBorder: "#53385A", fontWeight: 600 };
-            if (isPressed)
-              return isDark
-                ? { bg: "#0F2E2E", border: "1px solid #17403F", text: "#CBD5D6", iconBorder: "#CBD5D6", fontWeight: 400 }
-                : { bg: "#DCF1F1", border: "1px solid #D3EEEE", text: "#404955", iconBorder: "#404955", fontWeight: 400 };
-            if (isHovered)
-              return isDark
-                ? { bg: "#152F2F", border: "1px solid #1D3B3B", text: "#5FD9DC", iconBorder: "#5FD9DC", fontWeight: 500, boxShadow: "none" }
-                : { bg: "#DFE6E6", border: "1px solid #E8F0F0", text: "#007C88", iconBorder: "#007C88", fontWeight: 500, boxShadow: "0px 0px 2px 0px #21212114" };
-
-            return isDark
-              ? { bg: "transparent", border: "none", text: "#B0B8BA", iconBorder: "#B0B8BA", fontWeight: 400 }
-              : { bg: "transparent", border: "none", text: "#404955", iconBorder: "#404955", fontWeight: 400 };
-          };
-
-          const state = getStateStyles();
-
-          // Menu item content - identical to original
-          const menuItemElement = (
-            <div
-              tabIndex={isDisabled ? -1 : 0}
-              aria-current={selected ? "page" : undefined}
-              className={`group relative flex items-center rounded-[6px] h-[44px] mb-[8px] transition-all duration-150 cursor-pointer
-                ${collapsed ? "justify-center px-0" : "px-[12px]"}
-                ${isDisabled ? "opacity-50 pointer-events-none" : ""}
-                ${selected ? "bg-[#C8E9E9]" : "hover:bg-[#DFE6E6]"}
-              `}
-              style={{
-                background: state.bg,
-                border: state.border,
-                boxShadow: state.boxShadow || "none",
-              }}
-              onClick={() => {
-                if (!isDisabled) {
-                  if (isHome && showAsk && onHomeClick) {
-                    onHomeClick();
-                  } else {
-                    navigate(item.path);
-                  }
-                  onMobileClose?.();
-                }
-              }}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => {
-                setIsHovered(false);
-                setIsPressed(false);
-              }}
-              onMouseDown={() => setIsPressed(true)}
-              onMouseUp={() => setIsPressed(false)}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  if (!isDisabled) {
-                    if (isHome && showAsk && onHomeClick) {
-                      onHomeClick();
-                    } else {
-                      navigate(item.path);
-                    }
-                    onMobileClose?.();
-                  }
-                }
-              }}
-            >
-              {/* === Icon === */}
-              <div
-                className={`relative flex items-center justify-center min-w-[20px] h-[20px] ${
-                  collapsed ? "" : "mr-[8px]"
-                }`}
-              >
-                {item.iconType === "home" ? (
-                  <FiHome size={18} color={state.iconBorder} />
-                ) : (
-                  <FiBookmark size={18} color={state.iconBorder} />
-                )}
-              </div>
-
-              {/* === Text === */}
-              {!collapsed && (
-                <span
-                  style={{
-                    color: state.text,
-                    fontFamily: "Lato",
-                    fontWeight: state.fontWeight,
-                    fontSize: "18px",
-                    lineHeight: "10px",
-                    letterSpacing: isHovered ? "1%" : "normal",
-                    opacity: 1,
-                    transition: "all 0.15s ease-in-out",
-                  }}
-                >
-                  {item.name}
-                </span>
-              )}
-            </div>
-          );
-
-          // Only wrap with Tooltip when sidebar is collapsed
-          if (collapsed) {
-            return (
-              <Tooltip
-                key={i}
-                text={item.name}
-                position="right"
-                className="block"
-              >
-                {menuItemElement}
-              </Tooltip>
-            );
-          }
-
-          return <div key={i}>{menuItemElement}</div>;
-        })}
+        {menuItems.map((item, i) => (
+          <SidebarMenuItem
+            key={i}
+            item={item}
+            selected={location.pathname === item.path && !showAsk}
+            collapsed={collapsed}
+            isDark={isDark}
+            showAsk={showAsk}
+            onHomeClick={onHomeClick}
+            onMobileClose={onMobileClose}
+            navigate={navigate}
+          />
+        ))}
       </nav>
       </aside>
     </>

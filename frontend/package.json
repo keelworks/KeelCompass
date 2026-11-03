@@ -11,6 +11,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
     "axios": "^1.8.4",
     "dompurify": "^3.2.7",
     "emoji-picker-react": "^4.12.2",
@@ -41,5 +42,10 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-arm64-gnu": "*"
-  }
+  },
+  "description": "This project is a frontend application built with **React**, **TypeScript**, **Vite**, and **Tailwind CSS**. It leverages modern tools for fast development and optimized production builds. The project comes with **ESLint** configuration for code quality and type safety, ensuring smooth development workflows.",
+  "main": "eslint.config.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

@@ -1,196 +1,108 @@
-const crypto = require("crypto");
-const { Op } = require("sequelize");
-const bcrypt = require("bcryptjs");
+const { OAuth2Client } = require("google-auth-library");
 
 const logger = require("../utils/logger");
 const logEverything = require("../utils/logEverything");
 const { HttpError } = require("../utils/httpError");
 const { generateToken } = require("../utils/jwtUtils");
-const mailer = require("../utils/mailer");
+const { parseRoleTag } = require("../utils/roleTags");
 
 const db = require("../models");
 const User = db.User;
+const UserRole = db.UserRole;
+const RoleTagMapping = db.RoleTagMapping;
 
 const ALLOWED_SIGNUP_DOMAIN = (process.env.ALLOWED_SIGNUP_DOMAIN || "keelworks.org").toLowerCase();
-const VERIFICATION_CODE_TTL_MS = 30 * 60 * 1000; // 30 minutes
-const VERIFICATION_RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
-const VERIFICATION_MAX_ATTEMPTS = 5;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const BOOTSTRAP_ADMIN_EMAIL = (process.env.BOOTSTRAP_ADMIN_EMAIL || "").toLowerCase();
 
-const normalizeEmail = (email) => email.trim().toLowerCase();
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-const generateVerificationCode = () => String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+// resolve a user's Google-derived roles (tag mapping + bootstrap admin), and
+// re-sync their UserRoles rows to match - Google stays the source of truth,
+// re-evaluated on every sign-in.
+const syncUserRoles = async (user, email, rawTag) => {
+  const roles = new Set();
 
-const issueVerificationCode = async (user, { username, email, hashedPassword } = {}) => {
-  const code = generateVerificationCode();
-  const hashedCode = await bcrypt.hash(code, 10);
-  const now = new Date();
-
-  const attrs = {
-    verification_code: hashedCode,
-    verification_code_expires_at: new Date(now.getTime() + VERIFICATION_CODE_TTL_MS),
-    verification_code_sent_at: now,
-    verification_attempts: 0,
-    is_verified: false,
-  };
-  if (username !== undefined) attrs.username = username;
-  if (hashedPassword !== undefined) attrs.password = hashedPassword;
-
-  if (user) {
-    await user.update(attrs);
+  if (rawTag) {
+    const mapping = await RoleTagMapping.findOne({ where: { tag: rawTag } });
+    roles.add(mapping ? mapping.role : "viewer");
   } else {
-    user = await User.create({ ...attrs, email });
+    roles.add("viewer");
   }
 
-  await mailer.sendVerificationCodeEmail({
-    to: email,
-    username: user.username,
-    code,
-    expiresInMinutes: VERIFICATION_CODE_TTL_MS / 60000,
-  });
-
-  return user;
-};
-
-// register
-const register = async (username, email, password) => {
-  try {
-    const normalizedEmail = normalizeEmail(email);
-
-    if (!normalizedEmail.endsWith(`@${ALLOWED_SIGNUP_DOMAIN}`)) {
-      throw new HttpError(
-        403,
-        `Only KeelWorks employees can sign up for KeelCompass. Please use your KeelWorks email address (e.g. name@${ALLOWED_SIGNUP_DOMAIN}) to create an account.`
-      );
-    }
-
-    const existingUser = await User.findOne({ where: { email: normalizedEmail } });
-    if (existingUser && existingUser.is_verified) {
-      throw new HttpError(409, "An account with this email already exists. Please log in instead.");
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await issueVerificationCode(existingUser, {
-      username,
-      email: normalizedEmail,
-      hashedPassword,
-    });
-
-    logger.info(`Verification code issued for signup: ${normalizedEmail}`);
-    return { email: normalizedEmail, expiresInSeconds: VERIFICATION_CODE_TTL_MS / 1000 };
-  } catch (error) {
-    logEverything(error, "authServices");
-    if (error instanceof HttpError) throw error;
-    throw new HttpError(500, "Error registering user");
+  if (BOOTSTRAP_ADMIN_EMAIL && email === BOOTSTRAP_ADMIN_EMAIL) {
+    roles.add("admin");
   }
+
+  await UserRole.destroy({ where: { user_id: user.id } });
+  await UserRole.bulkCreate([...roles].map((role) => ({ user_id: user.id, role })));
+
+  return [...roles];
 };
 
-// verify email with the code sent at registration/resend
-const verifyEmail = async (email, code) => {
+// verify a Google ID token, then find-or-create the matching KeelCompass user
+const googleAuth = async (credential) => {
   try {
-    const normalizedEmail = normalizeEmail(email);
-    const user = await User.findOne({ where: { email: normalizedEmail } });
+    let payload;
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: GOOGLE_CLIENT_ID,
+      });
+      payload = ticket.getPayload();
+    } catch (err) {
+      throw new HttpError(401, "Invalid Google sign-in. Please try again.");
+    }
+
+    const email = (payload.email || "").toLowerCase();
+    const isAllowedWorkspaceAccount =
+      payload.email_verified &&
+      payload.hd === ALLOWED_SIGNUP_DOMAIN &&
+      email.endsWith(`@${ALLOWED_SIGNUP_DOMAIN}`);
+
+    if (!isAllowedWorkspaceAccount) {
+      throw new HttpError(403, "Only KeelWorks Google Workspace accounts can sign in to KeelCompass.");
+    }
+
+    const rawTag = parseRoleTag(payload.family_name);
+
+    let user = await User.findOne({ where: { google_id: payload.sub } });
 
     if (!user) {
-      throw new HttpError(404, "We couldn't find a pending signup for that email. Please sign up again.");
-    }
-    if (user.is_verified) {
-      throw new HttpError(409, "This account is already verified. Please log in.");
-    }
-    if (!user.verification_code || !user.verification_code_expires_at) {
-      throw new HttpError(400, "No verification code is pending for this account. Please request a new one.");
-    }
-    if (new Date() > user.verification_code_expires_at) {
-      throw new HttpError(410, "This verification code has expired. Please request a new one.");
-    }
-    if (user.verification_attempts >= VERIFICATION_MAX_ATTEMPTS) {
-      throw new HttpError(429, "Too many incorrect attempts. Please request a new verification code.");
-    }
-
-    const isMatch = await bcrypt.compare(code, user.verification_code);
-    if (!isMatch) {
-      await user.increment("verification_attempts");
-      throw new HttpError(401, "That verification code is incorrect. Please try again.");
-    }
-
-    await user.update({
-      is_verified: true,
-      verification_code: null,
-      verification_code_expires_at: null,
-      verification_code_sent_at: null,
-      verification_attempts: 0,
-    });
-
-    const token = generateToken({ id: user.id, email: user.email, username: user.username });
-    logger.info(`Email verified successfully for ${normalizedEmail}`);
-    return token;
-  } catch (error) {
-    logEverything(error, "authServices");
-    if (error instanceof HttpError) throw error;
-    throw new HttpError(500, "Error verifying email");
-  }
-};
-
-// resend a fresh verification code
-const resendCode = async (email) => {
-  try {
-    const normalizedEmail = normalizeEmail(email);
-    const user = await User.findOne({ where: { email: normalizedEmail } });
-
-    if (!user) {
-      throw new HttpError(404, "We couldn't find a pending signup for that email. Please sign up again.");
-    }
-    if (user.is_verified) {
-      throw new HttpError(409, "This account is already verified. Please log in.");
-    }
-    if (user.verification_code_sent_at) {
-      const elapsedMs = Date.now() - new Date(user.verification_code_sent_at).getTime();
-      if (elapsedMs < VERIFICATION_RESEND_COOLDOWN_MS) {
-        const secondsRemaining = Math.ceil((VERIFICATION_RESEND_COOLDOWN_MS - elapsedMs) / 1000);
-        throw new HttpError(429, `Please wait ${secondsRemaining}s before requesting another code.`);
+      user = await User.findOne({ where: { email } });
+      if (user) {
+        await user.update({ google_id: payload.sub, picture_url: payload.picture || null, raw_role_tag: rawTag });
       }
     }
 
-    await issueVerificationCode(user, { email: normalizedEmail });
-
-    logger.info(`Verification code resent for ${normalizedEmail}`);
-    return { email: normalizedEmail, expiresInSeconds: VERIFICATION_CODE_TTL_MS / 1000 };
-  } catch (error) {
-    logEverything(error, "authServices");
-    if (error instanceof HttpError) throw error;
-    throw new HttpError(500, "Error resending verification code");
-  }
-};
-
-// login
-const login = async (identifier, password) => {
-  try {
-    const trimmedIdentifier = identifier.trim();
-    const user = await User.findOne({
-      where: {
-        [Op.or]: [{ email: trimmedIdentifier.toLowerCase() }, { username: trimmedIdentifier }],
-      },
-    });
-    if (!user) throw new HttpError(401, "No account found with that email or username");
-    if (!user.is_verified) {
-      throw new HttpError(403, "Please verify your email before logging in. Check your inbox for the verification code.");
+    if (!user) {
+      user = await User.create({
+        email,
+        google_id: payload.sub,
+        picture_url: payload.picture || null,
+        raw_role_tag: rawTag,
+        role: "volunteer",
+      });
+      logger.info(`New user created via Google SSO: ${email}`);
+    } else {
+      const updates = {};
+      if (payload.picture && payload.picture !== user.picture_url) updates.picture_url = payload.picture;
+      if (rawTag !== user.raw_role_tag) updates.raw_role_tag = rawTag;
+      if (Object.keys(updates).length > 0) await user.update(updates);
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) throw new HttpError(401, "Invalid password");
+    const roles = await syncUserRoles(user, email, rawTag);
 
     const token = generateToken({ id: user.id, email: user.email, username: user.username });
-    logger.info(`User logged in successfully: ${trimmedIdentifier}`);
-    return token;
+    logger.info(`User signed in via Google SSO: ${email} (tag: ${rawTag ?? "none"}, roles: ${roles.join(",")})`);
+    return { token, needsProfile: !user.username };
   } catch (error) {
     logEverything(error, "authServices");
     if (error instanceof HttpError) throw error;
-    throw new HttpError(500, "Error logging in user");
+    throw new HttpError(500, "Error signing in with Google");
   }
 };
 
 module.exports = {
-  register,
-  verifyEmail,
-  resendCode,
-  login,
+  googleAuth,
 };

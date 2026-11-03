@@ -6,44 +6,45 @@ import {
   UserActionType,
   Interest,
   SearchResponse,
+  User,
+  KcRole,
+  RoleMapping,
+  AdminUser,
 } from './types';
 
 // auth endpoints
-export async function register(params: {
-  username: string;
-  email: string;
-  password: string;
-}): Promise<{ email: string; expiresInSeconds: number }> {
-  const res = await axiosInstance.post<{ email: string; expiresInSeconds: number }>(
-    '/auth/register',
+export async function googleAuth(params: {
+  credential: string;
+}): Promise<{ token: string; needsProfile: boolean }> {
+  const res = await axiosInstance.post<{ token: string; needsProfile: boolean }>(
+    '/auth/google',
     params
   );
   return res.data;
 }
 
-export async function verifyEmail(params: {
-  email: string;
-  code: string;
-}): Promise<string> {
-  const res = await axiosInstance.post<string>('/auth/verify-email', params);
+export async function completeProfile(params: { username: string }): Promise<string> {
+  const res = await axiosInstance.patch<string>('/users/me', params);
   return res.data;
 }
 
-export async function resendCode(params: {
-  email: string;
-}): Promise<{ email: string; expiresInSeconds: number }> {
-  const res = await axiosInstance.post<{ email: string; expiresInSeconds: number }>(
-    '/auth/resend-code',
-    params
-  );
+// admin endpoints
+export async function getRoleMappings(): Promise<RoleMapping[]> {
+  const res = await axiosInstance.get<RoleMapping[]>('/admin/role-mappings');
   return res.data;
 }
 
-export async function login(params: {
-  identifier: string;
-  password: string;
-}): Promise<string> {
-  const res = await axiosInstance.post<string>('/auth/login', params);
+export async function createRoleMapping(params: { tag: string; role: KcRole }): Promise<RoleMapping> {
+  const res = await axiosInstance.post<RoleMapping>('/admin/role-mappings', params);
+  return res.data;
+}
+
+export async function deleteRoleMapping(id: number): Promise<void> {
+  await axiosInstance.delete(`/admin/role-mappings/${id}`);
+}
+
+export async function getAdminUsers(): Promise<AdminUser[]> {
+  const res = await axiosInstance.get<AdminUser[]>('/admin/users');
   return res.data;
 }
 
@@ -284,7 +285,7 @@ export async function markNotificationRead(params: {
   await axiosInstance.patch(`/notifications/${params.id}/mark-read`);
 }
 
-export const getMe = async () => {
-  const response = await axiosInstance.get("/users/me");
+export const getMe = async (): Promise<User> => {
+  const response = await axiosInstance.get<User>("/users/me");
   return response.data;
 };

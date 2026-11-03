@@ -23,7 +23,9 @@ const MainLayout = ({
   onHomeClick,
 }: MainLayoutProps) => {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [username, setUsername] = useState("User");
+  const [username, setUsername] = useState<string | null>("User");
+  const [pictureUrl, setPictureUrl] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -44,6 +46,8 @@ const MainLayout = ({
         const user = await getMe();
         console.log("Fetched user data:", user);
         setUsername(user.username);
+        setPictureUrl(user.picture_url);
+        setIsAdmin(user.roles?.includes("admin") ?? false);
       } catch (error) {
         console.error("Failed to fetch user data:", error);
       }
@@ -80,6 +84,7 @@ const MainLayout = ({
           mobileOpen={mobileNavOpen}
           onMobileClose={() => setMobileNavOpen(false)}
           theme={theme}
+          isAdmin={isAdmin}
         />
       </div>
 
@@ -133,14 +138,21 @@ const MainLayout = ({
               onClick={() => setShowDropdown((prev) => !prev)}
               ref={dropdownRef}
             >
-              <img
-                src="https://i.pravatar.cc/40"
-                alt="Profile"
-                className="w-6 h-6 rounded-full"
-              />
+              {pictureUrl ? (
+                <img
+                  src={pictureUrl}
+                  alt="Profile"
+                  referrerPolicy="no-referrer"
+                  className="w-6 h-6 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-semibold flex items-center justify-center">
+                  {username ? username.charAt(0).toUpperCase() : "?"}
+                </div>
+              )}
               <div className="leading-tight hidden sm:block">
                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 -mb-1">
-                  {username}
+                  {username || "User"}
                 </p>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400">Student</p>
               </div>
