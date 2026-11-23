@@ -13,6 +13,7 @@ const searchQuestionByKeyword = async (req, res, next) => {
 
     const viewerTag = req.user?.normalized_role_tag ?? null;
     const viewerUserId = req.user?.id ?? null;
+    const isAdmin = req.user?.roles?.includes("admin") ?? false;
 
     const result = await searchService.searchQuestionByKeyword(
       query,
@@ -22,7 +23,8 @@ const searchQuestionByKeyword = async (req, res, next) => {
       !!hasNone,
       viewerTag,
       viewerUserId,
-      { tag, status, dateFrom, dateTo }
+      { tag, status, dateFrom, dateTo },
+      isAdmin
     );
     return res.status(200).json(result);
   } catch (error) {

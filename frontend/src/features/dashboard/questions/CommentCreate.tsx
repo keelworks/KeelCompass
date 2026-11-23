@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IoSend } from "react-icons/io5";
 import { createComment } from "../../../utils/store";
 import { useToast } from "../../../utils/useToast";
@@ -12,11 +12,25 @@ interface CommentCreateProps {
   onCommentCreate: (questionId: number) => void
 }
 
+const DRAFT_KEY_PREFIX = "keelcompass_comment_draft_";
+
 function CommentCreate({ questionId, onCommentCreate }: CommentCreateProps) {
-  const [comment, setComment] = useState("");
+  const draftKey = `${DRAFT_KEY_PREFIX}${questionId}`;
+  const [comment, setComment] = useState(() => localStorage.getItem(draftKey) || "");
   const { showError, toastNode } = useToast();
   const mention = useMentionAutocomplete<HTMLTextAreaElement>(comment, setComment);
   useAutoGrowTextarea(mention.inputRef, comment, 140);
+
+  // autosave so an accidental reload/navigation doesn't lose an in-progress
+  // comment - cleared automatically once the box is empty again (submit or
+  // manual clear), same pattern as the question-draft autosave
+  useEffect(() => {
+    if (!comment.trim()) {
+      localStorage.removeItem(draftKey);
+      return;
+    }
+    localStorage.setItem(draftKey, comment);
+  }, [comment, draftKey]);
 
   const handleSubmitComment = async () => {
     if (!comment.trim()) return;

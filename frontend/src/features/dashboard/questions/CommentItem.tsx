@@ -74,9 +74,21 @@ function CommentItem({
  const [editHistoryOpen, setEditHistoryOpen] = useState(false);
 
 
- const [isReplying, setIsReplying] = useState(false);
- const [replyContent, setReplyContent] = useState('');
+ const replyDraftKey = `keelcompass_reply_draft_${comment.id}`;
+ const [isReplying, setIsReplying] = useState(() => !!localStorage.getItem(replyDraftKey));
+ const [replyContent, setReplyContent] = useState(() => localStorage.getItem(replyDraftKey) || '');
  const [showReplies, setShowReplies] = useState(() => !!forceExpandIds?.has(comment.id));
+
+ // autosave the in-progress reply so navigating away or an accidental
+ // reload doesn't lose it - cleared automatically once empty (submit or
+ // cancel both already clear replyContent, which triggers the removal below)
+ useEffect(() => {
+   if (!replyContent.trim()) {
+     localStorage.removeItem(replyDraftKey);
+     return;
+   }
+   localStorage.setItem(replyDraftKey, replyContent);
+ }, [replyContent, replyDraftKey]);
 
  // forceExpandIds arrives asynchronously (computed once the question's
  // comments have loaded and a deep-link target is known), so re-check after

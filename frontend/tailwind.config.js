@@ -17,6 +17,9 @@ export default {
         "like-pop": "like-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
         "toast-in": "toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
         "bounce-in": "bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "confetti-burst": "confetti-burst 700ms ease-out forwards",
+        "ripple-pulse": "ripple-pulse 600ms ease-out forwards",
+        "heart-float": "heart-float 900ms ease-out forwards",
       },
       keyframes: {
         "slide-in": {
@@ -53,6 +56,13 @@ export default {
           "0%": { transform: "scale(0.9)", opacity: "0" },
           "60%": { transform: "scale(1.03)", opacity: "1" },
           "100%": { transform: "scale(1)" },
+        },
+        "confetti-burst": {
+          "0%": { transform: "translate(0, 0) scale(1) rotate(0deg)", opacity: "1" },
+          "100%": {
+            transform: "translate(var(--confetti-tx), var(--confetti-ty)) scale(0.4) rotate(var(--confetti-rot))",
+            opacity: "0",
+          },
         },
       },
       colors: {

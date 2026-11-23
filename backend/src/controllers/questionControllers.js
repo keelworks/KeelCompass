@@ -22,8 +22,9 @@ const getRecentQuestions = async (req, res, next) => {
     const userId = req.user?.id;
     const { count, offset, unanswered } = req.query;
     const viewerTag = req.user?.normalized_role_tag ?? null;
+    const isAdmin = req.user?.roles?.includes("admin") ?? false;
 
-    const result = await questionService.getRecentQuestions(userId, count, offset, viewerTag, unanswered === "true");
+    const result = await questionService.getRecentQuestions(userId, count, offset, viewerTag, unanswered === "true", isAdmin);
     return res.status(200).json(result);
   } catch (error) {
     logger.error(`Caught in getRecentQuestions controller: ${error.message}`);
@@ -49,8 +50,9 @@ const getPopularQuestions = async (req, res, next) => {
     const userId = req.user?.id;
     const { count, offset } = req.query;
     const viewerTag = req.user?.normalized_role_tag ?? null;
+    const isAdmin = req.user?.roles?.includes("admin") ?? false;
 
-    const result = await questionService.getPopularQuestions(userId, count, offset, viewerTag);
+    const result = await questionService.getPopularQuestions(userId, count, offset, viewerTag, isAdmin);
     return res.status(200).json(result);
   } catch (error) {
     logger.error(`Caught in getPopularQuestions controller: ${error.message}`);
@@ -89,8 +91,9 @@ const getQuestionById = async (req, res, next) => {
     const userId = req.user?.id;
     const { id } = req.params;
     const viewerTag = req.user?.normalized_role_tag ?? null;
+    const isAdmin = req.user?.roles?.includes("admin") ?? false;
 
-    const result = await questionService.getQuestion(userId, id, viewerTag);
+    const result = await questionService.getQuestion(userId, id, viewerTag, isAdmin);
     return res.status(200).json(result);
   } catch (error) {
     logger.error(`Caught in getQuestionById controller: ${error.message}`);

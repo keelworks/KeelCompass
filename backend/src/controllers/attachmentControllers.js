@@ -21,7 +21,8 @@ const getAttachmentFile = async (req, res, next) => {
     if (!questionId) throw new HttpError(404, "Attachment not found");
 
     const viewerTag = req.user?.normalized_role_tag ?? null;
-    const canView = await questionService.canUserViewQuestion(questionId, req.user.id, viewerTag);
+    const isAdmin = req.user?.roles?.includes("admin") ?? false;
+    const canView = await questionService.canUserViewQuestion(questionId, req.user.id, viewerTag, isAdmin);
     if (!canView) throw new HttpError(404, "Attachment not found");
 
     res.setHeader("Content-Type", attachment.mime_type);

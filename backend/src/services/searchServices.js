@@ -25,7 +25,8 @@ const searchQuestionByKeyword = async (
   hasNone = false,
   viewerTag = null,
   viewerUserId = null,
-  filters = {}
+  filters = {},
+  isAdmin = false
 ) => {
   try {
     const trimmedQuery = String(query || "").trim();
@@ -57,7 +58,7 @@ const searchQuestionByKeyword = async (
     for (const [questionId, tags] of tagsByQuestion) {
       if (!viewerTag || !tags.includes(viewerTag)) hiddenIds.push(questionId);
     }
-    if (hiddenIds.length > 0) {
+    if (!isAdmin && hiddenIds.length > 0) {
       whereClauses.push({
         [Op.or]: [
           { id: { [Op.notIn]: hiddenIds } },

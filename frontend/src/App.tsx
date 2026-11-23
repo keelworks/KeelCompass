@@ -1,17 +1,31 @@
+import { Suspense, lazy } from "react";
 import { Navigate, Route, Routes, Outlet } from "react-router-dom";
 import Auth from "./pages/Auth";
 import CompleteProfile from "./pages/CompleteProfile";
 import AuthGuard from "./pages/AuthGuard";
 import Dashboard from "./pages/Dashboard";
-import Settings from "./pages/Settings";
 import QuestionCreate from "./pages/QuestionCreate";
 import QuestionPage from "./pages/QuestionPage";
-import QnA from "./pages/QnA";
 import Interests from "./pages/Interests";
-import Admin from "./pages/Admin";
-import Leaderboard from "./pages/Leaderboard";
-import Stats from "./pages/Stats";
 import Fallback from "./pages/Fallback";
+import Spinner from "./components/ui/Spinner";
+
+// secondary pages (not visited every session) are code-split out of the
+// main bundle, which otherwise ships all of Admin/Stats/Leaderboard/Settings
+// to every user regardless of whether they ever open them
+const Settings = lazy(() => import("./pages/Settings"));
+const QnA = lazy(() => import("./pages/QnA"));
+const Admin = lazy(() => import("./pages/Admin"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const Stats = lazy(() => import("./pages/Stats"));
+
+function RouteFallback() {
+  return (
+    <div className="flex items-center justify-center w-full h-[60vh]">
+      <Spinner size={28} className="text-brand-600 dark:text-teal-400" />
+    </div>
+  );
+}
 
 
 const getValidTokenPayload = (token: string | null): { username?: string } | null => {
@@ -50,12 +64,27 @@ function App() {
       <Route path="/complete-profile" element={<AuthGuard><CompleteProfile /></AuthGuard>} />
       <Route element={<AuthGuard><Outlet /></AuthGuard>}>
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/qna" element={<QnA />} />
+        <Route
+          path="/settings"
+          element={<Suspense fallback={<RouteFallback />}><Settings /></Suspense>}
+        />
+        <Route
+          path="/qna"
+          element={<Suspense fallback={<RouteFallback />}><QnA /></Suspense>}
+        />
         <Route path="/interests" element={<Interests />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/stats" element={<Stats />} />
+        <Route
+          path="/admin"
+          element={<Suspense fallback={<RouteFallback />}><Admin /></Suspense>}
+        />
+        <Route
+          path="/leaderboard"
+          element={<Suspense fallback={<RouteFallback />}><Leaderboard /></Suspense>}
+        />
+        <Route
+          path="/stats"
+          element={<Suspense fallback={<RouteFallback />}><Stats /></Suspense>}
+        />
         <Route path="/questions/new" element={<QuestionCreate />} />
         <Route path="/questions/:id" element={<QuestionPage />} />
       </Route>

@@ -37,12 +37,13 @@ const getKnownTags = async () => {
 };
 
 // a tagged question is only visible to a viewer whose own normalized role
-// tag matches one of the question's tags - strictly, with no role-based
-// exceptions (not even for admins); the one exception is the question's own
-// author, who can always see their own post, tagged or not. An untagged
+// tag matches one of the question's tags, with two exceptions: the
+// question's own author can always see their own post, tagged or not, and
+// an admin bypasses tag restrictions entirely (isAdmin). An untagged
 // question is visible to everyone, which is the only form of "Everyone"
 // visibility.
-const getHiddenQuestionIds = async (viewerTag, viewerUserId) => {
+const getHiddenQuestionIds = async (viewerTag, viewerUserId, isAdmin = false) => {
+  if (isAdmin) return [];
   const rows = await QuestionTag.findAll({
     attributes: ["question_id", "tag"],
     include: [{ model: Question, as: "question", attributes: ["user_id"] }],
@@ -66,9 +67,10 @@ const getHiddenQuestionIds = async (viewerTag, viewerUserId) => {
 // single-question version of the same visibility rule above, for anything
 // that needs to gate access to one specific question (e.g. serving its
 // attachment) without pulling every tagged question's hidden-id list
-const canUserViewQuestion = async (questionId, userId, viewerTag) => {
+const canUserViewQuestion = async (questionId, userId, viewerTag, isAdmin = false) => {
   const question = await Question.findByPk(questionId, { attributes: ["id", "user_id", "deleted_at"] });
   if (!question || question.deleted_at) return false;
+  if (isAdmin) return true;
   if (userId && question.user_id === userId) return true;
 
   const tagRows = await QuestionTag.findAll({ where: { question_id: questionId }, attributes: ["tag"] });
@@ -77,14 +79,14 @@ const canUserViewQuestion = async (questionId, userId, viewerTag) => {
 };
 
 // get recent questions
-const getRecentQuestions = async (userId, count = 10, offset = 0, viewerTag = null, onlyUnanswered = false) => {
+const getRecentQuestions = async (userId, count = 10, offset = 0, viewerTag = null, onlyUnanswered = false, isAdmin = false) => {
   try {
     count = parseInt(count, 10);
     offset = parseInt(offset, 10);
     if (isNaN(count) || count <= 0) count = 10;
     if (isNaN(offset) || offset < 0) offset = 0;
 
-    const hiddenQuestionIds = await getHiddenQuestionIds(viewerTag, userId);
+    const hiddenQuestionIds = await getHiddenQuestionIds(viewerTag, userId, isAdmin);
     const { Op } = db.Sequelize;
 
     const whereClauses = [{ deleted_at: null }];
@@ -189,9 +191,9 @@ const getRecentQuestions = async (userId, count = 10, offset = 0, viewerTag = nu
 };
 
 // get popular questions
-const getPopularQuestions = async (userId, count = 10, offset = 0, viewerTag = null) => {
+const getPopularQuestions = async (userId, count = 10, offset = 0, viewerTag = null, isAdmin = false) => {
   try {
-    const hiddenQuestionIds = await getHiddenQuestionIds(viewerTag, userId);
+    const hiddenQuestionIds = await getHiddenQuestionIds(viewerTag, userId, isAdmin);
     const hiddenSet = new Set(hiddenQuestionIds);
 
     const allQuestions = await Question.findAll({
@@ -372,7 +374,7 @@ const getPendingQuestions = async (userId, count = 10, offset = 0) => {
 };
 
 // get question by id
-const getQuestion = async (userId, questionId, viewerTag = null) => {
+const getQuestion = async (userId, questionId, viewerTag = null, isAdmin = false) => {
   try {
     const question = await Question.findByPk(questionId, {
       include: [
@@ -417,7 +419,7 @@ const getQuestion = async (userId, questionId, viewerTag = null) => {
       : [];
     const tags = Array.isArray(question.tags) ? question.tags.map((t) => t.tag) : [];
     const isAuthor = userId && question.user_id === userId;
-    const isVisible = isAuthor || tags.length === 0 || (viewerTag && tags.includes(viewerTag));
+    const isVisible = isAdmin || isAuthor || tags.length === 0 || (viewerTag && tags.includes(viewerTag));
     if (!isVisible) throw new HttpError(404, "Question not found");
 
     const uqas = Array.isArray(question.userQuestionActions)
