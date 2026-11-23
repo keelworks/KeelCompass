@@ -50,6 +50,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(150),
         allowNull: true,
       },
+      reputation_points: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      manual_role_tag: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
     },
     { 
       tableName: "Users", 

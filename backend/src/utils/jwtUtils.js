@@ -9,7 +9,7 @@ const generateToken = (payload) => {
 const verifyToken = (token) => {
     try {
         return jwt.verify(token, jwtSecretKey);
-    } catch (err) {
+    } catch {
         return null;
     }
 };

@@ -20,6 +20,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM("admin", "manager", "staff", "viewer"),
         allowNull: false,
       },
+      manually_granted: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
     },
     {
       tableName: "UserRoles",

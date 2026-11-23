@@ -2,7 +2,9 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaFileAlt } from "react-icons/fa";
 import { Category } from "../utils/types";
-import EmojiPicker from "emoji-picker-react";
+import { capitalizeWords } from "../utils/format";
+import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
+import { marked } from "marked";
 import {
   FiBold,
   FiItalic,
@@ -10,6 +12,7 @@ import {
   FiLink,
   FiList,
   FiTrash2,
+  FiDroplet,
 } from "react-icons/fi";
 import { BsListOl } from "react-icons/bs";
 import DiscardModal from "../components/DiscardModal";
@@ -20,11 +23,18 @@ import FileIcon from "../assets/Fileicon.svg";
 import FormattingIcon from "../assets/Formatingicon.svg";
 import FormattingIconLeft from "../assets/Formatingiconleft.png";
 import ErrorIcon from "../../src/assets/ErrorIcon.svg";
-import { getAllCategories, getKnownTags } from "../utils/store";
+import { getAllCategories, getKnownTags, getSimilarQuestions } from "../utils/store";
+import { useTheme } from "../utils/theme";
+import { useMentionAutocomplete } from "../utils/useMentionAutocomplete";
+import MentionDropdown from "../components/ui/MentionDropdown";
+import MentionOverlay from "../components/ui/MentionOverlay";
+import RichContent from "../components/ui/RichContent";
+import { getErrorMessage } from "../utils/getErrorMessage";
 
 const SPACING = { sectionY: 48, labelGap: 16, helperGap: 16 };
 const MAX_TITLE = 80;
 const MIN_DESC_HEIGHT = 153;
+const DRAFT_STORAGE_KEY = "keelcompass_question_draft";
 
 type QuestionCreateNavigationState = {
   showQuestionPostedSnackbar?: boolean;
@@ -41,7 +51,7 @@ type QuestionCreateNavigateOptions = {
 function Chevron({ open }: { open: boolean }) {
   return (
     <span
-      className={`ml-2 inline-flex items-center justify-center rounded-full w-6 h-6 bg-[#F2F4F5] transition-transform duration-200 ${
+      className={`ml-2 inline-flex items-center justify-center rounded-full w-6 h-6 bg-[#F2F4F5] dark:bg-gray-700 transition-transform duration-200 ${
         open ? "rotate-180" : "rotate-0"
       }`}
       aria-hidden
@@ -214,9 +224,12 @@ function QuestionCreate({
   const isResizingRef = useRef(false);
   const attachmentInputRef = useRef<HTMLInputElement | null>(null);
 
+  const { theme } = useTheme();
+
   /* State */
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
+  const [descriptionError, setDescriptionError] = useState("");
   const [description, setDescription] = useState("");
   const [isDescriptionFocused, setIsDescriptionFocused] = useState(false);
   const [boxHeight, setBoxHeight] = useState<number>(MIN_DESC_HEIGHT);
@@ -241,7 +254,19 @@ function QuestionCreate({
   const [knownTags, setKnownTags] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tagOpen, setTagOpen] = useState(false);
+  const [visibilityTouched, setVisibilityTouched] = useState(false);
+  const [visibilityError, setVisibilityError] = useState("");
+  const [categoryError, setCategoryError] = useState("");
   const tagMenuRef = useRef<HTMLDivElement | null>(null);
+
+  const [similarQuestions, setSimilarQuestions] = useState<{ id: number; title: string; score: number }[]>([]);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [useMarkdown, setUseMarkdown] = useState(false);
+  const [markdownText, setMarkdownText] = useState("");
+  const markdownMention = useMentionAutocomplete<HTMLTextAreaElement>(markdownText, (value) => {
+    setMarkdownText(value);
+    setDescription(value);
+  });
 
   const [activeFormatting, setActiveFormatting] = useState({
     bold: false,
@@ -359,32 +384,6 @@ function QuestionCreate({
     }
   };
 
-  const getErrorMessage = (error: unknown): string => {
-    if (!error || typeof error !== "object") {
-      return "Failed to post question.";
-    }
-
-    const maybeResponse = (error as { response?: { data?: unknown } }).response;
-    const data = maybeResponse?.data;
-
-    if (data && typeof data === "object") {
-      const typedData = data as { message?: unknown; error?: unknown };
-      if (typeof typedData.message === "string" && typedData.message.trim()) {
-        return typedData.message;
-      }
-      if (typeof typedData.error === "string" && typedData.error.trim()) {
-        return typedData.error;
-      }
-    }
-
-    const maybeMessage = (error as { message?: unknown }).message;
-    if (typeof maybeMessage === "string" && maybeMessage.trim()) {
-      return maybeMessage;
-    }
-
-    return "Failed to post question.";
-  };
-
   /* ---------------- Submit ---------------- */
   const handleSubmitCreateQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -399,22 +398,44 @@ function QuestionCreate({
       field?.focus();
       return;
     }
+
+    const descriptionHtml = useMarkdown
+      ? (marked.parse(markdownText, { async: false }) as string)
+      : description || descriptionEditableRef.current?.innerHTML || "";
+    const descriptionText = descriptionHtml.replace(/<[^>]*>/g, "").trim();
+    if (!descriptionText) {
+      setDescriptionError("Description is required. Add some details for your question.");
+      descriptionEditableRef.current?.focus();
+      return;
+    }
+    setDescriptionError("");
+
+    if (selectedCategoryIds.length === 0) {
+      setCategoryError("Please select at least one category.");
+      return;
+    }
+    setCategoryError("");
+
+
     try {
       const res = await import("../utils/store");
       const questionId = await res.createQuestion({
         title,
-        description: description || descriptionEditableRef.current?.innerHTML || "",
+        description: descriptionHtml,
         attachment,
         tags: selectedTags,
+        categoryIds: selectedCategoryIds,
+        mentionedUserIds: useMarkdown ? markdownMention.getMentionedUserIds(markdownText) : [],
       });
       onQuestionCreated?.(questionId);
 
       setTitleError("");
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
       finalNavigate("/dashboard", {
         state: { showQuestionPostedSnackbar: true },
       });
     } catch (err: unknown) {
-      setAttachmentError(getErrorMessage(err));
+      setAttachmentError(getErrorMessage(err, "Failed to post question."));
     }
   };
 
@@ -439,6 +460,10 @@ function QuestionCreate({
     setShowFormattingPanel(false);
     setSelectedCategoryIds([]);
     setSelectedTags([]);
+    setVisibilityTouched(false);
+    setVisibilityError("");
+    setMarkdownText("");
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
     setShowDiscardModal(false);
     finalNavigate("/dashboard");
   };
@@ -447,14 +472,62 @@ function QuestionCreate({
     setShowDiscardModal(false);
   };
 
-  /* ---------------- Description Editor Bootstrap ---------------- */
+  /* ---------------- Description Editor Bootstrap + Draft Restore ---------------- */
   useEffect(() => {
     const el = descriptionEditableRef.current;
-    if (!el) return;
-    if (!el.innerHTML || el.innerHTML === "<br>") {
+
+    const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (saved) {
+      try {
+        const draft = JSON.parse(saved) as {
+          title?: string;
+          description?: string;
+          selectedCategoryIds?: string[];
+          useMarkdown?: boolean;
+        };
+        if (draft.title) setTitle(draft.title);
+        if (draft.selectedCategoryIds) setSelectedCategoryIds(draft.selectedCategoryIds);
+        if (draft.description) {
+          if (draft.useMarkdown) {
+            setUseMarkdown(true);
+            setMarkdownText(draft.description);
+            setDescription(draft.description);
+          } else if (el) {
+            el.innerHTML = draft.description;
+            setDescription(draft.description);
+          }
+        }
+        setDraftRestored(true);
+      } catch {
+        // corrupt draft - ignore it
+      }
+    }
+
+    if (el && (!el.innerHTML || el.innerHTML === "<br>")) {
       el.innerHTML = "<p><br></p>";
     }
   }, []);
+
+  /* ---------------- Draft Auto-Save ---------------- */
+  useEffect(() => {
+    if (!title.trim() && !description.trim()) return;
+    const draft = { title, description, selectedCategoryIds, useMarkdown };
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  }, [title, description, selectedCategoryIds, useMarkdown]);
+
+  /* ---------------- Duplicate-question nudge ---------------- */
+  useEffect(() => {
+    if (title.trim().length < 6) {
+      setSimilarQuestions([]);
+      return;
+    }
+    const handle = window.setTimeout(() => {
+      getSimilarQuestions(title.trim())
+        .then(setSimilarQuestions)
+        .catch(() => setSimilarQuestions([]));
+    }, 500);
+    return () => window.clearTimeout(handle);
+  }, [title]);
 
   /* ---------------- Range / Selection Helpers ---------------- */
   function createRangeAtEnd(host: HTMLElement) {
@@ -532,12 +605,9 @@ function QuestionCreate({
     if (!sel || sel.rangeCount === 0) return;
     const range = sel.getRangeAt(0);
 
-    const currentLi = closest(
-      range.startContainer,
-      "LI" as any
-    ) as HTMLLIElement | null;
-    const currentUl = closest(range.startContainer, "UL" as any);
-    const currentOl = closest(range.startContainer, "OL" as any);
+    const currentLi = closest(range.startContainer, "li");
+    const currentUl = closest(range.startContainer, "ul");
+    const currentOl = closest(range.startContainer, "ol");
 
     if (currentLi && (currentUl || currentOl)) {
       unwrapList(currentLi);
@@ -573,24 +643,27 @@ function QuestionCreate({
       link: false,
     };
     try {
-      // @ts-ignore
       res.bold = document.queryCommandState("bold");
-    } catch {}
+    } catch {
+      // queryCommandState throws in some browsers when there's no selection
+    }
     try {
-      // @ts-ignore
       res.italic = document.queryCommandState("italic");
-    } catch {}
+    } catch {
+      // see above
+    }
     try {
-      // @ts-ignore
       res.underline = document.queryCommandState("underline");
-    } catch {}
+    } catch {
+      // see above
+    }
 
     const sel = window.getSelection();
     if (sel && sel.rangeCount > 0) {
       const node = sel.focusNode;
-      res.bullet = !!closest(node, "UL" as any);
-      res.number = !!closest(node, "OL" as any);
-      res.link = !!closest(node, "A" as any);
+      res.bullet = !!closest(node, "ul");
+      res.number = !!closest(node, "ol");
+      res.link = !!closest(node, "a");
     }
 
     setActiveFormatting((prev) =>
@@ -607,6 +680,9 @@ function QuestionCreate({
         | "bulletList"
         | "numberedList"
         | "link"
+        | "foreColor"
+        | "fontName",
+      value?: string
     ) => {
       const host = descriptionEditableRef.current;
       if (!host) return;
@@ -623,27 +699,36 @@ function QuestionCreate({
             toggleList("ol");
             break;
           case "bold":
-            // @ts-ignore
             document.execCommand("bold");
             break;
           case "italic":
-            // @ts-ignore
             document.execCommand("italic");
             break;
           case "underline":
-            // @ts-ignore
             document.execCommand("underline");
             break;
           case "link": {
             const url = prompt("Enter URL:", "https://");
             if (url) {
-              // @ts-ignore
               document.execCommand("createLink", false, url);
             }
             break;
           }
+          case "foreColor":
+            if (value) {
+              document.execCommand("foreColor", false, value);
+            }
+            break;
+          case "fontName":
+            if (value) {
+              document.execCommand("fontName", false, value);
+            }
+            break;
         }
-      } catch {}
+      } catch {
+        // execCommand is deprecated and can throw for an unsupported
+        // command/browser - formatting just silently doesn't apply then
+      }
 
       setDescription(host.innerHTML);
       const sel = window.getSelection();
@@ -657,6 +742,7 @@ function QuestionCreate({
 
   const handleDescriptionInput = (e: React.FormEvent<HTMLDivElement>) => {
     setDescription(e.currentTarget.innerHTML);
+    if (descriptionError) setDescriptionError("");
   };
 
   /* Track selection */
@@ -740,19 +826,24 @@ function QuestionCreate({
 
   /* ---------------- Tags (visibility restriction) ---------------- */
   const toggleTag = (tag: string) => {
+    setVisibilityTouched(true);
+    setVisibilityError("");
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
+  };
+
+  const selectEveryone = () => {
+    setVisibilityTouched(true);
+    setVisibilityError("");
+    setSelectedTags([]);
   };
 
   const hasTagSelection = selectedTags.length > 0;
 
   /* ---------------- RETURN UI ---------------- */
   return (
-    <div
-      className="w-full h-screen overflow-y-auto"
-      style={{ backgroundColor: "#F9F9F9" }}
-    >
+    <div className="w-full h-screen overflow-y-auto bg-[#F9F9F9] dark:bg-[#0F1113]">
       <DiscardModal
         isOpen={showDiscardModal}
         onCancel={cancelDiscard}
@@ -761,7 +852,7 @@ function QuestionCreate({
 
       <div className="p-8">
         <h1
-          className="text-2xl font-semibold text-[#111] mb-10"
+          className="text-2xl font-semibold text-[#111] dark:text-gray-100 mb-10"
           style={{ fontFamily: "Raleway," }}
         >
           Ask Question
@@ -770,12 +861,12 @@ function QuestionCreate({
         <form onSubmit={handleSubmitCreateQuestion} className="pb-20">
           {/* ---------------------- Question ---------------------- */}
           <div style={{ marginBottom: SPACING.sectionY }}>
-            <label className="block mb-4 font-medium text-gray-700">
+            <label className="block mb-4 font-medium text-gray-700 dark:text-gray-300">
               Question <span className="text-red-600">*</span>{" "}
-              <span className="text-gray-500 font-normal">(required)</span>
+              <span className="text-gray-500 dark:text-gray-400 font-normal">(required)</span>
             </label>
 
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               Begin with who, what, where, when, why, or how.
             </p>
 
@@ -789,7 +880,7 @@ function QuestionCreate({
               }}
               maxLength={MAX_TITLE}
               className={`w-full  rounded-[10px] px-3 py-2 border outline-none transition
-                border-[#D1DBDD] bg-white text-gray-900
+                border-[#D1DBDD] dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
                 hover:border-[#929898] focus:border-[#929898] active:border-[#929898]
                 focus-visible:[box-shadow:0_0_0_2px_#A77CB2]
                 ${titleError ? "border-red-500" : ""}
@@ -797,7 +888,7 @@ function QuestionCreate({
             />
             {titleError && (
               <div
-                className="mt-3 flex items-center"
+                className="mt-3 flex items-center bg-[#FCE2E2] dark:bg-red-950/40"
                 style={{
                   width: "100%",
                   height: 32,
@@ -806,7 +897,6 @@ function QuestionCreate({
                   paddingRight: 8,
                   paddingBottom: 10,
                   paddingLeft: 8,
-                  background: "#FCE2E2",
                   gap: 17,
                   opacity: 1,
                 }}
@@ -819,48 +909,138 @@ function QuestionCreate({
                 />
 
                 <span
+                  className="text-[#404955] dark:text-red-200"
                   style={{
                     fontFamily: "Lato",
                     fontWeight: 500,
                     fontSize: "16px",
-                    color: "#404955",
                   }}
                 >
                   {titleError}
                 </span>
               </div>
             )}
-            <div className="mt-2 text-xs text-gray-500">
+            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               {remainingTitle} characters allowed
             </div>
+
+            {draftRestored && (
+              <div className="mt-3 text-xs px-3 py-2 rounded-md bg-brand-50 dark:bg-teal-900/30 text-brand-600 dark:text-teal-300 flex items-center justify-between">
+                <span>We restored your last unsaved draft.</span>
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() => {
+                    setDraftRestored(false);
+                  }}
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
+            {similarQuestions.length > 0 && (
+              <div className="mt-3 text-xs px-3 py-2 rounded-md bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300">
+                <p className="font-medium mb-1">This might already be answered:</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  {similarQuestions.map((q) => (
+                    <li key={q.id}>{q.title}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* ---------------------- Description ---------------------- */}
           <div style={{ marginBottom: SPACING.sectionY }}>
-            <label className="block mb-4 text-gray-700 font-medium">
-              Description
-            </label>
+            <div className="flex items-center justify-between mb-4">
+              <label className="block text-gray-700 dark:text-gray-300 font-medium">
+                Description <span className="text-red-600">*</span>{" "}
+                <span className="text-gray-500 dark:text-gray-400 font-normal">(required)</span>
+              </label>
+              <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md w-fit p-0.5 border border-gray-300 dark:border-gray-600">
+                {(["Rich Text", "Markdown"] as const).map((mode) => {
+                  const isMarkdownMode = mode === "Markdown";
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setUseMarkdown(isMarkdownMode)}
+                      className={`px-3 py-1 text-xs font-medium rounded transition ${
+                        useMarkdown === isMarkdownMode
+                          ? "bg-white dark:bg-gray-900 text-brand-550 dark:text-teal-300 shadow-sm"
+                          : "bg-transparent text-[#5F6C7B] dark:text-gray-300"
+                      }`}
+                    >
+                      {mode}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               Provide more details and context to help others answer.
             </p>
 
-            {/* WRAPPER (Resizable) */}
+            {useMarkdown ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="relative">
+                <MentionOverlay
+                  text={markdownText}
+                  mode="textarea"
+                  className="rounded-[10px] px-3 py-3 text-gray-900 dark:text-gray-100"
+                  style={{ minHeight: MIN_DESC_HEIGHT }}
+                />
+                <textarea
+                  ref={markdownMention.inputRef}
+                  value={markdownText}
+                  onChange={(e) => {
+                    markdownMention.handleChange(e.target.value, e.target.selectionStart ?? e.target.value.length);
+                    if (descriptionError) setDescriptionError("");
+                  }}
+                  onKeyDown={(e) => markdownMention.handleKeyDown(e)}
+                  placeholder="Write in Markdown... **bold**, _italic_, [links](https://...), lists, @mention someone, etc."
+                  className={`relative w-full rounded-[10px] px-3 py-3 border outline-none transition bg-white dark:bg-gray-800 text-transparent caret-gray-900 dark:caret-gray-100 placeholder:text-gray-400 ${
+                    descriptionError ? "border-red-500" : "border-[#D1DBDD] dark:border-gray-600"
+                  }`}
+                  style={{ minHeight: MIN_DESC_HEIGHT }}
+                />
+                {markdownMention.isOpen && (
+                  <MentionDropdown
+                    anchorRef={markdownMention.inputRef}
+                    results={markdownMention.results}
+                    activeIndex={markdownMention.activeIndex}
+                    onHover={markdownMention.setActiveIndex}
+                    onSelect={markdownMention.selectMention}
+                  />
+                )}
+                </div>
+                <RichContent
+                  html={marked.parse(markdownText, { async: false }) as string}
+                  className="post-content rounded-[10px] px-3 py-3 border border-[#D1DBDD] dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 overflow-y-auto"
+                  style={{ minHeight: MIN_DESC_HEIGHT }}
+                />
+              </div>
+            ) : (
+            /* WRAPPER (Resizable) */
             <div
               ref={containerRef}
               className={`
-                group/desc relative rounded-[10px] border bg-white transition
+                group/desc relative rounded-[10px] border bg-white dark:bg-gray-800 transition
                 overflow-visible
                 ${
-                  isDescriptionFocused
-                    ? "border-[#0CA3A6] hover:border-[#0CA3A6] active:border-[#0CA3A6]"
-                    : "border-[#D1DBDD] hover:border-[#929898] active:border-[#929898]"
+                  descriptionError
+                    ? "border-red-500"
+                    : isDescriptionFocused
+                    ? "border-brand-400 hover:border-brand-400 active:border-brand-400"
+                    : "border-[#D1DBDD] dark:border-gray-600 hover:border-[#929898] active:border-[#929898]"
                 }
               `}
               style={{
                 minHeight: boxHeight,
                 boxShadow: isDescriptionFocused
-                  ? "0 0 0 2px #F9F9F9, 0 0 0 4px #007c88"
+                  ? `0 0 0 2px ${theme === "dark" ? "#0F1113" : "#F9F9F9"}, 0 0 0 4px #007c88`
                   : "none",
               }}
             >
@@ -875,9 +1055,8 @@ function QuestionCreate({
                 onInput={handleDescriptionInput}
                 onFocus={() => setIsDescriptionFocused(true)}
                 onBlur={() => setIsDescriptionFocused(false)}
-                className="px-3 pt-3 pb-16 outline-none text-[#063E53] rounded-[10px] [&_a]:text-[#05808F] [&_a]:underline [&_a:hover]:text-[#04606B]"
+                className="px-3 pt-3 pb-16 outline-none text-[#063E53] dark:text-gray-100 bg-white dark:bg-gray-800 rounded-[10px] [&_a]:text-[#05808F] [&_a]:underline [&_a:hover]:text-[#04606B]"
                 style={{
-                  backgroundColor: "#FFFFFF",
                   minHeight: "100%", // Expands to fill wrapper
                 }}
               />
@@ -934,7 +1113,7 @@ function QuestionCreate({
                       style={{ left: -100, bottom: 50 }}
                     >
                       <EmojiPicker
-                        onEmojiClick={(data: any) => {
+                        onEmojiClick={(data: EmojiClickData) => {
                           const host = descriptionEditableRef.current;
                           if (!host) return;
 
@@ -985,14 +1164,11 @@ function QuestionCreate({
                   {showFormattingPanel && (
                     <div
                       ref={formattingPanelRef}
-                      className="absolute z-20 shadow-md flex items-center rounded-r-md rounded-l-none"
+                      className="absolute z-20 shadow-md flex items-center rounded-r-md rounded-l-none bg-[#F2F4F5] dark:bg-gray-700 border border-[#D1D5DB] dark:border-gray-600 border-l-0"
                       style={{
                         left: "100%",
                         top: 0,
                         height: "44px",
-                        border: "1px solid #D1D5DB",
-                        borderLeft: "none",
-                        background: "#F2F4F5",
                       }}
                     >
                       <div className="flex items-center gap-0 h-full px-3">
@@ -1111,26 +1287,68 @@ function QuestionCreate({
                             />
                           </button>
                         </CustomTooltip>
+
+                        {/* Text Color */}
+                        <CustomTooltip text="Text color">
+                          <label className="relative px-3 py-3 rounded transition cursor-pointer flex items-center justify-center hover:bg-[#EFF7F8]">
+                            <FiDroplet size={18} color="#6B7280" />
+                            <input
+                              type="color"
+                              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                              onChange={(e) => applyFormatting("foreColor", e.target.value)}
+                              onMouseDown={(e) => e.stopPropagation()}
+                            />
+                          </label>
+                        </CustomTooltip>
+
+                        {/* Font Family */}
+                        <CustomTooltip text="Font">
+                          <select
+                            className="text-sm border-0 bg-transparent text-[#6B7280] px-2 py-2 rounded hover:bg-[#EFF7F8] focus:outline-none cursor-pointer"
+                            defaultValue=""
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              if (e.target.value) applyFormatting("fontName", e.target.value);
+                              e.target.value = "";
+                            }}
+                          >
+                            <option value="" disabled>
+                              Font
+                            </option>
+                            <option value="Arial">Arial</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Verdana">Verdana</option>
+                          </select>
+                        </CustomTooltip>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
             </div>
+            )}
+
+            {descriptionError && (
+              <div className="mt-2 text-xs text-red-600 dark:text-red-400" aria-live="polite">
+                {descriptionError}
+              </div>
+            )}
 
             {/* Attachment preview + errors */}
             <div className="mt-4">
               {attachment && (
-                <div className="flex items-center gap-2 rounded-md border border-[#D1DBDD] bg-white px-3 py-2 w-fit">
+                <div className="flex items-center gap-2 rounded-md border border-[#D1DBDD] dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 w-fit">
                   <FaFileAlt className="mr-1 text-[#404955]" />
                   {attachmentPreviewUrl && (
                     <img
                       src={attachmentPreviewUrl}
                       alt="Attachment thumbnail"
-                      className="h-8 w-8 rounded object-cover border border-[#D1DBDD]"
+                      className="h-8 w-8 rounded object-cover border border-[#D1DBDD] dark:border-gray-600"
                     />
                   )}
-                  <div className="text-sm text-gray-700">
+                  <div className="text-sm text-gray-700 dark:text-gray-300">
                     <span className="font-semibold">{attachment.name}</span>
                     <span>
                       {" "}
@@ -1152,7 +1370,7 @@ function QuestionCreate({
               )}
 
               {attachmentError && (
-                <div className="mt-1 text-xs text-red-600" aria-live="polite">
+                <div className="mt-1 text-xs text-red-600 dark:text-red-400" aria-live="polite">
                   {attachmentError}
                 </div>
               )}
@@ -1161,11 +1379,11 @@ function QuestionCreate({
 
           {/* ---------------------- Category ---------------------- */}
           <div className="mb-12">
-            <label className="block mb-4 font-medium text-gray-800">
-              Category
+            <label className="block mb-4 font-medium text-gray-800 dark:text-gray-100">
+              Category <span className="text-red-500">*</span>
             </label>
 
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               Select one or more categories to get your question better
               visibility.
             </p>
@@ -1178,19 +1396,24 @@ function QuestionCreate({
               {/* Select Box */}
               <button
                 type="button"
-                onClick={() => setCatOpen((s) => !s)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-[3px] border 
-                  outline-none transition bg-white text-[#063E53] ${
-                    catOpen || hasSelection
+                onClick={() => {
+                  setCatOpen((s) => !s);
+                  if (categoryError) setCategoryError("");
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-[3px] border
+                  outline-none transition bg-white dark:bg-gray-800 text-[#063E53] dark:text-teal-300 ${
+                    categoryError
+                      ? "border-red-500"
+                      : catOpen || hasSelection
                       ? "border-[#A77CB2]"
-                      : "border-[#D1DBDD]"
-                  } hover:border-[#929898] focus:border-[#A77CB2] 
+                      : "border-[#D1DBDD] dark:border-gray-600"
+                  } hover:border-[#929898] focus:border-[#A77CB2]
                   active:border-[#A77CB2] focus-visible:[box-shadow:0_0_0_2px_#A77CB2]`}
                 style={{ height: 48 }}
               >
                 <span
                   className={`${
-                    selectedLabel ? "text-[#063E53]" : "text-gray-400"
+                    selectedLabel ? "text-[#063E53] dark:text-teal-300" : "text-gray-400"
                   } whitespace-nowrap overflow-hidden text-ellipsis block`}
                   style={{ maxWidth: "210px" }}
                 >
@@ -1203,7 +1426,7 @@ function QuestionCreate({
               {/* Dropdown */}
               {catOpen && (
                 <div
-                  className="absolute z-20 rounded-[10px] bg-white shadow-md"
+                  className="absolute z-20 rounded-[10px] bg-white dark:bg-gray-800 shadow-md"
                   style={{
                     width: "100%",
                     border: "1px solid #D1DBDD",
@@ -1218,7 +1441,7 @@ function QuestionCreate({
                       <label
                         key={c.id}
                         className={`flex items-center gap-3 px-4 py-2 cursor-pointer ${
-                          checked ? "bg-[#C7C7C7]" : "hover:bg-[#C7C7C7]"
+                          checked ? "bg-[#C7C7C7] dark:bg-gray-700" : "hover:bg-[#C7C7C7] dark:hover:bg-gray-700"
                         }`}
                       >
                         <input
@@ -1227,22 +1450,27 @@ function QuestionCreate({
                           onChange={() => toggleCategory(String(c.id))}
                           className="w-4 h-4 accent-[#A77CB2]"
                         />
-                        <span className="text-gray-800">{c.name}</span>
+                        <span className="text-gray-800 dark:text-gray-100">{c.name}</span>
                       </label>
                     );
                   })}
                 </div>
               )}
             </div>
+            {categoryError && (
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400" aria-live="polite">
+                {categoryError}
+              </p>
+            )}
           </div>
 
           {/* ---------------------- Visibility Tags ---------------------- */}
           <div className="mb-12">
-            <label className="block mb-4 font-medium text-gray-800">
+            <label className="block mb-4 font-medium text-gray-800 dark:text-gray-100">
               Visibility
             </label>
 
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               Optionally restrict this post to one or more groups. Only
               people whose own tag matches will be able to see it. Leave
               empty to make it visible to everyone.
@@ -1258,10 +1486,12 @@ function QuestionCreate({
                 type="button"
                 onClick={() => setTagOpen((s) => !s)}
                 className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-[3px] border
-                  outline-none transition bg-white text-[#063E53] ${
-                    tagOpen || hasTagSelection
+                  outline-none transition bg-white dark:bg-gray-800 text-[#063E53] dark:text-teal-300 ${
+                    visibilityError
+                      ? "border-red-500"
+                      : tagOpen || hasTagSelection
                       ? "border-[#A77CB2]"
-                      : "border-[#D1DBDD]"
+                      : "border-[#D1DBDD] dark:border-gray-600"
                   } hover:border-[#929898] focus:border-[#A77CB2]
                   active:border-[#A77CB2] focus-visible:[box-shadow:0_0_0_2px_#A77CB2]`}
                 style={{ minHeight: 48 }}
@@ -1274,25 +1504,33 @@ function QuestionCreate({
                     selectedTags.map((tag) => (
                       <span
                         key={tag}
-                        className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#E8F4F5] text-[#007C88] whitespace-nowrap"
+                        className="text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-brand-50 dark:bg-teal-900/40 text-brand-600 dark:text-teal-300 whitespace-nowrap"
                       >
-                        {tag}
+                        {capitalizeWords(tag)}
                       </span>
                     ))
-                  ) : (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#E8F4F5] text-[#007C88] whitespace-nowrap">
+                  ) : visibilityTouched ? (
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-brand-50 dark:bg-teal-900/40 text-brand-600 dark:text-teal-300 whitespace-nowrap">
                       Everyone
                     </span>
+                  ) : (
+                    <span className="text-sm text-gray-400">Select visibility...</span>
                   )}
                 </div>
 
                 <Chevron open={tagOpen} />
               </button>
 
+              {visibilityError && (
+                <div className="mt-2 text-xs text-red-600 dark:text-red-400" aria-live="polite">
+                  {visibilityError}
+                </div>
+              )}
+
               {/* Dropdown */}
               {tagOpen && (
                 <div
-                  className="absolute z-20 rounded-[10px] bg-white shadow-md"
+                  className="absolute z-20 rounded-[10px] bg-white dark:bg-gray-800 shadow-md"
                   style={{
                     width: "100%",
                     border: "1px solid #D1DBDD",
@@ -1303,16 +1541,16 @@ function QuestionCreate({
                 >
                   <label
                     className={`flex items-center gap-3 px-4 py-2 cursor-pointer ${
-                      !hasTagSelection ? "bg-[#C7C7C7]" : "hover:bg-[#C7C7C7]"
+                      !hasTagSelection ? "bg-[#C7C7C7] dark:bg-gray-700" : "hover:bg-[#C7C7C7] dark:hover:bg-gray-700"
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={!hasTagSelection}
-                      onChange={() => setSelectedTags([])}
+                      onChange={selectEveryone}
                       className="w-4 h-4 accent-[#A77CB2]"
                     />
-                    <span className="text-gray-800">Everyone</span>
+                    <span className="text-gray-800 dark:text-gray-100">Everyone</span>
                   </label>
 
                   {knownTags.map((tag) => {
@@ -1321,7 +1559,7 @@ function QuestionCreate({
                       <label
                         key={tag}
                         className={`flex items-center gap-3 px-4 py-2 cursor-pointer ${
-                          checked ? "bg-[#C7C7C7]" : "hover:bg-[#C7C7C7]"
+                          checked ? "bg-[#C7C7C7] dark:bg-gray-700" : "hover:bg-[#C7C7C7] dark:hover:bg-gray-700"
                         }`}
                       >
                         <input
@@ -1330,7 +1568,7 @@ function QuestionCreate({
                           onChange={() => toggleTag(tag)}
                           className="w-4 h-4 accent-[#A77CB2]"
                         />
-                        <span className="text-gray-800">{tag}</span>
+                        <span className="text-gray-800 dark:text-gray-100">{capitalizeWords(tag)}</span>
                       </label>
                     );
                   })}

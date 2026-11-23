@@ -4,6 +4,7 @@ const { handleValidationErrors } = require("../utils/validationUtils");
 const isUser = require("../middlewares/isUser");
 const upload = require("../utils/multerConfig");
 const commentController = require("../controllers/commentControllers");
+const { createCommentLimiter } = require("../middlewares/rateLimiters");
 
 const router = express.Router();
 router.use(isUser);
@@ -27,12 +28,15 @@ const deleteCommentValidation = [
 ];
 
 // create comment
-router.post("/", upload.single("attachment"), createCommentValidation, commentController.createComment);
+router.post("/", createCommentLimiter, upload.single("attachment"), createCommentValidation, commentController.createComment);
 
 // update comment by id
 router.put("/:id", upload.single("attachment"), updateCommentValidation, commentController.updateComment);
 
 // delete comment by id
 router.delete("/:id", deleteCommentValidation, commentController.deleteComment);
+
+// prior saved versions of this comment's content
+router.get("/:id/history", commentController.getCommentHistory);
 
 module.exports = router;

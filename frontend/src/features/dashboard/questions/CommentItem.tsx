@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { FaRegThumbsUp, FaRegCommentDots } from 'react-icons/fa';
+import { FaRegCommentDots, FaCheckCircle } from 'react-icons/fa';
 import { formatDateTime } from '../../../utils/format';
 import { Comment, UserActionType } from '../../../utils/types';
 import {
@@ -10,6 +10,15 @@ import {
  createReply
 } from '../../../utils/store';
 import ThreeDotsMenu from '../../../components/ui/ThreeDotsMenu';
+import AuthorHeader from '../../../components/ui/AuthorHeader';
+import LikeButton from '../../../components/ui/LikeButton';
+import MentionDropdown from '../../../components/ui/MentionDropdown';
+import MentionOverlay from '../../../components/ui/MentionOverlay';
+import EditHistoryModal from '../../../components/ui/EditHistoryModal';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog';
+import { useToast } from '../../../utils/useToast';
+import { useMentionAutocomplete } from '../../../utils/useMentionAutocomplete';
+import { highlightMentionsReact } from '../../../utils/mentionHighlight';
 
 
 interface CommentItemProps {
@@ -17,9 +26,16 @@ interface CommentItemProps {
  onCommentDelete?: () => void;
  openMenuId: string | null;
  setOpenMenuId: (id: string | null) => void;
- questionId: number; // NEW: for creating replies
- level?: number; // NEW: 0 = top level, 1 = first reply, 2 = second reply
+ questionId: number;
+ level?: number; // 0 = top level, increments with depth - no cap, threads can go as deep as Reddit-style ladders
  onReplyAdded?: () => void;
+ canAcceptAnswer?: boolean;
+ onAcceptAnswer?: (commentId: number) => void;
+ // ids of comments whose replies should start expanded (the path down to a
+ // deep-linked comment, e.g. from a notification or the featured answer card)
+ forceExpandIds?: Set<number>;
+ // the comment to scroll to and briefly flash-highlight once rendered
+ highlightCommentId?: number | null;
 }
 
 
@@ -31,9 +47,15 @@ function CommentItem({
  questionId,
  level = 0,
  onReplyAdded,
+ canAcceptAnswer = false,
+ onAcceptAnswer,
+ forceExpandIds,
+ highlightCommentId,
 }: CommentItemProps) {
  const userId = Number(localStorage.getItem('userId'));
  const menuRef = useRef<HTMLDivElement>(null);
+ const cardRef = useRef<HTMLDivElement>(null);
+ const { showError, showSuccess, toastNode } = useToast();
 
 
  const [liked, setLiked] = useState(!!comment.hasLiked);
@@ -43,14 +65,29 @@ function CommentItem({
  const [editMode, setEditMode] = useState(false);
  const [editForm, setEditForm] = useState({ content: comment.content });
  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+ const [editHistoryOpen, setEditHistoryOpen] = useState(false);
 
 
  const [isReplying, setIsReplying] = useState(false);
  const [replyContent, setReplyContent] = useState('');
- const [showReplies, setShowReplies] = useState(false);
- 
- const isAuthor = comment.user.id === userId;
- const canReply = !isAuthor && level < 2; // Can't reply to own comment, max 2 levels
+ const [showReplies, setShowReplies] = useState(() => !!forceExpandIds?.has(comment.id));
+
+ // forceExpandIds arrives asynchronously (computed once the question's
+ // comments have loaded and a deep-link target is known), so re-check after
+ // mount too - a lazy useState initializer alone only ever sees the value
+ // from the very first render
+ useEffect(() => {
+   if (forceExpandIds?.has(comment.id)) setShowReplies(true);
+ }, [forceExpandIds, comment.id]);
+ const replyMention = useMentionAutocomplete<HTMLTextAreaElement>(replyContent, setReplyContent);
+
+ const isTarget = highlightCommentId === comment.id;
+ const [highlighted, setHighlighted] = useState(false);
+
+ const commentNameLabel = comment.user.displayName || comment.user.username;
+ const isDeleted = !!comment.isDeleted;
+
+ const canReply = !isDeleted; // anyone, including the comment's own author, can reply - just not to a tombstone
  const replyCount = (comment.replies || []).length;
 
 
@@ -76,8 +113,8 @@ function CommentItem({
      await updateComment({ id: comment.id, content: editForm.content });
      comment.content = editForm.content;
      setEditMode(false);
-   } catch (err) {
-     alert('Failed to update comment.');
+   } catch {
+     showError('Failed to update comment.');
    }
  };
 
@@ -88,8 +125,8 @@ function CommentItem({
      await deleteComment({ id: comment.id });
      if (onCommentDelete) onCommentDelete();
      setOpenMenuId(null);
-   } catch (err) {
-     alert('Failed to delete comment.');
+   } catch {
+     showError('Failed to delete comment.');
      setOpenMenuId(null);
    }
  };
@@ -111,10 +148,10 @@ function CommentItem({
          actionType: UserActionType.Like,
        });
      }
-   } catch (err) {
+   } catch {
      setLiked(prevLiked);
      setLikeCount((prev) => prev + (prevLiked ? 1 : -1));
-     alert('Failed to update like status.');
+     showError('Failed to update like status.');
    }
  };
 
@@ -126,13 +163,15 @@ function CommentItem({
        questionId: questionId,
        content: replyContent,
        parentId: comment.id,
+       mentionedUserIds: replyMention.getMentionedUserIds(replyContent),
      });
      setReplyContent('');
+     replyMention.resetMentions();
      setIsReplying(false);
      setShowReplies(true); // Show replies after adding
      if (onReplyAdded) onReplyAdded(); // Refresh parent
-   } catch (err) {
-     alert('Failed to add reply.');
+   } catch {
+     showError('Failed to add reply.');
    }
  };
 
@@ -146,41 +185,24 @@ function CommentItem({
  const handleCancelReply = () => {
    setIsReplying(false);
    setReplyContent('');
+   replyMention.resetMentions();
  };
 
 
- const handleReportComment = () => {
+ const handleReportComment = async () => {
    setOpenMenuId(null);
-   alert('Reported!');
- };
-
-
- const getIndentationClass = () => {
-   switch (level) {
-     case 0:
-       return 'ml-0'; // Top level
-     case 1:
-       return 'ml-6 border-l-2 border-blue-200 pl-4'; // First reply
-     case 2:
-       return 'ml-12 border-l-2 border-green-200 pl-4'; // Second reply
-     default:
-       return 'ml-0';
+   try {
+     await createUserCommentAction({ commentId: comment.id, actionType: UserActionType.Report });
+     showSuccess('Thank you for reporting! This will be moderated by the admins.');
+   } catch {
+     showError('Failed to report this comment. You may have already reported it.');
    }
  };
 
 
- const getBackgroundClass = () => {
-   switch (level) {
-     case 0:
-       return 'bg-gray-100 dark:bg-gray-700';
-     case 1:
-       return 'bg-blue-50 dark:bg-blue-950/40';
-     case 2:
-       return 'bg-green-50 border border-green-200 dark:bg-green-950/30 dark:border-green-800';
-     default:
-       return 'bg-gray-100 dark:bg-gray-700';
-   }
- };
+ // one consistent card style at every depth - varying it per level used to
+ // make nested replies look like a different, disconnected color palette
+ // instead of the same conversation continuing
 
 
  // close ThreeDotsMenu when clicking outside menu but inside QuestionDetails
@@ -197,49 +219,82 @@ function CommentItem({
    };
  }, [openMenuId, setOpenMenuId, comment.id]);
 
+ // scroll to and briefly flash this comment if it's the deep-link target
+ // (from a notification, or "View in thread" on the featured answer card)
+ useEffect(() => {
+   if (!isTarget || !cardRef.current) return;
+   const timer = setTimeout(() => {
+     cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+     setHighlighted(true);
+     setTimeout(() => setHighlighted(false), 2200);
+   }, 300);
+   return () => clearTimeout(timer);
+ }, [isTarget]);
+
 
  return (
-   <div className={`${getIndentationClass()}`}>
+   <>
+   <div className="animate-card-in" id={`comment-${comment.id}`}>
      <div
-       className={`w-full ${getBackgroundClass()} rounded-lg px-4 py-3 mb-3 shadow-sm`}
+       ref={cardRef}
+       className={`w-full bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 mb-3 shadow-sm transition-shadow duration-300 ${
+         highlighted ? 'ring-2 ring-brand-600 dark:ring-teal-400' : ''
+       }`}
      >
        <div>
-         <div className="flex items-start justify-between">
-           {/* Username and Date */}
-           <div>
-             <span className="font-semibold text-[#004466] dark:text-teal-300">
-               {comment.user.username}
-             </span>
-             {/*level > 0 && (
-               <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
-                 Level {level} Reply
-               </span>
-             )*/}
-             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-               {formatDateTime(comment.createdAt)}
+         {isDeleted ? (
+           <div className="flex items-center gap-2">
+             <div className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-xs">
+               ✕
+             </div>
+             <div className="leading-snug">
+               <div className="text-sm font-medium text-gray-400 dark:text-gray-500 italic">[deleted]</div>
+               <div className="text-xs text-gray-400 dark:text-gray-500">{formatDateTime(comment.createdAt)}</div>
              </div>
            </div>
-
-
-           {/* Menu */}
-           <div className="relative" ref={menuRef}>
-             <ThreeDotsMenu
-               menuRef={menuRef}
-               menuId={`comment-menu-${comment.id}`}
-               openMenuId={openMenuId}
-               setOpenMenuId={setOpenMenuId}
-               handleReport={handleReportComment}
-               handleEdit={handleCommentEdit}
-               handleDelete={() => setShowDeleteConfirmation(true)}
-               userId={userId}
-               comment={comment}
-             />
-           </div>
-         </div>
+         ) : (
+           <AuthorHeader
+             pictureUrl={comment.user.pictureUrl}
+             displayName={commentNameLabel}
+             email={comment.user.email}
+             roleTag={comment.user.fullRoleTag}
+             dateLabel={formatDateTime(comment.createdAt)}
+             afterDate={
+               comment.updatedAt && comment.updatedAt !== comment.createdAt ? (
+                 <button
+                   type="button"
+                   onClick={() => setEditHistoryOpen(true)}
+                   className="italic text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline decoration-dotted underline-offset-2 transition-colors duration-150"
+                 >
+                   (edited)
+                 </button>
+               ) : undefined
+             }
+             rightSlot={
+               <div className="relative" ref={menuRef}>
+                 <ThreeDotsMenu
+                   menuRef={menuRef}
+                   menuId={`comment-menu-${comment.id}`}
+                   openMenuId={openMenuId}
+                   setOpenMenuId={setOpenMenuId}
+                   handleReport={handleReportComment}
+                   handleEdit={handleCommentEdit}
+                   handleDelete={() => setShowDeleteConfirmation(true)}
+                   handleAcceptAnswer={canAcceptAnswer ? () => onAcceptAnswer?.(comment.id) : undefined}
+                   isAccepted={comment.isAccepted}
+                   userId={userId}
+                   comment={comment}
+                 />
+               </div>
+             }
+           />
+         )}
 
 
          {/* Content */}
-         {editMode ? (
+         {isDeleted ? (
+           <div className="mt-2 text-sm text-gray-400 dark:text-gray-500 italic">Comment deleted</div>
+         ) : editMode ? (
            <div className="mt-2">
              <textarea
                className="w-full p-2 border dark:border-gray-600 rounded mb-2 bg-white dark:bg-gray-800 dark:text-gray-100"
@@ -263,20 +318,40 @@ function CommentItem({
              </div>
            </div>
          ) : (
-           <div className="mt-2 text-sm text-[#616161] dark:text-gray-300">{comment.content}</div>
+           <div className="mt-2 text-sm text-[#616161] dark:text-gray-300">{highlightMentionsReact(comment.content)}</div>
          )}
 
 
          {/* NEW: Reply Input */}
-         {isReplying && (
-           <div className="mt-3 bg-white dark:bg-gray-800 p-3 rounded border-2 border-blue-200 dark:border-blue-800">
-             <textarea
-               value={replyContent}
-               onChange={(e) => setReplyContent(e.target.value)}
-               placeholder={`Reply to ${comment.user.username}...`}
-               className="w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-400"
-               rows={2}
-             />
+         {!isDeleted && isReplying && (
+           <div className="relative mt-3 bg-white dark:bg-gray-800 p-3 rounded border-2 border-blue-200 dark:border-blue-800">
+             <div className="relative">
+               <MentionOverlay
+                 text={replyContent}
+                 mode="textarea"
+                 className="p-2 text-sm text-gray-900 dark:text-gray-100 leading-normal"
+               />
+               <textarea
+                 ref={replyMention.inputRef}
+                 value={replyContent}
+                 onChange={(e) =>
+                   replyMention.handleChange(e.target.value, e.target.selectionStart ?? e.target.value.length)
+                 }
+                 onKeyDown={(e) => replyMention.handleKeyDown(e)}
+                 placeholder={`Reply to ${comment.user.username}... (type @ to mention someone)`}
+                 className="relative w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-900 text-transparent caret-gray-900 dark:caret-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-blue-400"
+                 rows={2}
+               />
+             </div>
+             {replyMention.isOpen && (
+               <MentionDropdown
+                 anchorRef={replyMention.inputRef}
+                 results={replyMention.results}
+                 activeIndex={replyMention.activeIndex}
+                 onHover={replyMention.setActiveIndex}
+                 onSelect={replyMention.selectMention}
+               />
+             )}
              <div className="flex justify-end space-x-2 mt-2">
                <button
                  className="px-3 py-1 bg-gray-200 dark:bg-gray-600 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-500 rounded text-xs"
@@ -298,10 +373,17 @@ function CommentItem({
          {/* Action buttons */}
          <div className="flex items-center justify-between gap-6 mt-3">
            <div className="flex items-center gap-4">
+             {comment.isAccepted && (
+               <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 border border-green-300 text-green-700 dark:bg-green-900/40 dark:border-green-700 dark:text-green-300">
+                 <FaCheckCircle size={12} />
+                 Accepted Answer
+               </span>
+             )}
+
              {/*  Reply button */}
              {canReply && (
                <button
-                 className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer select-none"
+                 className="text-sm font-bold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 cursor-pointer select-none transition-colors duration-150"
                  onClick={handleStartReply}
                >
                  Reply
@@ -309,10 +391,10 @@ function CommentItem({
              )}
 
 
-             {/*  Show/Hide replies for top-level comments */}
-             {level === 0 && replyCount > 0 && (
+             {/*  Show/Hide replies - a single toggle reveals the whole subtree beneath this comment at once */}
+             {replyCount > 0 && (
                <button
-                 className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer select-none"
+                 className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 cursor-pointer select-none transition-colors duration-150"
                  onClick={() => setShowReplies(!showReplies)}
                >
                  {showReplies ? 'Hide' : 'Show'} {replyCount}{' '}
@@ -323,57 +405,51 @@ function CommentItem({
 
 
            <div className="flex items-center gap-6">
-             <div
-               className={`flex items-center text-sm cursor-pointer select-none ${
-                 liked ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'
-               }`}
-               onClick={handleCommentLike}
-             >
-               <FaRegThumbsUp className="mr-1" />
-               {typeof likeCount === 'number' && !isNaN(likeCount)
-                 ? likeCount
-                 : 0}{' '}
-               Like
-             </div>
+             {!isDeleted && <LikeButton liked={liked} count={likeCount} onToggle={handleCommentLike} />}
              <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
                <FaRegCommentDots className="mr-1" />
-               {replyCount} Replies
+               {replyCount} {replyCount === 1 ? 'Reply' : 'Replies'}
              </div>
            </div>
          </div>
        </div>
 
 
-       {/* Nested Replies */}
-       {level === 0 && showReplies && (comment.replies || []).length > 0 && (
-         <div className="space-y-2">
+       {/* Nested Replies - a smooth curved connector tree (like Reddit/Linear
+           threaded comments) that recurses at any depth */}
+       {showReplies && (comment.replies || []).length > 0 && (
+         <div className="relative mt-2 pl-6 space-y-3 animate-card-in">
+           {/* shared trunk running behind every sibling's curve */}
+           <div
+             className="absolute left-[9px] top-0 bottom-6 w-0.5 bg-gray-300 dark:bg-gray-600 rounded-full"
+             aria-hidden="true"
+           />
            {(comment.replies || []).map((reply: Comment) => (
-             <div key={reply.id}>
+             <div key={reply.id} className="relative">
+               {/* smooth curve branching off the trunk into this reply */}
+               <svg
+                 className="absolute -left-6 top-0 text-gray-300 dark:text-gray-600"
+                 width="24"
+                 height="28"
+                 viewBox="0 0 24 28"
+                 fill="none"
+                 aria-hidden="true"
+               >
+                 <path d="M9 0 V14 Q9 22 17 22 H24" stroke="currentColor" strokeWidth="2" />
+               </svg>
                <CommentItem
                  comment={reply}
                  openMenuId={openMenuId}
                  setOpenMenuId={setOpenMenuId}
                  onCommentDelete={onReplyAdded}
                  questionId={questionId}
-                 level={1}
+                 level={level + 1}
                  onReplyAdded={onReplyAdded}
+                 canAcceptAnswer={canAcceptAnswer}
+                 onAcceptAnswer={onAcceptAnswer}
+                 forceExpandIds={forceExpandIds}
+                 highlightCommentId={highlightCommentId}
                />
-               {/* Second Level Replies */}
-               {(reply.replies || []).length > 0 && (
-                 <div className="space-y-2">
-                   {(reply.replies || []).map((nestedReply: Comment) => (
-                     <CommentItem
-                       key={nestedReply.id}
-                       comment={nestedReply}
-                       openMenuId={openMenuId}
-                       setOpenMenuId={setOpenMenuId}
-                       onCommentDelete={onReplyAdded}
-                       questionId={questionId}
-                       level={2}
-                     />
-                   ))}
-                 </div>
-               )}
              </div>
            ))}
          </div>
@@ -381,36 +457,24 @@ function CommentItem({
 
 
        {/* Delete Confirmation Modal */}
-       {showDeleteConfirmation && (
-         <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
-           <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-md max-w-sm w-full">
-             <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-               Are you sure you want to delete this comment?
-             </h2>
-             <div className="flex justify-end space-x-2">
-               <button
-                 onClick={() => setShowDeleteConfirmation(false)}
-                 className="px-3 py-1 bg-gray-200 dark:bg-gray-700 dark:text-gray-100 rounded"
-               >
-                 Cancel
-               </button>
-               <button
-                 onClick={handleCommentDelete}
-                 className="px-3 py-1 bg-red-500 text-white rounded"
-               >
-                 Delete
-               </button>
-             </div>
-           </div>
-         </div>
-       )}
+       <ConfirmDialog
+         title="Are you sure you want to delete this comment?"
+         isOpen={showDeleteConfirmation}
+         onCancel={() => setShowDeleteConfirmation(false)}
+         onConfirm={handleCommentDelete}
+       />
      </div>
    </div>
+   {toastNode}
+   <EditHistoryModal
+     entityType="comment"
+     entityId={comment.id}
+     isOpen={editHistoryOpen}
+     onClose={() => setEditHistoryOpen(false)}
+   />
+   </>
  );
 }
 
 
 export default CommentItem;
-
-
-

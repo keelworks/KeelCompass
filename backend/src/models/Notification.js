@@ -56,6 +56,18 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
+      source_type: {
+        type: DataTypes.STRING(40),
+        allowNull: true,
+      },
+      source_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      actor_user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
     },
     {
       tableName: 'Notifications',

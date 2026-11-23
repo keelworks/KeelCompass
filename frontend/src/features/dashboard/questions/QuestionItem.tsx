@@ -1,4 +1,4 @@
-import { formatDate } from "../../../utils/format";
+import { formatDate, capitalizeWords } from "../../../utils/format";
 import {
   UserActionType,
   QuestionListItem,
@@ -9,12 +9,17 @@ import {
   deleteUserQuestionAction,
   createInterest,
   deleteInterest,
+  toggleQuestionPin,
 } from "../../../utils/store";
-import DOMPurify from "dompurify";
 import React, { useState } from "react";
 import bookmark from "../../../assets/bookmark.svg";
 import bookmarked from "../../../assets/bookmarked.svg";
+import { Pin, PinOff } from "lucide-react";
 import Tooltip from "../../../components/ui/Tooltip";
+import AuthorHeader from "../../../components/ui/AuthorHeader";
+import LikeButton from "../../../components/ui/LikeButton";
+import RichContent from "../../../components/ui/RichContent";
+import { useToast } from "../../../utils/useToast";
 
 interface QuestionItemProps {
   question: QuestionListItem;
@@ -27,6 +32,9 @@ interface QuestionItemProps {
   setInterests: (interests: Interest[]) => void;
   onInterestUpdate: () => void;
   setSelectedQuestionId: (id: number | null) => void;
+  index?: number;
+  isAdmin?: boolean;
+  onQuestionUpdate?: (updated: Partial<QuestionListItem> & { id: number }) => void;
 }
 
 function QuestionItem({
@@ -36,8 +44,12 @@ function QuestionItem({
   setInterests,
   onInterestUpdate,
   setSelectedQuestionId,
+  index = 0,
+  isAdmin = false,
+  onQuestionUpdate,
 }: QuestionItemProps) {
   const [isPressed, setIsPressed] = useState(false);
+  const { showError, toastNode } = useToast();
 
   const {
     id,
@@ -50,13 +62,14 @@ function QuestionItem({
     commentCount,
     categories,
     tags,
+    pinned,
+    solved,
   } = question;
 
   const isInterested = question.isInterested;
   const interestId = question.interestId;
 
   const nameLabel = user.displayName || user.username;
-  const authorLabel = user.email ? `${nameLabel} <${user.email}>` : nameLabel;
 
   // Hide description if title is long (to keep card height consistent)
   // or if description is empty
@@ -66,25 +79,6 @@ function QuestionItem({
     description.trim().length > 0 &&
     title.length <= TITLE_LENGTH_THRESHOLD;
 
-  // Sanitize description HTML and ensure links open in new tab
-  const cleanHtml = DOMPurify.sanitize(description || "", {
-    ALLOWED_TAGS: [
-      "b",
-      "strong",
-      "i",
-      "em",
-      "u",
-      "a",
-      "p",
-      "br",
-      "ul",
-      "ol",
-      "li",
-      "div",
-      "span",
-    ],
-    ALLOWED_ATTR: ["href", "target", "rel"],
-  }).replace(/<a\s/gi, '<a target="_blank" rel="noopener noreferrer" ');
 
   const handleLikeQuestion = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -104,7 +98,7 @@ function QuestionItem({
         });
       }
     } catch {
-      alert("Failed to update like status.");
+      showError("Failed to update like status.");
     }
   };
 
@@ -115,7 +109,7 @@ function QuestionItem({
         const newInterest: Interest = await createInterest({ questionId: id });
         setInterests([...interests, newInterest]);
       } catch {
-        alert("Failed to bookmark question.");
+        showError("Failed to bookmark question.");
       }
     } else {
       if (interestId == null) return;
@@ -123,10 +117,20 @@ function QuestionItem({
         await deleteInterest({ id: interestId });
         setInterests(interests.filter((i) => i.id !== interestId));
       } catch {
-        alert("Failed to remove bookmark.");
+        showError("Failed to remove bookmark.");
       }
     }
     onInterestUpdate();
+  };
+
+  const handleTogglePin = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const result = await toggleQuestionPin(id);
+      onQuestionUpdate?.({ id, pinned: result.pinned });
+    } catch {
+      showError("Failed to update pin status.");
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -137,15 +141,18 @@ function QuestionItem({
   };
 
   return (
+    <>
     <article
       className={`
-        w-full p-4 flex flex-col gap-4 rounded cursor-pointer
-        border-2 border-transparent bg-transparent
+        w-full p-4 flex flex-col gap-4 cursor-pointer group
+        bg-transparent
+        animate-card-in
         transition-all duration-150 ease-in-out
-        hover:bg-[#F0F0F0] dark:hover:bg-white/5 hover:border-[#E8E8E8] dark:hover:border-white/10
-        focus:outline-none focus:border-[#007C88]
-        ${isPressed ? "!bg-[#E5E5E5] dark:!bg-white/10" : ""}
+        hover:bg-[#F0F0F0] dark:hover:bg-white/5 hover:-translate-y-[1px]
+        focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-600
+        ${isPressed ? "!bg-[#E5E5E5] dark:!bg-white/10 !translate-y-0" : ""}
       `}
+      style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
       onClick={() => setSelectedQuestionId(id)}
       onMouseDown={() => setIsPressed(true)}
       onMouseUp={() => setIsPressed(false)}
@@ -155,118 +162,127 @@ function QuestionItem({
       role="button"
       aria-label={`Post: ${title}`}
     >
-      {/* Header: Avatar, Username, Date, Bookmark */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {/* Profile Picture */}
-          {user.pictureUrl ? (
-            <img
-              src={user.pictureUrl}
-              alt=""
-              referrerPolicy="no-referrer"
-              className="w-8 h-8 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold text-sm">
-              {nameLabel.charAt(0).toUpperCase()}
-            </div>
-          )}
-
-          {/* Name <email> and date */}
-          <span className="text-[14px] text-[#666A6F] dark:text-gray-300 font-normal font-lato leading-none">
-            {authorLabel}
-          </span>
-          <span className="text-sm text-gray-500 dark:text-gray-400">•</span>
-          <span className="text-sm text-gray-500 dark:text-gray-400">{formatDate(createdAt)}</span>
-        </div>
-
-        {/* Bookmark Button with Tooltip */}
-        <Tooltip text={isInterested ? "Remove bookmark" : "Add bookmark"}>
-          <button
-            className={`
-              w-10 h-10 flex items-center justify-center rounded-full
-              transition-all duration-150 ease-in-out
-              hover:bg-[#EDF2F2] dark:hover:bg-white/10 hover:border hover:border-[#E8F4F5] dark:hover:border-white/10
-              active:bg-[#C8E9E9] dark:active:bg-teal-900/40
-              focus:outline-none focus:ring-2 focus:ring-[#007C88]
-            `}
-            onClick={handleInterestQuestion}
-            type="button"
-            aria-label={isInterested ? "Remove bookmark" : "Add bookmark"}
-          >
-            {isInterested ? (
-              <img src={bookmarked} alt="" aria-hidden="true" />
-            ) : (
-              <img src={bookmark} alt="" aria-hidden="true" />
+      {/* Header: Avatar, Username, Role, Date, Bookmark */}
+      <AuthorHeader
+        pictureUrl={user.pictureUrl}
+        displayName={nameLabel}
+        email={user.email}
+        roleTag={user.fullRoleTag}
+        dateLabel={formatDate(createdAt)}
+        rightSlot={
+          <div className="flex items-center gap-1">
+            {isAdmin && (
+              <Tooltip text={pinned ? "Unpin" : "Pin"}>
+                <button
+                  className={`
+                    w-10 h-10 flex items-center justify-center rounded-full
+                    transition-all duration-150 ease-in-out
+                    hover:bg-[#EDF2F2] dark:hover:bg-white/10 hover:border hover:border-brand-50 dark:hover:border-white/10
+                    active:bg-[#C8E9E9] dark:active:bg-teal-900/40 active:scale-90
+                    focus:outline-none focus:ring-2 focus:ring-brand-600
+                    ${pinned ? "text-amber-600 dark:text-amber-400" : "text-gray-500 dark:text-gray-400"}
+                  `}
+                  onClick={handleTogglePin}
+                  type="button"
+                  aria-label={pinned ? "Unpin" : "Pin"}
+                >
+                  {pinned ? <PinOff size={18} /> : <Pin size={18} />}
+                </button>
+              </Tooltip>
             )}
-          </button>
-        </Tooltip>
-      </div>
+            <Tooltip text={isInterested ? "Remove bookmark" : "Add bookmark"}>
+              <button
+                className={`
+                  w-10 h-10 flex items-center justify-center rounded-full
+                  transition-all duration-150 ease-in-out
+                  hover:bg-[#EDF2F2] dark:hover:bg-white/10 hover:border hover:border-brand-50 dark:hover:border-white/10
+                  active:bg-[#C8E9E9] dark:active:bg-teal-900/40 active:scale-90
+                  focus:outline-none focus:ring-2 focus:ring-brand-600
+                `}
+                onClick={handleInterestQuestion}
+                type="button"
+                aria-label={isInterested ? "Remove bookmark" : "Add bookmark"}
+              >
+                {isInterested ? (
+                  <img src={bookmarked} alt="" aria-hidden="true" className="animate-bounce-in" />
+                ) : (
+                  <img src={bookmark} alt="" aria-hidden="true" />
+                )}
+              </button>
+            </Tooltip>
+          </div>
+        }
+      />
 
-      {/* Title */}
-      <h3 className="text-lg font-semibold text-[#00545C] dark:text-teal-300 leading-relaxed m-0">
+      {/* Pinned / Solved badges */}
+      {(pinned || solved) && (
+        <div className="flex items-center gap-1.5 -mb-2">
+          {pinned && (
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+              Pinned
+            </span>
+          )}
+          {solved && (
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
+              Solved
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Title - highlights on hover/focus to signal it opens the post */}
+      <h3 className="text-lg font-semibold text-brand-800 dark:text-teal-300 leading-relaxed m-0 transition-colors duration-150 group-hover:text-brand-600 dark:group-hover:text-teal-200">
         {title}
       </h3>
 
       {/* Description (sanitized HTML, 2-line clamp) - hidden for long titles */}
       {shouldShowDescription && (
-        <p
+        <RichContent
+          html={description || ""}
           className="post-content text-sm text-[#555] dark:text-gray-300 leading-normal m-0 line-clamp-2"
-          dangerouslySetInnerHTML={{ __html: cleanHtml }}
         />
       )}
 
       {/* Footer: Categories, Tags and Stats */}
       <div className="flex justify-between items-end text-sm">
         {/* Categories and Tags */}
-        <div className="flex flex-col gap-1">
-          {categories && categories.length > 0 && (
-            <div className="flex items-center gap-2">
-              {categories.map((cat, index) => (
-                <React.Fragment key={cat.id}>
-                  <span className="text-gray-600 dark:text-gray-300">{cat.name}</span>
-                  {index < categories.length - 1 && (
-                    <span className="text-gray-300 dark:text-gray-600">|</span>
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-          )}
-          {tags && tags.length > 0 && (
-            <span className="inline-block w-fit text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#E8F4F5] text-[#007C88] dark:bg-teal-900/40 dark:text-teal-300">
-              Tags: {tags.join(", ")}
-            </span>
-          )}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {categories &&
+            categories.length > 0 &&
+            categories.map((cat) => (
+              <span
+                key={cat.id}
+                className="inline-block w-fit text-[11px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300"
+              >
+                {cat.name}
+              </span>
+            ))}
+          {tags &&
+            tags.length > 0 &&
+            tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-block w-fit text-[11px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full bg-brand-50 text-brand-600 dark:bg-teal-900/40 dark:text-teal-300"
+              >
+                #{capitalizeWords(tag)}
+              </span>
+            ))}
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-2">
-          <span
-            className={`cursor-pointer select-none ${
-              hasLiked ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
-            }`}
-            onClick={handleLikeQuestion}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                handleLikeQuestion(e as unknown as React.MouseEvent);
-              }
-            }}
-          >
-            {likeCount} likes
-          </span>
-          <span className="text-gray-500 dark:text-gray-400">•</span>
-          <span
-            className="text-gray-500 dark:text-gray-400 cursor-pointer"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {commentCount} comments
+        <div
+          className="flex items-center gap-4 shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <LikeButton liked={hasLiked} count={likeCount} onToggle={handleLikeQuestion} />
+          <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+            {commentCount} {commentCount === 1 ? "Comment" : "Comments"}
           </span>
         </div>
       </div>
     </article>
+    {toastNode}
+    </>
   );
 }
 

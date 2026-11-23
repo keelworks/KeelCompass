@@ -40,8 +40,35 @@ const markNotificationRead = async (req, res, next) => {
     next(error);  }
 };
 
+// delete a single notification
+const deleteNotification = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const notificationId = req.params.id;
+    const id = await notificationService.deleteNotification(userId, notificationId);
+    return res.status(200).json({ id });
+  } catch (error) {
+    logger.error(`Caught in deleteNotification controller: ${error.message}`);
+    next(error);
+  }
+};
+
+// clear every notification for the signed-in user
+const deleteAllNotifications = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const count = await notificationService.deleteAllNotifications(userId);
+    return res.status(200).json({ count });
+  } catch (error) {
+    logger.error(`Caught in deleteAllNotifications controller: ${error.message}`);
+    next(error);
+  }
+};
+
 module.exports = {
   getNotificationsByUserId,
   createNotificationsForAllUsers,
   markNotificationRead,
+  deleteNotification,
+  deleteAllNotifications,
 };

@@ -25,19 +25,37 @@ module.exports = (sequelize, DataTypes) => {
       },
       status: {
         type: DataTypes.ENUM(
-          'pending', 
-          'approved', 
+          'pending',
+          'approved',
           'rejected'
         ),
         allowNull: false,
         defaultValue: 'pending',
       },
+      pinned: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      solved: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      accepted_comment_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      deleted_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
-    { 
-      tableName: "Questions", 
-      timestamps: true, 
-      createdAt: 'created_at', 
-      updatedAt: 'updated_at' 
+    {
+      tableName: "Questions",
+      timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: 'updated_at'
     }
   );
 
@@ -50,6 +68,7 @@ module.exports = (sequelize, DataTypes) => {
     Question.hasMany(models.UserQuestionAction, { foreignKey: 'question_id', as: 'userQuestionActions' });
     Question.hasMany(models.Notification, { foreignKey: 'question_id', as: 'notifications' });
     Question.hasMany(models.QuestionTag, { foreignKey: 'question_id', as: 'tags' });
+    Question.belongsTo(models.Comment, { foreignKey: 'accepted_comment_id', as: 'acceptedComment' });
   };
 
   return Question;

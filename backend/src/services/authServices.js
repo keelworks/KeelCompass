@@ -4,7 +4,7 @@ const logger = require("../utils/logger");
 const logEverything = require("../utils/logEverything");
 const { HttpError } = require("../utils/httpError");
 const { generateToken } = require("../utils/jwtUtils");
-const { parseRoleTag, parseFullRoleTag, stripRoleTag } = require("../utils/roleTags");
+const { parseRoleTag, parseFullRoleTag, stripRoleTag, normalizeTag } = require("../utils/roleTags");
 
 const db = require("../models");
 const User = db.User;
@@ -18,24 +18,29 @@ const BOOTSTRAP_ADMIN_EMAIL = (process.env.BOOTSTRAP_ADMIN_EMAIL || "").toLowerC
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // resolve a user's Google-derived roles (tag mapping + bootstrap admin), and
-// re-sync their UserRoles rows to match - Google stays the source of truth,
-// re-evaluated on every sign-in.
+// re-sync their auto-derived UserRoles rows to match - Google stays the
+// source of truth for those, re-evaluated on every sign-in. Roles an admin
+// granted manually (via the Admin panel) are tracked separately and are
+// never touched here, so a manual grant survives the next sign-in.
 const syncUserRoles = async (user, email, rawTag) => {
   const roles = new Set();
+  // an admin-assigned group override (set from the Admin panel) always wins
+  // over whatever Google's name field says
+  const normalizedTag = normalizeTag(user.manual_role_tag || rawTag);
 
-  if (rawTag) {
-    let mapping = await RoleTagMapping.findOne({ where: { tag: rawTag } });
+  if (normalizedTag) {
+    let mapping = await RoleTagMapping.findOne({ where: { tag: normalizedTag } });
     if (!mapping) {
       // first time this tag has ever been seen - auto-register it as
       // Viewer so it shows up in the admin's role mappings list (and the
       // question tag picker) without anyone having to add it by hand;
       // an admin can bump its role later.
       try {
-        mapping = await RoleTagMapping.create({ tag: rawTag, role: "viewer" });
-        logger.info(`Auto-registered new role tag: "${rawTag}" -> viewer`);
+        mapping = await RoleTagMapping.create({ tag: normalizedTag, role: "viewer" });
+        logger.info(`Auto-registered new role tag: "${normalizedTag}" -> viewer`);
       } catch (err) {
         // another concurrent sign-in with the same new tag may have won the race
-        mapping = await RoleTagMapping.findOne({ where: { tag: rawTag } });
+        mapping = await RoleTagMapping.findOne({ where: { tag: normalizedTag } });
         if (!mapping) throw err;
       }
     }
@@ -48,10 +53,18 @@ const syncUserRoles = async (user, email, rawTag) => {
     roles.add("admin");
   }
 
-  await UserRole.destroy({ where: { user_id: user.id } });
-  await UserRole.bulkCreate([...roles].map((role) => ({ user_id: user.id, role })));
+  const manualRows = await UserRole.findAll({ where: { user_id: user.id, manually_granted: true } });
+  const manualRoles = new Set(manualRows.map((r) => r.role));
 
-  return [...roles];
+  await UserRole.destroy({ where: { user_id: user.id, manually_granted: false } });
+  const autoRolesToInsert = [...roles].filter((role) => !manualRoles.has(role));
+  if (autoRolesToInsert.length > 0) {
+    await UserRole.bulkCreate(
+      autoRolesToInsert.map((role) => ({ user_id: user.id, role, manually_granted: false }))
+    );
+  }
+
+  return [...new Set([...roles, ...manualRoles])];
 };
 
 // verify a Google ID token, then find-or-create the matching KeelCompass user
@@ -64,7 +77,7 @@ const googleAuth = async (credential) => {
         audience: GOOGLE_CLIENT_ID,
       });
       payload = ticket.getPayload();
-    } catch (err) {
+    } catch {
       throw new HttpError(401, "Invalid Google sign-in. Please try again.");
     }
 

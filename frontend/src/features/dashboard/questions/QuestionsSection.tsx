@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Interest } from "../../../utils/types";
+import { useNavigate } from "react-router-dom";
+import { CommentSearchResult, Interest } from "../../../utils/types";
 import { QuestionListItem, QuestionsResponse } from "../../../utils/types";
+import { formatDateTime } from "../../../utils/format";
 import Snackbar from "../../../components/Snackbar";
 import QuestionItem from "./QuestionItem";
 import QuestionDetails from "./QuestionDetails";
+import SmoothExpand from "../../../components/ui/SmoothExpand";
+import { QuestionCardSkeleton } from "../../../components/ui/Skeleton";
 
 interface QuestionsSectionProps {
   questions: QuestionsResponse;
@@ -24,6 +28,8 @@ interface QuestionsSectionProps {
   tab: "recent" | "popular";
   setTab: (tab: "recent" | "popular") => void;
   searchActive: boolean;
+  commentResults?: CommentSearchResult[];
+  isAdmin?: boolean;
   onSearchReset: () => void;
   hasMore: boolean;
   isLoading: boolean;
@@ -45,6 +51,8 @@ function QuestionsSection({
   tab,
   setTab,
   searchActive,
+  commentResults = [],
+  isAdmin = false,
   onSearchReset,
   hasMore,
   isLoading,
@@ -52,9 +60,10 @@ function QuestionsSection({
   showSuccessSnackbar,
   onSuccessSnackbarClose,
 }: QuestionsSectionProps) {
-  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(
-    null
-  );
+  const navigate = useNavigate();
+  // accordion-style: at most one post is expanded in place at a time -
+  // expanding a different one collapses whichever was open
+  const [expandedQuestionId, setExpandedQuestionId] = useState<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -119,7 +128,7 @@ function QuestionsSection({
                 }
                 className={`px-6 py-[6px] text-[14px] font-medium leading-6 font-sans rounded-md transition duration-200 ${
                   tab === tabOption.value
-                    ? "bg-white dark:bg-gray-900 text-[#007575] dark:text-teal-300 shadow-md"
+                    ? "bg-white dark:bg-gray-900 text-brand-550 dark:text-teal-300 shadow-md"
                     : "bg-transparent text-[#5F6C7B] dark:text-gray-300 hover:bg-[#E5E7EB] dark:hover:bg-gray-600"
                 }`}
               >
@@ -132,49 +141,97 @@ function QuestionsSection({
 
       {/* Scrollable Questions List */}
       <div ref={listRef} className="flex-1 overflow-y-auto pr-1 space-y-4">
+        {searchActive && commentResults.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              Matching comments
+            </p>
+            {commentResults.map((c) => (
+              <button
+                key={`comment-${c.id}`}
+                type="button"
+                onClick={() => navigate(`/questions/${c.questionId}#comment-${c.id}`)}
+                className="w-full text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 transition-all duration-150 hover:shadow-sm hover:-translate-y-[1px] animate-card-in"
+              >
+                <div className="flex items-center justify-between gap-3 mb-1">
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {c.user.displayName || c.user.username}
+                  </span>
+                  <span className="text-xs text-gray-400 shrink-0">{formatDateTime(c.createdAt)}</span>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 truncate">
+                  commented on <span className="font-medium text-brand-800 dark:text-teal-300">{c.questionTitle}</span>
+                </p>
+                <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">{c.content}</p>
+              </button>
+            ))}
+            <hr className="border-gray-200 dark:border-gray-700" />
+          </div>
+        )}
         {isLoading && questions.questions.length === 0 ? (
-          <p className="text-gray-600 dark:text-gray-300">Loading posts...</p>
+          <>
+            <QuestionCardSkeleton />
+            <QuestionCardSkeleton />
+            <QuestionCardSkeleton />
+          </>
         ) : questions.questions.length === 0 ? (
           <p className="text-gray-600 dark:text-gray-300">No posts found.</p>
         ) : (
-          questions.questions.map((question) => (
-            <div key={question.id}>
-              <QuestionItem
-                question={question}
-                onQuestionLike={onQuestionLike}
-                interests={interests}
-                setInterests={setInterests}
-                onInterestUpdate={onInterestUpdate}
-                setSelectedQuestionId={setSelectedQuestionId}
-              />
-              <hr className="border-gray-200 dark:border-gray-700" />
-            </div>
-          ))
+          questions.questions.map((question, index) => {
+            const isExpanded = expandedQuestionId === question.id;
+            return (
+              <div
+                key={question.id}
+                className={`rounded-xl border overflow-hidden transition-colors duration-300 ${
+                  isExpanded
+                    ? "border-teal-300 dark:border-teal-600 ring-1 ring-teal-100 dark:ring-teal-900/40 bg-teal-50/30 dark:bg-teal-950/10"
+                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-500"
+                }`}
+              >
+                <SmoothExpand>
+                  {isExpanded ? (
+                    <QuestionDetails
+                      questionId={question.id}
+                      variant="page"
+                      onCollapse={() => setExpandedQuestionId(null)}
+                      onQuestionUpdate={onQuestionUpdate}
+                      onQuestionDelete={(deletedId) => {
+                        setExpandedQuestionId(null);
+                        onQuestionDelete(deletedId);
+                      }}
+                      onQuestionLike={onQuestionLike}
+                      interests={interests}
+                      setInterests={setInterests}
+                      onInterestsUpdate={onInterestUpdate}
+                      onCommentCreate={onCommentCreate}
+                      onCommentDelete={onCommentDelete}
+                    />
+                  ) : (
+                    <QuestionItem
+                      question={question}
+                      onQuestionLike={onQuestionLike}
+                      interests={interests}
+                      setInterests={setInterests}
+                      onInterestUpdate={onInterestUpdate}
+                      setSelectedQuestionId={(id) => setExpandedQuestionId(id)}
+                      index={index}
+                      isAdmin={isAdmin}
+                      onQuestionUpdate={onQuestionUpdate}
+                    />
+                  )}
+                </SmoothExpand>
+              </div>
+            );
+          })
         )}
 
         <div ref={sentinelRef} className="h-1" aria-hidden="true" />
         {isLoading && questions.questions.length > 0 && (
-          <p className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-            Loading more posts...
-          </p>
+          <div className="pt-4">
+            <QuestionCardSkeleton />
+          </div>
         )}
       </div>
-
-      {/* Question Details Modal */}
-      {typeof selectedQuestionId === "number" && !isNaN(selectedQuestionId) && (
-        <QuestionDetails
-          questionId={selectedQuestionId}
-          onQuestionUpdate={onQuestionUpdate}
-          onQuestionDelete={onQuestionDelete}
-          onQuestionLike={onQuestionLike}
-          interests={interests}
-          setInterests={setInterests}
-          onInterestsUpdate={onInterestUpdate}
-          onCommentCreate={onCommentCreate}
-          onCommentDelete={onCommentDelete}
-          onClose={() => setSelectedQuestionId(null)}
-        />
-      )}
     </div>
   );
 }

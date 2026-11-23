@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
+  CommentSearchResult,
   Interest,
   QuestionListItem,
   QuestionsResponse,
@@ -11,6 +12,7 @@ import {
   getRecentQuestions,
   searchQuestions,
   getUserInterests,
+  getMe,
 } from "../utils/store";
 import MainLayout from "../components/wrappers/MainLayout";
 import SearchBar from "../features/dashboard/searchBar/SearchBar";
@@ -18,6 +20,7 @@ import QuestionsSection from "../features/dashboard/questions/QuestionsSection";
 import QuestionCreate from "../pages/QuestionCreate"; // adjust the path to where your file is
 import AskQuestionButton from "../components/ui/AskQuestionButton";
 import MyInterests from "../features/dashboard/interests/MyInterests";
+import NotificationsFullView from "../components/notifications/NotificationsFullView";
 
 type SearchRequest = {
   query: string;
@@ -31,6 +34,7 @@ type FeedResponse = QuestionsResponse & {
 
 type DashboardLocationState = {
   showQuestionPostedSnackbar?: boolean;
+  showAllNotifications?: boolean;
 };
 
 const FETCH_BATCH_SIZE = 10;
@@ -51,14 +55,14 @@ const fetchDashboardQuestions = async (
   tab: "recent" | "popular",
   searchRequest: SearchRequest | null,
   offset: number
-): Promise<QuestionsResponse> => {
+): Promise<{ questions: QuestionsResponse; comments: CommentSearchResult[] }> => {
   if (searchRequest) {
     const data = await searchQuestions({
       ...searchRequest,
       count: FETCH_BATCH_SIZE,
       offset,
     });
-    return normalizeQuestionsResponse(data);
+    return { questions: normalizeQuestionsResponse(data), comments: data.comments || [] };
   }
 
   const data =
@@ -66,12 +70,14 @@ const fetchDashboardQuestions = async (
       ? await getPopularQuestions({ count: FETCH_BATCH_SIZE, offset })
       : await getRecentQuestions({ count: FETCH_BATCH_SIZE, offset });
 
-  return normalizeQuestionsResponse(data);
+  return { questions: normalizeQuestionsResponse(data), comments: [] };
 };
 
 const Dashboard = () => {
   const [questions, setQuestions] = useState<QuestionsResponse>(INITIAL_QUESTIONS);
+  const [commentResults, setCommentResults] = useState<CommentSearchResult[]>([]);
   const [interests, setInterests] = useState<Interest[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [tab, setTab] = useState<"recent" | "popular">("recent");
   const [searchRequest, setSearchRequest] = useState<SearchRequest | null>(null);
   const [questionsRefreshKey, setQuestionsRefreshKey] = useState(0);
@@ -82,6 +88,7 @@ const Dashboard = () => {
   const [questionTitle, setQuestionTitle] = useState("");
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
   const latestRequestRef = useRef(0);
   const location = useLocation();
   const navigate = useNavigate();
@@ -92,6 +99,7 @@ const Dashboard = () => {
     if (!questionTitle.trim()) {
       setShowAsk(false);
       setQuestionTitle("");
+      setShowAllNotifications(false);
       return;
     }
     // If title exists, show confirmation modal
@@ -177,6 +185,9 @@ const Dashboard = () => {
     };
     fetchCategories();
     handleInterestUpdate();
+    getMe()
+      .then((me) => setIsAdmin(me.roles?.includes("admin") ?? false))
+      .catch(() => setIsAdmin(false));
   }, []);
 
   useEffect(() => {
@@ -197,6 +208,20 @@ const Dashboard = () => {
   }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
+    const shouldShowAllNotifications = (
+      location.state as DashboardLocationState | null
+    )?.showAllNotifications;
+
+    if (!shouldShowAllNotifications) {
+      return;
+    }
+
+    setShowAsk(false);
+    setShowAllNotifications(true);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
+
+  useEffect(() => {
     const requestId = ++latestRequestRef.current;
     setQuestions(INITIAL_QUESTIONS);
     setHasMore(false);
@@ -204,10 +229,11 @@ const Dashboard = () => {
 
     const loadInitialQuestions = async () => {
       try {
-        const data = await fetchDashboardQuestions(tab, searchRequest, 0);
+        const { questions: data, comments } = await fetchDashboardQuestions(tab, searchRequest, 0);
         if (latestRequestRef.current !== requestId) return;
 
         setQuestions(data);
+        setCommentResults(comments);
         setHasMore(data.offset !== -1);
       } catch (error) {
         if (latestRequestRef.current !== requestId) return;
@@ -231,7 +257,7 @@ const Dashboard = () => {
     setIsLoadingQuestions(true);
 
     try {
-      const data = await fetchDashboardQuestions(tab, searchRequest, nextOffset);
+      const { questions: data } = await fetchDashboardQuestions(tab, searchRequest, nextOffset);
       if (latestRequestRef.current !== requestId) return;
 
       setQuestions((prev) => ({
@@ -282,6 +308,8 @@ const Dashboard = () => {
               showDiscardModal={showDiscardModal}
               setShowDiscardModal={setShowDiscardModal}
             />
+          ) : showAllNotifications ? (
+            <NotificationsFullView onBack={() => setShowAllNotifications(false)} />
           ) : (
             <QuestionsSection
               questions={{
@@ -306,6 +334,8 @@ const Dashboard = () => {
               tab={tab}
               setTab={setTab}
               searchActive={searchActive}
+              commentResults={searchActive ? commentResults : []}
+              isAdmin={isAdmin}
               onSearchReset={() => setSearchRequest(null)}
               hasMore={hasMore}
               isLoading={isLoadingQuestions}
@@ -325,6 +355,7 @@ const Dashboard = () => {
             onClick={() => {
               setAskDisabled(true);
               setShowAsk(true);
+              setShowAllNotifications(false);
             }}
           />
         </div>

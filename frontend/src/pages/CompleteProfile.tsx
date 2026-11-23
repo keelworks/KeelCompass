@@ -4,6 +4,7 @@ import { completeProfile } from "../utils/store";
 import { persistSession } from "./Auth";
 import Snackbar from "../components/Snackbar";
 import ShipMark from "../assets/ship-mark.png";
+import { getErrorMessage } from "../utils/getErrorMessage";
 
 const CompleteProfile = () => {
   const navigate = useNavigate();
@@ -28,9 +29,8 @@ const CompleteProfile = () => {
       const token = await completeProfile({ username: username.trim() });
       persistSession(token);
       navigate("/dashboard");
-    } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message || "Couldn't save your profile. Please try again.";
-      showError(message);
+    } catch (err) {
+      showError(getErrorMessage(err, "Couldn't save your profile. Please try again."));
       setSubmitting(false);
     }
   };

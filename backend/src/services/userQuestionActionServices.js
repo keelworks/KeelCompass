@@ -3,9 +3,11 @@ const logEverything = require("../utils/logEverything");
 const { HttpError } = require("../utils/httpError");
 
 const db = require("../models");
+const User = db.User;
 const Question = db.Question;
 const UserQuestionAction = db.UserQuestionAction;
 const notificationService = require("./notificationServices");
+const { snippet } = require("../utils/textUtils");
 
 // create question action
 const createQuestionAction = async (userId, questionId, actionType) => {
@@ -26,9 +28,14 @@ const createQuestionAction = async (userId, questionId, actionType) => {
       let notifType, message;
       if (actionType === "like") {
         notifType = "liked";
-        message = "Your question was liked!";
+        const actor = await User.findByPk(userId, { attributes: ["display_name", "username"] });
+        const actorName = actor?.display_name || actor?.username || "Someone";
+        message = `${actorName} liked your question: "${snippet(question.title, 60)}"`;
+        await User.increment("reputation_points", { by: 1, where: { id: question.user_id } });
       } else if (actionType === "report") {
         notifType = "reported";
+        // deliberately anonymous - no actor name, so reporting doesn't risk
+        // identifying the reporter to the person who got reported
         message = "Your question was reported.";
       } else {
         return questionId;
@@ -37,7 +44,8 @@ const createQuestionAction = async (userId, questionId, actionType) => {
         question.user_id,
         notifType,
         message,
-        `/questions/${question.id}`
+        `/questions/${question.id}`,
+        { sourceType: `question_${actionType}`, sourceId: question.id, actorUserId: userId, questionId: question.id }
       );
       logger.info(`Notification sent to user ${question.user_id} for ${notifType} on question ${question.id}`);
     }
@@ -62,6 +70,19 @@ const deleteQuestionAction = async (userId, questionId, actionType) => {
     if (!action) throw new HttpError(404, "User has not taken action on this question");
 
     await action.destroy();
+
+    if (actionType === "like") {
+      const question = await Question.findByPk(questionId);
+      if (question && question.user_id !== userId) {
+        await User.increment("reputation_points", { by: -1, where: { id: question.user_id } });
+      }
+    }
+
+    // undoing the action removes the notification it caused, so the
+    // recipient doesn't accumulate stale entries from likes/reports that
+    // were later reversed
+    await notificationService.deleteNotificationsBySource(`question_${actionType}`, questionId, userId);
+
     logger.info(`Question action removed successfully for user ${userId} on question ${questionId}`);
     return questionId;
   } catch (error) {

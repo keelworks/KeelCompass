@@ -5,6 +5,7 @@ import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { googleAuth } from "../utils/store";
 import Snackbar from "../components/Snackbar";
 import ShipMark from "../assets/ship-mark.png";
+import { getErrorMessage } from "../utils/getErrorMessage";
 
 export const persistSession = (token: string) => {
   localStorage.setItem("token", token);
@@ -17,7 +18,7 @@ export const persistSession = (token: string) => {
       localStorage.removeItem("userId");
     }
     localStorage.setItem("username", decoded.username);
-  } catch (e) {
+  } catch {
     localStorage.removeItem("userId");
     localStorage.removeItem("username");
   }
@@ -42,9 +43,8 @@ const Auth = () => {
       const { token, needsProfile } = await googleAuth({ credential: credentialResponse.credential });
       persistSession(token);
       navigate(needsProfile ? "/complete-profile" : "/dashboard");
-    } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message || "Couldn't sign in with Google. Please try again.";
-      showError(message);
+    } catch (err) {
+      showError(getErrorMessage(err, "Couldn't sign in with Google. Please try again."));
     }
   };
 

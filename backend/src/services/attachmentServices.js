@@ -1,6 +1,8 @@
+const fs = require("fs");
 const logger = require("../utils/logger");
 const logEverything = require("../utils/logEverything");
 const { HttpError } = require("../utils/httpError");
+const { resolveUploadPath } = require("../utils/uploadPaths");
 
 const db = require("../models");
 const Attachment = db.Attachment;
@@ -48,11 +50,13 @@ const createAttachment = async (file, owner) => {
     const existingAttachment = await getAttachmentByOwner({ question_id, comment_id });
     if (existingAttachment) throw new HttpError(409, "Attachment already exists for this question or comment");
 
-    const { originalname, mimetype, buffer } = file;
+    // multer's diskStorage has already written the bytes to UPLOAD_DIR under
+    // file.filename by the time we get here - this just records where
+    const { originalname, mimetype, filename } = file;
     const attachment = await Attachment.create({
       file_name: originalname,
       mime_type: mimetype,
-      data: buffer,
+      file_path: filename,
       question_id: question_id || null,
       comment_id: comment_id || null,
     });
@@ -71,6 +75,13 @@ const deleteAttachment = async (id) => {
     const attachment = await Attachment.findByPk(id);
     if (!attachment) throw new HttpError(404, "Attachment not found");
 
+    if (attachment.file_path) {
+      fs.unlink(resolveUploadPath(attachment.file_path), (err) => {
+        if (err && err.code !== "ENOENT") {
+          logger.error(`Failed to remove attachment file ${attachment.file_path}: ${err.message}`);
+        }
+      });
+    }
     await attachment.destroy();
     logger.info(`Attachment ${id} deleted successfully`);
     return id;
@@ -81,8 +92,18 @@ const deleteAttachment = async (id) => {
   }
 };
 
+// resolves an attachment to an absolute, readable path on disk - callers
+// (the file-serving controller) must do their own visibility check first,
+// this just answers "where does it live"
+const getAttachmentFilePath = (attachment) => {
+  if (!attachment.file_path) return null;
+  const absolutePath = resolveUploadPath(attachment.file_path);
+  return fs.existsSync(absolutePath) ? absolutePath : null;
+};
+
 module.exports = {
   getAttachmentByOwner,
   createAttachment,
   deleteAttachment,
+  getAttachmentFilePath,
 };

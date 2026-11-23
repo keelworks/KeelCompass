@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useRef } from "react";
+import { useModalA11y } from "../utils/useModalA11y";
 
 interface DiscardModalProps {
   isOpen: boolean;
@@ -11,12 +12,20 @@ const DiscardModal: React.FC<DiscardModalProps> = ({
   onCancel,
   onConfirm,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  useModalA11y(isOpen, onCancel, containerRef);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 animate-backdrop-in">
       <div
-        className="bg-white rounded-lg shadow-lg"
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="discard-modal-title"
+        tabIndex={-1}
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-lg animate-bounce-in focus:outline-none"
         style={{
           width: 489,
           height: 200,
@@ -37,12 +46,13 @@ const DiscardModal: React.FC<DiscardModalProps> = ({
           {/* Header with title and close button */}
           <div className="flex items-start justify-between">
             <h2
+              id="discard-modal-title"
+              className="text-[#323232] dark:text-gray-100"
               style={{
                 fontFamily: "Raleway, sans-serif",
                 fontWeight: 600,
                 fontSize: 20,
                 lineHeight: "28px",
-                color: " #323232",
               }}
             >
               Discard question?
@@ -109,12 +119,12 @@ const DiscardModal: React.FC<DiscardModalProps> = ({
 
           {/* Body text */}
           <p
+            className="text-[#212121] dark:text-gray-200"
             style={{
               fontFamily: "Lato, sans-serif",
               fontWeight: 400,
               fontSize: 18,
               lineHeight: "100%",
-              color: "#212121",
             }}
           >
             Are you sure you want to discard your question draft?

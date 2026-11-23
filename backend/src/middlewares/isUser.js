@@ -1,5 +1,6 @@
 const logger = require("../utils/logger");
 const { verifyToken } = require("../utils/jwtUtils");
+const { normalizeTag } = require("../utils/roleTags");
 const db = require("../models");
 const User = db.User;
 const UserRole = db.UserRole;
@@ -23,6 +24,7 @@ module.exports = async function isUser(req, res, next) {
       role: user.role,
       roles: userRoles.map((r) => r.role),
       raw_role_tag: user.raw_role_tag,
+      normalized_role_tag: normalizeTag(user.manual_role_tag || user.raw_role_tag),
     };
     next();
   } catch (error) {

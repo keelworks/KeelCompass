@@ -3,9 +3,83 @@ name: Deploy to production
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: keelcompass_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      DB_HOST: 127.0.0.1
+      DB_USER: root
+      DB_PASS: root
+      DB_DATABASE: keelcompass_ci
+      DB_DIALECT: mysql
+      JWT_SECRET: ci-test-secret
+      ALLOWED_SIGNUP_DOMAIN: keelworks.org
+      UPLOAD_DIR: ./uploads
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Lint backend
+        working-directory: backend
+        run: npx eslint .
+
+      - name: Run backend migrations against the CI database
+        working-directory: backend
+        run: npx sequelize-cli db:migrate
+
+      - name: Run backend unit/integration tests
+        working-directory: backend
+        run: npm run test:unit
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Typecheck frontend
+        working-directory: frontend
+        run: npx tsc -b
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Run frontend unit tests
+        working-directory: frontend
+        run: npm run test:unit
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+        env:
+          VITE_API_URL: /api
+          VITE_GOOGLE_CLIENT_ID: ci-placeholder
+
   deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy over SSH

@@ -5,13 +5,25 @@ const searchService = require("../services/searchServices");
 // search questions by keyword
 const searchQuestionByKeyword = async (req, res, next) => {
   try {
-    const { query, count, offset, categoriesIds, hasNone } = req.body;
+    const { query, count, offset, categoriesIds, hasNone, tag, status, dateFrom, dateTo } = req.body;
 
     const parsedCategoryIds = Array.isArray(categoriesIds)
     ? categoriesIds.map(id => parseInt(id, 10)).filter(Number.isInteger)
     : [];
 
-    const result = await searchService.searchQuestionByKeyword(query, count, offset, parsedCategoryIds, !!hasNone);
+    const viewerTag = req.user?.normalized_role_tag ?? null;
+    const viewerUserId = req.user?.id ?? null;
+
+    const result = await searchService.searchQuestionByKeyword(
+      query,
+      count,
+      offset,
+      parsedCategoryIds,
+      !!hasNone,
+      viewerTag,
+      viewerUserId,
+      { tag, status, dateFrom, dateTo }
+    );
     return res.status(200).json(result);
   } catch (error) {
     logger.error(`Caught in searchQuestionByKeyword controller: ${error.message}`);

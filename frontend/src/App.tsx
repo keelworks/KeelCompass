@@ -4,9 +4,12 @@ import CompleteProfile from "./pages/CompleteProfile";
 import AuthGuard from "./pages/AuthGuard";
 import Dashboard from "./pages/Dashboard";
 import QuestionCreate from "./pages/QuestionCreate";
+import QuestionPage from "./pages/QuestionPage";
 import QnA from "./pages/QnA";
 import Interests from "./pages/Interests";
 import Admin from "./pages/Admin";
+import Leaderboard from "./pages/Leaderboard";
+import Stats from "./pages/Stats";
 import Fallback from "./pages/Fallback";
 
 
@@ -49,7 +52,10 @@ function App() {
         <Route path="/qna" element={<QnA />} />
         <Route path="/interests" element={<Interests />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/stats" element={<Stats />} />
         <Route path="/questions/new" element={<QuestionCreate />} />
+        <Route path="/questions/:id" element={<QuestionPage />} />
       </Route>
 
       <Route path="*" element={<Fallback />} />

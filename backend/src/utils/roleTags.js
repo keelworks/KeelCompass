@@ -34,4 +34,27 @@ const stripRoleTag = (familyName) => {
   return familyName.replace(/\s*\([^)]*\)\s*/g, "").trim();
 };
 
-module.exports = { parseRoleTag, parseFullRoleTag, stripRoleTag };
+// canonical matching key for a role tag: strips all punctuation (keeping
+// spaces) and lowercases, so visually-equivalent variants like "Prod. Mgr.",
+// "Prod Mgr.", and "Prod. Mgr" all collapse to the same "prod mgr" key. This
+// is what gets stored in RoleTagMappings.tag and QuestionTags.tag - it's the
+// single canonical identity for a role from here on, not just a lookup key.
+const normalizeTag = (tag) => {
+  if (!tag) return null;
+  const normalized = tag
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+  return normalized.length > 0 ? normalized : null;
+};
+
+// mention key for the @mention notification system: same as normalizeTag,
+// but with spaces removed too (e.g. "prod mgr" -> "prodmgr"), since mentions
+// are typed as a single contiguous @token
+const mentionKey = (tag) => {
+  const normalized = normalizeTag(tag);
+  return normalized ? normalized.replace(/\s+/g, "") : null;
+};
+
+module.exports = { parseRoleTag, parseFullRoleTag, stripRoleTag, normalizeTag, mentionKey };

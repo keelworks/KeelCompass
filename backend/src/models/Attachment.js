@@ -33,9 +33,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      // legacy base64-in-MySQL storage, kept nullable for any row that
+      // predates the disk-storage migration - new rows only use file_path
       data: {
         type: DataTypes.BLOB('long'),
-        allowNull: false,
+        allowNull: true,
+      },
+      file_path: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
     },
     {

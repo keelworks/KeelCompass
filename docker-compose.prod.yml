@@ -33,11 +33,13 @@ services:
       - ALLOWED_SIGNUP_DOMAIN=${ALLOWED_SIGNUP_DOMAIN}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - BOOTSTRAP_ADMIN_EMAIL=${BOOTSTRAP_ADMIN_EMAIL}
+      - UPLOAD_DIR=/app/uploads
     depends_on:
       database:
         condition: service_healthy
     volumes:
       - backend_logs:/app/logs
+      - attachment_uploads:/app/uploads
 
   frontend:
     container_name: keelcompass-frontend
@@ -56,3 +58,4 @@ services:
 volumes:
   db_data:
   backend_logs:
+  attachment_uploads:

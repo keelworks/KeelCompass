@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Interest, QuestionDetail, QuestionListItem } from "../utils/types";
-import { getQuestion, getUserInterests } from "../utils/store";
+import { getQuestion, getUserInterests, getMe } from "../utils/store";
 import MainLayout from "../components/wrappers/MainLayout";
 import AskQuestionButton from "../components/ui/AskQuestionButton";
 import QuestionItem from "../features/dashboard/questions/QuestionItem";
@@ -12,6 +12,7 @@ const InterestsPage = () => {
   const [interests, setInterests] = useState<Interest[]>([]);
   const [interestQuestions, setInterestQuestions] = useState<QuestionListItem[]>([]);
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const refreshInterests = async () => {
     setInterests(await getUserInterests());
@@ -19,6 +20,9 @@ const InterestsPage = () => {
 
   useEffect(() => {
     refreshInterests();
+    getMe()
+      .then((me) => setIsAdmin(me.roles?.includes("admin") ?? false))
+      .catch(() => setIsAdmin(false));
   }, []);
 
   useEffect(() => {
@@ -124,6 +128,8 @@ const InterestsPage = () => {
                     setInterests={setInterests}
                     onInterestUpdate={refreshInterests}
                     setSelectedQuestionId={setSelectedQuestionId}
+                    isAdmin={isAdmin}
+                    onQuestionUpdate={handleQuestionUpdate}
                   />
                   <hr className="border-gray-200 dark:border-gray-700" />
                 </div>

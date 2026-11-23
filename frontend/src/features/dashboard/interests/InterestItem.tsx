@@ -17,7 +17,7 @@ function InterestItem({
       onClick={onClick}
     >
       {/* Title */}
-      <h3 className="text-lg font-semibold text-[#004466] dark:text-teal-300 leading-relaxed mb-3">
+      <h3 className="text-lg font-semibold text-brand-900 dark:text-teal-300 leading-relaxed mb-3">
         {title}
       </h3>
 

@@ -5,6 +5,7 @@ const isUser = require("../middlewares/isUser");
 const isFacilitator = require("../middlewares/isFacilitator");
 const upload = require("../utils/multerConfig");
 const questionControllers = require("../controllers/questionControllers");
+const { createQuestionLimiter } = require("../middlewares/rateLimiters");
 
 const router = express.Router();
 router.use(isUser);
@@ -21,7 +22,7 @@ const getQuestionByIdValidation = [
 ];
 
 const createQuestionValidation = [
-  body("categoryIds").optional().isArray().withMessage("Invalid category IDs.").bail(),
+  body("categoryIds").optional().isString().withMessage("Invalid category IDs.").bail(),
   body("title").notEmpty().withMessage("Title is required").bail().isString().withMessage("Invalid title"),
   body("description").notEmpty().withMessage("Description is required").bail().isString().withMessage("Invalid description"),
   body("tags").optional().isString().withMessage("Invalid tags.").bail(),
@@ -31,7 +32,7 @@ const createQuestionValidation = [
 const updateQuestionValidation = [
   body("title").notEmpty().withMessage("Title is required.").bail().isString().withMessage("Invalid title."),
   body("description").notEmpty().withMessage("Description is required.").bail().isString().withMessage("Invalid description."),
-  body("categoryIds").optional().isArray().withMessage("Invalid category IDs.").bail(),
+  body("categoryIds").optional().isString().withMessage("Invalid category IDs.").bail(),
   body("tags").optional().isString().withMessage("Invalid tags.").bail(),
   handleValidationErrors,
 ];
@@ -59,17 +60,30 @@ router.get("/pending", isFacilitator, getQuestionsValidation, questionController
 // list known tags a question can be restricted to
 router.get("/tags", questionControllers.getKnownTags);
 
+// find existing questions with a similar title (duplicate-question nudge)
+router.get("/similar", questionControllers.getSimilarQuestions);
+
 // get question by id
 router.get("/:id", getQuestionByIdValidation, questionControllers.getQuestionById);
 
 // post question
-router.post("/", upload.single("attachment"), createQuestionValidation, questionControllers.createQuestion);
+router.post("/", createQuestionLimiter, upload.single("attachment"), createQuestionValidation, questionControllers.createQuestion);
 
 // update question by id
 router.put("/:id", upload.single("attachment"), updateQuestionValidation, questionControllers.updateQuestion);
 
 // update question status (facilitator)
 router.patch("/:id/status", isFacilitator, updateQuestionStatusValidation, questionControllers.updateQuestionStatus);
+
+// mark/unmark a comment as the accepted answer (question author or admin)
+router.patch("/:id/accept-answer", getQuestionByIdValidation, questionControllers.setAcceptedAnswer);
+
+// mute/unmute a thread for the signed-in user only
+router.post("/:id/mute", getQuestionByIdValidation, questionControllers.muteQuestion);
+router.delete("/:id/mute", getQuestionByIdValidation, questionControllers.unmuteQuestion);
+
+// prior saved versions of this question's title/description
+router.get("/:id/history", getQuestionByIdValidation, questionControllers.getQuestionHistory);
 
 // delete question by id
 router.delete("/:id", deleteQuestionValidation, questionControllers.deleteQuestion);

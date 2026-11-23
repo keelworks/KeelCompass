@@ -17,7 +17,9 @@ function logEverything(obj, prefix = "") {
         if (key !== 'constructor') {
           try {
             logger.error(`${pre}Proto ${key}:`, obj[key]);
-          } catch {}
+          } catch {
+            // some prototype properties throw on access (e.g. getters) - skip those
+          }
         }
       });
     }

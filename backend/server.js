@@ -8,11 +8,14 @@ if (env === "development") {
 
 const app = require("./src/app.js");
 const logger = require("./src/utils/logger");
+const { initSocket } = require("./src/utils/socket");
 const port = process.env.PORT || 8080;
 
 // server listening on port <PORT> for incoming requests
-app.listen(port, () => {
+const httpServer = app.listen(port, () => {
   logger.info(
     `Server is running on port ${port}, env = ${env}, logging level = ${logger.level}`
   );
 });
+
+initSocket(httpServer);

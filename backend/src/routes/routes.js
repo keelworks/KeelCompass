@@ -11,6 +11,8 @@ const interestRoutes = require("./interestRoutes");
 const notificationRoutes = require("./notificationRoutes");
 const userRoutes = require("./userRoutes");
 const adminRoutes = require("./adminRoutes");
+const feedbackRoutes = require("./feedbackRoutes");
+const attachmentRoutes = require("./attachmentRoutes");
 
 // routes
 router.use("/api/auth", authRoutes);
@@ -24,6 +26,8 @@ router.use("/api/comment-actions", userCommentActionRoutes);
 router.use("/api/interests", interestRoutes);
 router.use("/api/notifications", notificationRoutes);
 router.use("/api/users", userRoutes);
+router.use("/api/feedback", feedbackRoutes);
+router.use("/api/attachments", attachmentRoutes);
 
 // static routes
 router.use("/static/career", express.static("src/career"));

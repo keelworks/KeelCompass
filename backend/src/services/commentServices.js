@@ -5,19 +5,28 @@ const { HttpError } = require("../utils/httpError");
 const db = require("../models");
 const Question = db.Question;
 const Comment = db.Comment;
+const User = db.User;
 const attachmentService = require("./attachmentServices");
 const interestService = require("./interestServices");
 const notificationService = require("./notificationServices");
+const editHistoryService = require("./editHistoryServices");
+const { snippet } = require("../utils/textUtils");
 
-// create comment
-const createComment = async (userId, questionId, content, parentId = null, attachment = null) => {
+// create comment. `mentionedUserIds` are the people explicitly tagged via
+// the @mention autocomplete while composing - a direct, reliable way to
+// notify specific people, instead of re-parsing free text after the fact
+const createComment = async (userId, questionId, content, parentId = null, attachment = null, mentionedUserIds = []) => {
   try {
     const question = await Question.findByPk(questionId);
     if (!question) throw new HttpError(404, "Question not found");
     if (parentId) {
       const parentComment = await Comment.findByPk(parentId);
       if (!parentComment) throw new HttpError(400, "Parent comment not found");
-      if (parentComment.question_id !== questionId) throw new HttpError(400, "Parent comment does not belong to the same question");
+      // questionId can arrive as a string (multipart/form-data) or a number
+      // (JSON) depending on the caller, so compare numerically rather than
+      // with strict equality - otherwise every multipart reply would be
+      // rejected as belonging to "a different question"
+      if (Number(parentComment.question_id) !== Number(questionId)) throw new HttpError(400, "Parent comment does not belong to the same question");
     }
 
     const newComment = await Comment.create({
@@ -34,14 +43,25 @@ const createComment = async (userId, questionId, content, parentId = null, attac
 
     // create notification
     try {
+      const actor = await User.findByPk(userId, { attributes: ["display_name", "username"] });
+      const actorName = actor?.display_name || actor?.username || "Someone";
+      const contentSnippet = snippet(content, 60);
+      const postTitle = snippet(question?.title || "", 40);
+
+      // all notifications caused by this comment are tagged with it as their
+      // source, so deleting the comment later can clean them all up at once
+      const commentSource = { sourceType: "comment_created", sourceId: newComment.id, actorUserId: userId, questionId };
+      const targetUrl = `/questions/${questionId}#comment-${newComment.id}`;
+
       if (parentId) {
         const parentComment = await Comment.findByPk(parentId);
         if (parentComment && parentComment.user_id !== userId) {
           await notificationService.createNotification(
             parentComment.user_id,
             "commented",
-            "Someone replied to your comment!",
-            `/questions/${questionId}#comment-${newComment.id}`
+            `${actorName} replied to your comment on "${postTitle}": "${contentSnippet}"`,
+            targetUrl,
+            commentSource
           );
         }
       } else {
@@ -49,10 +69,42 @@ const createComment = async (userId, questionId, content, parentId = null, attac
           await notificationService.createNotification(
             question.user_id,
             "commented",
-            "Someone commented on your question!",
-            `/questions/${questionId}#comment-${newComment.id}`
+            `${actorName} commented on "${postTitle}": "${contentSnippet}"`,
+            targetUrl,
+            commentSource
           );
         }
+      }
+
+      // "follow a question": anyone who bookmarked it also gets notified of
+      // any new top-level comment, not just the question's own author
+      const followers = await interestService.getInterestsByQuestionId(questionId);
+      const followerIds = followers
+        .map((f) => f.user_id)
+        .filter((id) => id !== userId && id !== question?.user_id);
+      if (followerIds.length > 0) {
+        await notificationService.createNotificationsForUsers(
+          followerIds,
+          "commented",
+          `${actorName} commented on "${postTitle}" (which you bookmarked): "${contentSnippet}"`,
+          targetUrl,
+          commentSource
+        );
+      }
+
+      // explicit @mentions from the autocomplete - reuses the comment's own
+      // source tag so deleting the comment cleans these up too
+      const mentionIds = [...new Set((mentionedUserIds || []).map(Number))].filter(
+        (id) => id && id !== userId
+      );
+      if (mentionIds.length > 0) {
+        await notificationService.createNotificationsForUsers(
+          mentionIds,
+          "mention",
+          `${actorName} mentioned you in a comment on "${postTitle}": "${contentSnippet}"`,
+          targetUrl,
+          commentSource
+        );
       }
     } catch (err) {
       logger.error(`Failed to create comment notification: ${err.message}`);
@@ -71,7 +123,12 @@ const updateCommentById = async (userId, commentId, content, attachment = null) 
   try {
     const comment = await Comment.findByPk(commentId);
     if (!comment) throw new HttpError(404, "Comment not found");
+    if (comment.deleted_at) throw new HttpError(400, "This comment has been deleted");
     if (comment.user_id !== userId) throw new HttpError(401, "No permission to edit");
+
+    if (comment.content !== content) {
+      await editHistoryService.recordEdit("comment", comment.id, null, comment.content);
+    }
 
     comment.content = content;
     await comment.save();
@@ -98,7 +155,8 @@ const updateCommentById = async (userId, commentId, content, attachment = null) 
           userIds,
           "update",
           "A comment you bookmarked was updated.",
-          `/questions/${comment.question_id}#comment-${commentId}`
+          `/questions/${comment.question_id}#comment-${commentId}`,
+          { questionId: comment.question_id }
         );
         logger.info(`Notified ${userIds.length} users about update to comment ${commentId}`);
       }
@@ -114,15 +172,29 @@ const updateCommentById = async (userId, commentId, content, attachment = null) 
   }
 }
 
-// delete comment by id
-const deleteCommentById = async (userId, commentId) => {
+// delete comment by id - soft delete only: the row (and its replies) stay
+// in place so the thread underneath it keeps working, it just renders as a
+// "[deleted]" tombstone from here on (see getQuestion's comment mapping)
+const deleteCommentById = async (userId, commentId, isAdmin = false) => {
   try {
     const comment = await Comment.findByPk(commentId);
     if (!comment) throw new HttpError(404, "Comment not found");
-    if (comment.user_id !== userId) throw new HttpError(401, "No permission to delete");
+    if (comment.deleted_at) throw new HttpError(400, "This comment has already been deleted");
+    if (comment.user_id !== userId && !isAdmin) throw new HttpError(401, "No permission to delete");
 
-    await Comment.destroy({ where: { id: commentId } });
-    logger.info(`Comment ${commentId} deleted successfully`);
+    // clear notifications this specific comment caused (its replies are
+    // untouched and keep their own notifications, since they're not deleted)
+    try {
+      await notificationService.deleteNotificationsBySource("comment_created", commentId);
+      await notificationService.deleteNotificationsBySource("comment_like", commentId);
+      await notificationService.deleteNotificationsBySource("comment_report", commentId);
+    } catch (err) {
+      logger.error(`Failed to clean up notifications for deleted comment ${commentId}: ${err.message}`);
+    }
+
+    comment.deleted_at = new Date();
+    await comment.save();
+    logger.info(`Comment ${commentId} soft-deleted`);
     return commentId;
   } catch (error) {
     logEverything(error, "commentServices");
@@ -136,4 +208,5 @@ module.exports = {
   createComment,
   updateCommentById,
   deleteCommentById,
+  getCommentEditHistory: (commentId) => editHistoryService.getEditHistory("comment", commentId),
 };

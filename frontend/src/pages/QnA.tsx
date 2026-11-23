@@ -36,7 +36,7 @@ const QnA = () => {
           setCategories(names);
           setSelectedMainCategory(names[0]);
         }
-      } catch (_) {
+      } catch {
         // keep defaultCategories as fallback
       }
     })();

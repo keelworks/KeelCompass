@@ -42,6 +42,23 @@ const getInterestsByCommentId = async (commentId) => {
   }
 };
 
+// get interests by question id - this is also how "following" a question
+// works: bookmarking it is the follow action, so this list is who gets
+// notified of new activity on it
+const getInterestsByQuestionId = async (questionId) => {
+  try {
+    return await Interest.findAll({
+      where: { question_id: questionId },
+      attributes: ["user_id"],
+      raw: true,
+    });
+  } catch (error) {
+    logEverything(error, "interestServices");
+    if (error instanceof HttpError) throw error;
+    throw new HttpError(500, "Error fetching interests");
+  }
+};
+
 // create interest
 const createInterest = async (userId, questionId, commentId) => {
   try {
@@ -64,6 +81,7 @@ const createInterest = async (userId, questionId, commentId) => {
     if (target.user_id !== userId) {
       try {
         let message, link;
+        const ownerQuestionId = questionId || target.question_id;
         if (questionId) {
           message = "Your question was bookmarked!";
           link = `/questions/${questionId}`;
@@ -73,7 +91,9 @@ const createInterest = async (userId, questionId, commentId) => {
         }
 
         // create notification for post user
-        await notificationService.createNotification(target.user_id, "bookmarked", message, link);
+        await notificationService.createNotification(target.user_id, "bookmarked", message, link, {
+          questionId: ownerQuestionId,
+        });
 
         logger.info(`Notification sent to user ${target.user_id} for ${questionId ? "question" : "comment"} bookmark`);
       } catch (err) {
@@ -124,6 +144,7 @@ const deleteInterest = async (userId, id) => {
 module.exports = {
   getUserInterests,
   getInterestsByCommentId,
+  getInterestsByQuestionId,
   createInterest,
   deleteInterest,
 };

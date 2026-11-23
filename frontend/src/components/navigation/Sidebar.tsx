@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { BsChevronBarLeft, BsChevronBarRight } from "react-icons/bs";
 import { IoClose } from "react-icons/io5";
-import { FiBookmark, FiHome, FiShield } from "react-icons/fi";
+import { FiBookmark, FiHome, FiShield, FiAward, FiBarChart2 } from "react-icons/fi";
 import Logo from "../../assets/compass-mark.png";
 import Tooltip from "../../components/ui/Tooltip";
 import type { Theme } from "../../utils/theme";
@@ -12,7 +12,7 @@ const TOGGLE_TEAL = "#0E8B87";
 
 interface MenuItemData {
   name: string;
-  iconType: "home" | "interests" | "admin";
+  iconType: "home" | "interests" | "admin" | "leaderboard" | "stats";
   path: string;
   disabled: boolean;
 }
@@ -123,6 +123,10 @@ function SidebarMenuItem({
           <FiHome size={18} color={state.iconBorder} />
         ) : item.iconType === "admin" ? (
           <FiShield size={18} color={state.iconBorder} />
+        ) : item.iconType === "leaderboard" ? (
+          <FiAward size={18} color={state.iconBorder} />
+        ) : item.iconType === "stats" ? (
+          <FiBarChart2 size={18} color={state.iconBorder} />
         ) : (
           <FiBookmark size={18} color={state.iconBorder} />
         )}
@@ -194,6 +198,18 @@ function Sidebar({
       path: "/interests",
       disabled: false,
     },
+    {
+      name: "Leaderboard",
+      iconType: "leaderboard" as const,
+      path: "/leaderboard",
+      disabled: false,
+    },
+    {
+      name: "My Stats",
+      iconType: "stats" as const,
+      path: "/stats",
+      disabled: false,
+    },
     ...(isAdmin
       ? [
           {
@@ -211,7 +227,7 @@ function Sidebar({
       {/* === Mobile backdrop === */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden animate-backdrop-in"
           onClick={onMobileClose}
           aria-hidden="true"
         />
@@ -249,9 +265,9 @@ function Sidebar({
       rounded-full transition-all duration-200
       bg-white border border-[#F4F4F4] shadow-sm
 
-      hover:bg-[#EDF2F2] hover:border-[#E8F4F5]
+      hover:bg-[#EDF2F2] hover:border-brand-50
 
-      active:bg-[#C8E9E9] active:border-[#D2EEF0]
+      active:bg-[#C8E9E9] active:border-brand-100
 
       focus:outline-none
       focus:bg-white focus:border-[#F4F4F4]

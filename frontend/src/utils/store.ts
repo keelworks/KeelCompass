@@ -10,6 +10,16 @@ import {
   KcRole,
   RoleMapping,
   AdminUser,
+  Notification,
+  FeedbackEntry,
+  LeaderboardEntry,
+  UserStats,
+  AdminQuestion,
+  DeletedQuestion,
+  Report,
+  AuditLogEntry,
+  AdminInsights,
+  EditHistoryEntry,
 } from './types';
 
 // auth endpoints
@@ -48,6 +58,34 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
   return res.data;
 }
 
+export async function grantAdmin(userId: number): Promise<void> {
+  await axiosInstance.post(`/admin/users/${userId}/admin`);
+}
+
+export async function revokeAdmin(userId: number): Promise<void> {
+  await axiosInstance.delete(`/admin/users/${userId}/admin`);
+}
+
+export async function getAllFeedback(): Promise<FeedbackEntry[]> {
+  const res = await axiosInstance.get<FeedbackEntry[]>('/admin/feedback');
+  return res.data;
+}
+
+export async function setFeedbackRead(id: number, read: boolean): Promise<{ id: number; read: boolean }> {
+  const res = await axiosInstance.patch<{ id: number; read: boolean }>(`/admin/feedback/${id}/read`, { read });
+  return res.data;
+}
+
+export async function deleteFeedback(id: number): Promise<void> {
+  await axiosInstance.delete(`/admin/feedback/${id}`);
+}
+
+// feedback endpoint
+export async function submitFeedback(message: string): Promise<{ id: number }> {
+  const res = await axiosInstance.post<{ id: number }>('/feedback', { message });
+  return res.data;
+}
+
 // category endpoints
 export async function getAllCategories(): Promise<
   { id: number; name: string }[]
@@ -60,10 +98,17 @@ export async function getAllCategories(): Promise<
 export async function getRecentQuestions(params?: {
   count?: number;
   offset?: number;
+  unanswered?: boolean;
 }): Promise<QuestionsResponse> {
   const res = await axiosInstance.get<QuestionsResponse>('/questions', {
     params,
   });
+  return res.data;
+}
+
+// duplicate-question nudge while composing
+export async function getSimilarQuestions(title: string): Promise<{ id: number; title: string; score: number }[]> {
+  const res = await axiosInstance.get('/questions/similar', { params: { title } });
   return res.data;
 }
 
@@ -91,12 +136,17 @@ export async function createQuestion(params: {
   description: string;
   attachment?: File | null;
   tags?: string[];
+  categoryIds?: string[];
+  mentionedUserIds?: number[];
 }): Promise<number> {
   const formData = new FormData();
   formData.append('title', params.title);
   formData.append('description', params.description);
   if (params.attachment) formData.append('attachment', params.attachment);
   if (params.tags) formData.append('tags', JSON.stringify(params.tags));
+  if (params.categoryIds) formData.append('categoryIds', JSON.stringify(params.categoryIds));
+  if (params.mentionedUserIds && params.mentionedUserIds.length > 0)
+    formData.append('mentionedUserIds', JSON.stringify(params.mentionedUserIds));
   const res = await axiosInstance.post<number>('/questions', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
@@ -108,14 +158,18 @@ export async function updateQuestion(params: {
   title?: string;
   description?: string;
   attachment?: File | null;
+  removeAttachment?: boolean;
   tags?: string[];
+  categoryIds?: string[];
 }): Promise<number> {
   const formData = new FormData();
   if (params.title !== undefined) formData.append('title', params.title);
   if (params.description !== undefined)
     formData.append('description', params.description);
   if (params.attachment) formData.append('attachment', params.attachment);
+  if (params.removeAttachment) formData.append('removeAttachment', 'true');
   if (params.tags) formData.append('tags', JSON.stringify(params.tags));
+  if (params.categoryIds) formData.append('categoryIds', JSON.stringify(params.categoryIds));
   const res = await axiosInstance.put<number>(
     `/questions/${params.id}`,
     formData,
@@ -134,12 +188,44 @@ export async function deleteQuestion(params: { id: number }): Promise<void> {
   await axiosInstance.delete(`/questions/${params.id}`);
 }
 
+export async function getQuestionEditHistory(id: number): Promise<EditHistoryEntry[]> {
+  const res = await axiosInstance.get<EditHistoryEntry[]>(`/questions/${id}/history`);
+  return res.data;
+}
+
+export async function getCommentEditHistory(id: number): Promise<EditHistoryEntry[]> {
+  const res = await axiosInstance.get<EditHistoryEntry[]>(`/comments/${id}/history`);
+  return res.data;
+}
+
+export async function muteQuestion(id: number): Promise<{ muted: boolean }> {
+  const res = await axiosInstance.post(`/questions/${id}/mute`);
+  return res.data;
+}
+
+export async function unmuteQuestion(id: number): Promise<{ muted: boolean }> {
+  const res = await axiosInstance.delete(`/questions/${id}/mute`);
+  return res.data;
+}
+
+// mark/unmark a comment as the accepted answer (pass commentId: null to clear)
+export async function setAcceptedAnswer(params: {
+  questionId: number;
+  commentId: number | null;
+}): Promise<{ solved: boolean; acceptedCommentId: number | null }> {
+  const res = await axiosInstance.patch(`/questions/${params.questionId}/accept-answer`, {
+    commentId: params.commentId,
+  });
+  return res.data;
+}
+
 // comment endpoints
 export async function createComment(params: {
   questionId: number;
   content: string;
   parentId?: number | null;
   attachment?: File | null;
+  mentionedUserIds?: number[];
 }): Promise<number> {
   const formData = new FormData();
   formData.append('questionId', String(params.questionId));
@@ -147,6 +233,8 @@ export async function createComment(params: {
   if (params.parentId !== undefined && params.parentId !== null)
     formData.append('parentId', String(params.parentId));
   if (params.attachment) formData.append('attachment', params.attachment);
+  if (params.mentionedUserIds && params.mentionedUserIds.length > 0)
+    formData.append('mentionedUserIds', JSON.stringify(params.mentionedUserIds));
   const res = await axiosInstance.post<number>('/comments', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
@@ -157,12 +245,28 @@ export async function createReply(params: {
   questionId: number;
   content: string;
   parentId: number;
+  mentionedUserIds?: number[];
 }): Promise<number> {
   const res = await axiosInstance.post<number>('/comments', {
     questionId: params.questionId,
     content: params.content,
     parentId: params.parentId,
+    mentionedUserIds: params.mentionedUserIds,
   });
+  return res.data;
+}
+
+export interface MentionUser {
+  id: number;
+  displayName: string;
+  email?: string;
+  pictureUrl?: string | null;
+  fullRoleTag?: string | null;
+}
+
+export async function searchMentionUsers(query: string): Promise<MentionUser[]> {
+  if (!query.trim()) return [];
+  const res = await axiosInstance.get<MentionUser[]>('/users/search', { params: { q: query } });
   return res.data;
 }
 
@@ -270,6 +374,10 @@ export async function searchQuestions(params: {
   offset: number;
   categoriesIds: number[];
   hasNone: boolean;
+  tag?: string;
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }): Promise<SearchResponse> {
   return axiosInstance
     .post<SearchResponse>('/search', params)
@@ -277,8 +385,8 @@ export async function searchQuestions(params: {
 }
 
 // notification endpoints
-export async function getNotifications(): Promise<any[]> {
-  const res = await axiosInstance.get<any[]>('/notifications');
+export async function getNotifications(): Promise<Notification[]> {
+  const res = await axiosInstance.get<Notification[]>('/notifications');
   return res.data;
 }
 
@@ -295,7 +403,80 @@ export async function markNotificationRead(params: {
   await axiosInstance.patch(`/notifications/${params.id}/mark-read`);
 }
 
+export async function deleteNotification(id: number): Promise<void> {
+  await axiosInstance.delete(`/notifications/${id}`);
+}
+
+export async function clearAllNotifications(): Promise<void> {
+  await axiosInstance.delete('/notifications');
+}
+
 export const getMe = async (): Promise<User> => {
   const response = await axiosInstance.get<User>("/users/me");
   return response.data;
 };
+
+// leaderboard + personal stats
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
+  const res = await axiosInstance.get<LeaderboardEntry[]>('/users/leaderboard');
+  return res.data;
+}
+
+export async function getMyStats(): Promise<UserStats> {
+  const res = await axiosInstance.get<UserStats>('/users/me/stats');
+  return res.data;
+}
+
+// admin: group membership override
+export async function setUserTag(userId: number, tag: string | null): Promise<void> {
+  await axiosInstance.patch(`/admin/users/${userId}/tag`, { tag });
+}
+
+// admin: posts list + pin + bulk actions + soft-delete/restore
+export async function getAdminQuestions(): Promise<AdminQuestion[]> {
+  const res = await axiosInstance.get<AdminQuestion[]>('/admin/questions');
+  return res.data;
+}
+
+export async function toggleQuestionPin(id: number): Promise<{ pinned: boolean }> {
+  const res = await axiosInstance.patch(`/admin/questions/${id}/pin`);
+  return res.data;
+}
+
+export async function bulkUpdateQuestionStatus(ids: number[], status: string): Promise<void> {
+  await axiosInstance.patch('/admin/questions/bulk-status', { ids, status });
+}
+
+export async function bulkAddQuestionTags(ids: number[], tags: string[]): Promise<void> {
+  await axiosInstance.patch('/admin/questions/bulk-tag', { ids, tags });
+}
+
+export async function getDeletedQuestions(): Promise<DeletedQuestion[]> {
+  const res = await axiosInstance.get<DeletedQuestion[]>('/admin/questions/deleted');
+  return res.data;
+}
+
+export async function restoreQuestion(id: number): Promise<void> {
+  await axiosInstance.post(`/admin/questions/${id}/restore`);
+}
+
+// admin: reports queue
+export async function getReports(): Promise<Report[]> {
+  const res = await axiosInstance.get<Report[]>('/admin/reports');
+  return res.data;
+}
+
+export async function dismissReport(type: "question" | "comment", id: number): Promise<void> {
+  await axiosInstance.delete(`/admin/reports/${type}/${id}`);
+}
+
+// admin: audit log + insights
+export async function getAuditLog(): Promise<AuditLogEntry[]> {
+  const res = await axiosInstance.get<AuditLogEntry[]>('/admin/audit-log');
+  return res.data;
+}
+
+export async function getAdminInsights(): Promise<AdminInsights> {
+  const res = await axiosInstance.get<AdminInsights>('/admin/insights');
+  return res.data;
+}

@@ -25,6 +25,10 @@ const searchValidation = [
     return true;
   }),
   body("hasNone").optional().isBoolean().withMessage("hasNone must be a boolean."),
+  body("tag").optional().isString().withMessage("Invalid tag."),
+  body("status").optional().isIn(["pending", "approved", "rejected"]).withMessage("Invalid status."),
+  body("dateFrom").optional().isISO8601().withMessage("dateFrom must be a valid date."),
+  body("dateTo").optional().isISO8601().withMessage("dateTo must be a valid date."),
   handleValidationErrors,
 ];
 

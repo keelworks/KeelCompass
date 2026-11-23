@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes } = require("sequelize");
+const { Sequelize } = require("sequelize");
 const logger = require("../utils/logger.js");
 const dbConfig = require("../configs/dbConfig.js");
 
@@ -50,6 +50,10 @@ db.Interest = require("./Interest.js")(sequelize, Sequelize.DataTypes);
 db.Notification = require("./Notification.js")(sequelize, Sequelize.DataTypes);
 db.UserRole = require("./UserRole.js")(sequelize, Sequelize.DataTypes);
 db.RoleTagMapping = require("./RoleTagMapping.js")(sequelize, Sequelize.DataTypes);
+db.Feedback = require("./Feedback.js")(sequelize, Sequelize.DataTypes);
+db.AdminAuditLog = require("./AdminAuditLog.js")(sequelize, Sequelize.DataTypes);
+db.MutedQuestion = require("./MutedQuestion.js")(sequelize, Sequelize.DataTypes);
+db.EditHistory = require("./EditHistory.js")(sequelize, Sequelize.DataTypes);
 
 // initialize associations
 Object.keys(db).forEach(modelName => {

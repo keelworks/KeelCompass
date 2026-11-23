@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../navigation/Sidebar";
-import { MdNotificationsNone } from "react-icons/md";
-import { BsQuestionCircle } from "react-icons/bs";
 import { FiChevronDown, FiLogOut, FiMenu, FiSun, FiMoon } from "react-icons/fi";
 import { getMe } from "../../utils/store";
 import { useTheme } from "../../utils/theme";
+import NotificationsPanel from "../notifications/NotificationsPanel";
+import FeedbackModal from "../feedback/FeedbackModal";
+import { getSocket, disconnectSocket } from "../../utils/socket";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -36,6 +37,7 @@ const MainLayout = ({
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
+    disconnectSocket();
     navigate("/");
   };
 
@@ -58,6 +60,7 @@ const MainLayout = ({
     };
 
     fetchUserData();
+    getSocket();
   }, []);
 
   useEffect(() => {
@@ -115,26 +118,16 @@ const MainLayout = ({
             <button
               onClick={toggleTheme}
               aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              className="flex items-center justify-center text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
+              className="flex items-center justify-center text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-all duration-200 hover:scale-110 hover:rotate-12 active:scale-95"
             >
               {theme === "dark" ? <FiSun size={20} /> : <FiMoon size={20} />}
             </button>
 
-            {/* Bell Icon */}
-            <div className="relative group cursor-pointer text-gray-700 dark:text-gray-300">
-              <MdNotificationsNone size={20} />
-              <span
-                className="absolute -top-1 -right-1 bg-yellow-400 text-white text-[10px]
-                w-4 h-4 rounded-full flex items-center justify-center"
-              >
-                1
-              </span>
-            </div>
+            {/* Notifications */}
+            <NotificationsPanel />
 
-            {/* Help Icon */}
-            <div className="relative group cursor-pointer text-gray-700 dark:text-gray-300">
-              <BsQuestionCircle size={20} />
-            </div>
+            {/* Feedback */}
+            <FeedbackModal />
 
             {/* Profile & Dropdown */}
             <div
@@ -169,7 +162,7 @@ const MainLayout = ({
 
               {/* Dropdown */}
               {showDropdown && (
-                <div className="absolute right-0 top-8 w-36 z-50">
+                <div className="absolute right-0 top-8 w-36 z-50 origin-top-right animate-dropdown-in">
                   <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md p-2">
                     <button
                       onClick={handleLogout}

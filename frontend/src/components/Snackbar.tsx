@@ -50,7 +50,7 @@ const Snackbar: React.FC<SnackbarProps> = ({
 
   return (
     <div
-      className={`flex items-center justify-between ${
+      className={`flex items-center justify-between animate-toast-in ${
         isInline ? "mb-4 max-w-full" : "fixed z-50"
       }`}
       style={{

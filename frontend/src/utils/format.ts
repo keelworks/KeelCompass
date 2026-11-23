@@ -20,3 +20,10 @@ export function formatDate(dateString: string | Date): string {
     year: "numeric",
   });
 }
+
+// role tags are stored/matched in a normalized, lowercase form (so visually
+// equivalent variants collapse together) - capitalize each word only for
+// display, without touching the underlying value used for matching
+export function capitalizeWords(value: string): string {
+  return value.replace(/\b\w/g, (c) => c.toUpperCase());
+}

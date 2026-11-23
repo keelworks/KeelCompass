@@ -13,7 +13,7 @@ const createNotificationsForAllUsersValidation = [
   handleValidationErrors,
 ];
 
-const markNotificationReadValidation = [
+const notificationIdValidation = [
   param("id").isInt({ gt: 0 }).withMessage("Invalid notification ID."),
   handleValidationErrors,
 ];
@@ -25,6 +25,12 @@ router.get("/", notificationController.getNotificationsByUserId);
 router.post("/announcement", createNotificationsForAllUsersValidation, notificationController.createNotificationsForAllUsers);
 
 // mark notification as read
-router.patch("/:id/mark-read", markNotificationReadValidation, notificationController.markNotificationRead);
+router.patch("/:id/mark-read", notificationIdValidation, notificationController.markNotificationRead);
+
+// clear all notifications
+router.delete("/", notificationController.deleteAllNotifications);
+
+// delete a single notification
+router.delete("/:id", notificationIdValidation, notificationController.deleteNotification);
 
 module.exports = router;

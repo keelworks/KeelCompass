@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const { getAllCategories } = require("../services/categoryServices");
 
 const getCategories = async (_, res, next) => {
