@@ -18,6 +18,7 @@ import EditHistoryModal from '../../../components/ui/EditHistoryModal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { useToast } from '../../../utils/useToast';
 import { useMentionAutocomplete } from '../../../utils/useMentionAutocomplete';
+import { useAutoGrowTextarea } from '../../../utils/useAutoGrowTextarea';
 import { highlightMentionsReact } from '../../../utils/mentionHighlight';
 
 
@@ -80,6 +81,9 @@ function CommentItem({
    if (forceExpandIds?.has(comment.id)) setShowReplies(true);
  }, [forceExpandIds, comment.id]);
  const replyMention = useMentionAutocomplete<HTMLTextAreaElement>(replyContent, setReplyContent);
+ useAutoGrowTextarea(replyMention.inputRef, replyContent, 240);
+ const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+ useAutoGrowTextarea(editTextareaRef, editForm.content, 240);
 
  const isTarget = highlightCommentId === comment.id;
  const [highlighted, setHighlighted] = useState(false);
@@ -297,7 +301,8 @@ function CommentItem({
          ) : editMode ? (
            <div className="mt-2">
              <textarea
-               className="w-full p-2 border dark:border-gray-600 rounded mb-2 bg-white dark:bg-gray-800 dark:text-gray-100"
+               ref={editTextareaRef}
+               className="w-full p-2 border dark:border-gray-600 rounded mb-2 bg-white dark:bg-gray-800 dark:text-gray-100 resize-none"
                value={editForm.content}
                onChange={(e) => setEditForm({ content: e.target.value })}
                rows={2}
@@ -329,6 +334,7 @@ function CommentItem({
                <MentionOverlay
                  text={replyContent}
                  mode="textarea"
+                 scrollSourceRef={replyMention.inputRef}
                  className="p-2 text-sm text-gray-900 dark:text-gray-100 leading-normal"
                />
                <textarea
@@ -339,7 +345,7 @@ function CommentItem({
                  }
                  onKeyDown={(e) => replyMention.handleKeyDown(e)}
                  placeholder={`Reply to ${comment.user.username}... (type @ to mention someone)`}
-                 className="relative w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-900 text-transparent caret-gray-900 dark:caret-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-blue-400"
+                 className="relative w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-900 text-transparent caret-gray-900 dark:caret-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-blue-400 resize-none overflow-y-auto no-scrollbar"
                  rows={2}
                />
              </div>

@@ -989,6 +989,7 @@ function QuestionCreate({
                 <MentionOverlay
                   text={markdownText}
                   mode="textarea"
+                  scrollSourceRef={markdownMention.inputRef}
                   className="rounded-[10px] px-3 py-3 text-gray-900 dark:text-gray-100"
                   style={{ minHeight: MIN_DESC_HEIGHT }}
                 />
@@ -1001,7 +1002,7 @@ function QuestionCreate({
                   }}
                   onKeyDown={(e) => markdownMention.handleKeyDown(e)}
                   placeholder="Write in Markdown... **bold**, _italic_, [links](https://...), lists, @mention someone, etc."
-                  className={`relative w-full rounded-[10px] px-3 py-3 border outline-none transition bg-white dark:bg-gray-800 text-transparent caret-gray-900 dark:caret-gray-100 placeholder:text-gray-400 ${
+                  className={`relative w-full rounded-[10px] px-3 py-3 border outline-none transition bg-white dark:bg-gray-800 text-transparent caret-gray-900 dark:caret-gray-100 placeholder:text-gray-400 no-scrollbar ${
                     descriptionError ? "border-red-500" : "border-[#D1DBDD] dark:border-gray-600"
                   }`}
                   style={{ minHeight: MIN_DESC_HEIGHT }}

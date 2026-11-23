@@ -112,3 +112,17 @@
   from {}
   to {}
 }
+
+/* The real control under a MentionOverlay has transparent text (only the
+   caret shows) once it scrolls internally past a capped auto-grow height -
+   the overlay mirrors that scroll so the highlighted text stays in sync,
+   but the real control's own scrollbar would still render as a stray bar
+   with nothing visibly attached to it, so it's hidden here. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

@@ -3,6 +3,7 @@ import { IoSend } from "react-icons/io5";
 import { createComment } from "../../../utils/store";
 import { useToast } from "../../../utils/useToast";
 import { useMentionAutocomplete } from "../../../utils/useMentionAutocomplete";
+import { useAutoGrowTextarea } from "../../../utils/useAutoGrowTextarea";
 import MentionDropdown from "../../../components/ui/MentionDropdown";
 import MentionOverlay from "../../../components/ui/MentionOverlay";
 
@@ -14,7 +15,8 @@ interface CommentCreateProps {
 function CommentCreate({ questionId, onCommentCreate }: CommentCreateProps) {
   const [comment, setComment] = useState("");
   const { showError, toastNode } = useToast();
-  const mention = useMentionAutocomplete<HTMLInputElement>(comment, setComment);
+  const mention = useMentionAutocomplete<HTMLTextAreaElement>(comment, setComment);
+  useAutoGrowTextarea(mention.inputRef, comment, 140);
 
   const handleSubmitComment = async () => {
     if (!comment.trim()) return;
@@ -39,42 +41,43 @@ function CommentCreate({ questionId, onCommentCreate }: CommentCreateProps) {
       className="bg-[#F5F5F5] dark:bg-gray-700 transition-colors duration-150 focus-within:ring-2 focus-within:ring-brand-600"
       style={{
         width: "100%",
-        height: "36px",
+        minHeight: "36px",
         borderRadius: "4px",
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-end",
         paddingLeft: "12px",
         paddingRight: "12px",
       }}
     >
-      <div className="relative" style={{ flex: 1, height: "100%" }}>
+      <div className="relative" style={{ flex: 1 }}>
         <MentionOverlay
           text={comment}
-          mode="input"
-          className="flex items-center text-[#374151] dark:text-gray-100"
-          style={{ fontSize: "0.95rem" }}
+          mode="textarea"
+          scrollSourceRef={mention.inputRef}
+          className="text-[#374151] dark:text-gray-100"
+          style={{ fontSize: "0.95rem", padding: "8px 0", lineHeight: "1.4" }}
         />
-        <input
+        <textarea
           ref={mention.inputRef}
-          type="text"
+          rows={1}
           placeholder="Add a comment... (type @ to mention someone)"
           value={comment}
           onChange={(e) => mention.handleChange(e.target.value, e.target.selectionStart ?? e.target.value.length)}
           onKeyDown={(e) => {
             if (mention.handleKeyDown(e)) return;
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               handleSubmitComment();
             }
           }}
-          className="text-transparent caret-[#374151] dark:caret-gray-100 placeholder:text-gray-400"
+          className="block w-full resize-none overflow-y-auto no-scrollbar text-transparent caret-[#374151] dark:caret-gray-100 placeholder:text-gray-400"
           style={{
-            width: "100%",
             background: "transparent",
             outline: "none",
             border: "none",
             fontSize: "0.95rem",
-            height: "100%",
+            padding: "8px 0",
+            lineHeight: "1.4",
           }}
         />
       </div>
@@ -88,8 +91,8 @@ function CommentCreate({ questionId, onCommentCreate }: CommentCreateProps) {
           border: "none",
           fontSize: "0.95rem",
           cursor: "pointer",
-          height: "100%",
-          padding: "0 8px",
+          padding: "8px",
+          alignSelf: "flex-end",
         }}
         disabled={!comment.trim()}
         onClick={handleSubmitComment}

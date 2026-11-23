@@ -10,6 +10,7 @@ import {
   UserActionType,
 } from "../../../utils/types";
 import { useAttachmentBlobUrl } from "../../../utils/useAttachmentBlobUrl";
+import { useAutoGrowTextarea } from "../../../utils/useAutoGrowTextarea";
 import {
   getQuestion,
   createUserQuestionAction,
@@ -102,6 +103,7 @@ function QuestionDetails({
   const navigate = useNavigate();
   const modalRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const editDescriptionRef = useRef<HTMLTextAreaElement>(null);
   const { showError, showSuccess, toastNode } = useToast();
 
   const [question, setQuestion] = useState<QuestionDetail | null>(null);
@@ -122,6 +124,8 @@ function QuestionDetails({
   const [notFound, setNotFound] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [editHistoryOpen, setEditHistoryOpen] = useState(false);
+
+  useAutoGrowTextarea(editDescriptionRef, editForm.description, 400);
 
   // the existing attachment (if any) is only ever metadata + a URL now - the
   // bytes live on the server's disk, fetched through an authenticated
@@ -507,7 +511,8 @@ function QuestionDetails({
             {/* Description */}
             {editMode ? (
               <textarea
-                className="w-full mb-2 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-900 dark:text-gray-100"
+                ref={editDescriptionRef}
+                className="w-full mb-2 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-900 dark:text-gray-100 resize-none"
                 value={editForm.description}
                 onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                 placeholder="Description"
