@@ -3,8 +3,10 @@ import { LeaderboardEntry } from "../utils/types";
 import { getLeaderboard } from "../utils/store";
 import MainLayout from "../components/wrappers/MainLayout";
 import { Skeleton } from "../components/ui/Skeleton";
+import { usePageTitle } from "../utils/usePageTitle";
 
 const Leaderboard = () => {
+  usePageTitle("Leaderboard");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

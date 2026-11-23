@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../navigation/Sidebar";
-import { FiChevronDown, FiLogOut, FiMenu, FiSun, FiMoon, FiSearch, FiPlus, FiX } from "react-icons/fi";
+import { FiChevronDown, FiLogOut, FiMenu, FiSun, FiMoon, FiSearch, FiPlus, FiX, FiSettings } from "react-icons/fi";
 import { getMe } from "../../utils/store";
 import { useTheme } from "../../utils/theme";
 import NotificationsPanel from "../notifications/NotificationsPanel";
@@ -250,8 +250,18 @@ const MainLayout = ({
 
               {/* Dropdown */}
               {showDropdown && (
-                <div className="absolute right-0 top-8 w-36 z-50 origin-top-right animate-dropdown-in">
+                <div className="absolute right-0 top-8 w-40 z-50 origin-top-right animate-dropdown-in">
                   <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md p-2">
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        navigate("/settings");
+                      }}
+                      className="w-full flex items-center justify-start gap-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 font-medium text-sm py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-200"
+                    >
+                      <FiSettings size={16} />
+                      Settings
+                    </button>
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center justify-start gap-2 text-red-500 bg-white dark:bg-gray-800 font-medium text-sm py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-red-600 transition duration-200"

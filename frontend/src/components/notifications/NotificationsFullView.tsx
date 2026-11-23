@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiBell } from "react-icons/fi";
 import { Notification } from "../../utils/types";
 import { getNotifications, markNotificationRead, deleteNotification, clearAllNotifications } from "../../utils/store";
 import { getSocket } from "../../utils/socket";
 import { NotificationRow } from "./NotificationsPanel";
 import { NotificationRowSkeleton } from "../ui/Skeleton";
+import EmptyState from "../ui/EmptyState";
 
 interface NotificationsFullViewProps {
   onBack: () => void;
@@ -106,7 +107,11 @@ function NotificationsFullView({ onBack }: NotificationsFullViewProps) {
             <NotificationRowSkeleton />
           </>
         ) : notifications.length === 0 ? (
-          <p className="text-gray-600 dark:text-gray-300">No notifications yet.</p>
+          <EmptyState
+            icon={FiBell}
+            title="No notifications yet"
+            description="You'll see replies, mentions, and updates here."
+          />
         ) : (
           notifications.map((n) => (
             <div key={n.id} className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">

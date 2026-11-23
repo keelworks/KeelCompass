@@ -30,6 +30,7 @@ import MentionDropdown from "../components/ui/MentionDropdown";
 import MentionOverlay from "../components/ui/MentionOverlay";
 import RichContent from "../components/ui/RichContent";
 import { getErrorMessage } from "../utils/getErrorMessage";
+import { usePageTitle } from "../utils/usePageTitle";
 
 const SPACING = { sectionY: 48, labelGap: 16, helperGap: 16 };
 const MAX_TITLE = 80;
@@ -206,6 +207,7 @@ function QuestionCreate({
   showDiscardModal?: boolean;
   setShowDiscardModal?: (show: boolean) => void;
 }) {
+  usePageTitle("Ask a Question");
   const defaultNavigate = useNavigate();
   const finalNavigate =
     navigate ||

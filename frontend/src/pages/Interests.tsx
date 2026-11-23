@@ -2,12 +2,16 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Interest, QuestionDetail, QuestionListItem } from "../utils/types";
 import { getQuestion, getUserInterests, getMe } from "../utils/store";
+import { usePageTitle } from "../utils/usePageTitle";
 import MainLayout from "../components/wrappers/MainLayout";
 import AskQuestionButton from "../components/ui/AskQuestionButton";
 import QuestionItem from "../features/dashboard/questions/QuestionItem";
 import QuestionDetails from "../features/dashboard/questions/QuestionDetails";
+import EmptyState from "../components/ui/EmptyState";
+import { FiBookmark } from "react-icons/fi";
 
 const InterestsPage = () => {
+  usePageTitle("My Interests");
   const navigate = useNavigate();
   const [interests, setInterests] = useState<Interest[]>([]);
   const [interestQuestions, setInterestQuestions] = useState<QuestionListItem[]>([]);
@@ -117,7 +121,11 @@ const InterestsPage = () => {
 
           <div className="flex-1 overflow-y-auto pr-1 space-y-4">
             {interestQuestions.length === 0 ? (
-              <p className="text-gray-600 dark:text-gray-300">No interests found.</p>
+              <EmptyState
+                icon={FiBookmark}
+                title="No interests yet"
+                description="Bookmark a post to find it here later."
+              />
             ) : (
               interestQuestions.map((question) => (
                 <div key={question.id}>

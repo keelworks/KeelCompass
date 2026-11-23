@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MdNotificationsNone, MdClose } from "react-icons/md";
+import { FiBell } from "react-icons/fi";
 import { Notification } from "../../utils/types";
 import { getNotifications, markNotificationRead, deleteNotification, clearAllNotifications } from "../../utils/store";
 import { getSocket } from "../../utils/socket";
 import { formatDate } from "../../utils/format";
+import EmptyState from "../ui/EmptyState";
 
 const SWIPE_DISMISS_THRESHOLD = 70;
 
@@ -231,7 +233,7 @@ function NotificationsPanel() {
             )}
           </div>
           {notifications.length === 0 ? (
-            <p className="p-4 text-sm text-gray-500 dark:text-gray-400">No notifications yet.</p>
+            <EmptyState icon={FiBell} title="No notifications yet" compact />
           ) : (
             notifications.slice(0, 8).map((n) => (
               <NotificationRow

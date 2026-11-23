@@ -4,9 +4,11 @@ import { completeProfile } from "../utils/store";
 import { persistSession } from "./Auth";
 import Snackbar from "../components/Snackbar";
 import ShipMark from "../assets/ship-mark.png";
+import { usePageTitle } from "../utils/usePageTitle";
 import { getErrorMessage } from "../utils/getErrorMessage";
 
 const CompleteProfile = () => {
+  usePageTitle("Complete your profile");
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [submitting, setSubmitting] = useState(false);

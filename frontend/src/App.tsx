@@ -3,6 +3,7 @@ import Auth from "./pages/Auth";
 import CompleteProfile from "./pages/CompleteProfile";
 import AuthGuard from "./pages/AuthGuard";
 import Dashboard from "./pages/Dashboard";
+import Settings from "./pages/Settings";
 import QuestionCreate from "./pages/QuestionCreate";
 import QuestionPage from "./pages/QuestionPage";
 import QnA from "./pages/QnA";
@@ -49,6 +50,7 @@ function App() {
       <Route path="/complete-profile" element={<AuthGuard><CompleteProfile /></AuthGuard>} />
       <Route element={<AuthGuard><Outlet /></AuthGuard>}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/qna" element={<QnA />} />
         <Route path="/interests" element={<Interests />} />
         <Route path="/admin" element={<Admin />} />

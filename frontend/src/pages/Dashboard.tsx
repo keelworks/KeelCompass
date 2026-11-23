@@ -14,6 +14,7 @@ import {
   getUserInterests,
   getMe,
 } from "../utils/store";
+import { usePageTitle } from "../utils/usePageTitle";
 import MainLayout from "../components/wrappers/MainLayout";
 import SearchBar from "../features/dashboard/searchBar/SearchBar";
 import QuestionsSection from "../features/dashboard/questions/QuestionsSection";
@@ -74,6 +75,7 @@ const fetchDashboardQuestions = async (
 };
 
 const Dashboard = () => {
+  usePageTitle("Dashboard");
   const [questions, setQuestions] = useState<QuestionsResponse>(INITIAL_QUESTIONS);
   const [commentResults, setCommentResults] = useState<CommentSearchResult[]>([]);
   const [interests, setInterests] = useState<Interest[]>([]);

@@ -27,6 +27,6 @@ describe("LikeButton", () => {
 
   it("applies the liked styling when liked is true", () => {
     render(<LikeButton liked count={3} onToggle={() => {}} />);
-    expect(screen.getByRole("button").className).toContain("text-blue-600");
+    expect(screen.getByRole("button").className).toContain("text-brand-700");
   });
 });

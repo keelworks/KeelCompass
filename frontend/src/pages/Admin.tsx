@@ -34,6 +34,7 @@ import {
 } from "../utils/store";
 import MainLayout from "../components/wrappers/MainLayout";
 import { formatDateTime, capitalizeWords } from "../utils/format";
+import { usePageTitle } from "../utils/usePageTitle";
 
 const ROLE_OPTIONS: KcRole[] = ["admin", "manager", "staff", "viewer"];
 
@@ -55,6 +56,7 @@ const roleBadgeClass = (role: string) => {
 type AdminSection = "mappings" | "users" | "feedback" | "insights" | "reports" | "deleted" | "audit";
 
 const Admin = () => {
+  usePageTitle("Admin");
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<AdminSection | null>(null);
 

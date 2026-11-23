@@ -5,6 +5,7 @@ import { getUserInterests } from "../utils/store";
 import MainLayout from "../components/wrappers/MainLayout";
 import AskQuestionButton from "../components/ui/AskQuestionButton";
 import QuestionDetails from "../features/dashboard/questions/QuestionDetails";
+import { usePageTitle } from "../utils/usePageTitle";
 
 // Fullscreen post view (the /questions/:id route) - the same post+comments
 // thread as the popup modal, just taking over the main content area instead
@@ -15,6 +16,8 @@ function QuestionPage() {
   const navigate = useNavigate();
   const questionId = Number(id);
   const [interests, setInterests] = useState<Interest[]>([]);
+  const [questionTitle, setQuestionTitle] = useState<string | undefined>(undefined);
+  usePageTitle(questionTitle || "Question");
 
   const refreshInterests = async () => {
     setInterests(await getUserInterests());
@@ -35,6 +38,7 @@ function QuestionPage() {
             setInterests={setInterests}
             onInterestsUpdate={refreshInterests}
             onQuestionDelete={() => navigate("/dashboard")}
+            onTitleChange={setQuestionTitle}
           />
         )}
       </div>

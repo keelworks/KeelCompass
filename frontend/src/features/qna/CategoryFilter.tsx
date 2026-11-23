@@ -47,7 +47,7 @@ const CategoryFilter = ({
             >
               {category}
               {selectedCategory === category && (
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500 dark:bg-teal-400"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-600 dark:bg-teal-400"></div>
             )}
             </span>
             

@@ -34,6 +34,7 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - BOOTSTRAP_ADMIN_EMAIL=${BOOTSTRAP_ADMIN_EMAIL}
       - UPLOAD_DIR=/app/uploads
+      - FRONTEND_ORIGIN=${FRONTEND_ORIGIN}
     depends_on:
       database:
         condition: service_healthy

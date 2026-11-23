@@ -1,10 +1,14 @@
 const express = require("express");
+const helmet = require("helmet");
 const morgan = require("morgan");
 const logger = require("./utils/logger");
 const router = require("./routes/routes");
 
 // initialize express app
 const app = express();
+
+// baseline security headers (CSP, X-Frame-Options, HSTS, etc)
+app.use(helmet());
 
 // parse incoming request bodies
 app.use(express.json());
@@ -18,9 +22,16 @@ app.use((err, _, res, next) => {
   next();
 });
 
-// initialize cors configuration
+// initialize cors configuration - restricted to the known frontend
+// origin(s) rather than wide open, so a leaked/stolen token can't be used
+// from an arbitrary origin. Comma-separated to support more than one
+// (e.g. a staging + production frontend) from the same backend.
 const cors = require("cors");
-app.use(cors());
+const allowedOrigins = (process.env.FRONTEND_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+app.use(cors({ origin: allowedOrigins }));
 
 // initialize app to use morgan to log http requests
 app.use(

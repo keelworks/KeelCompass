@@ -2,6 +2,7 @@ const logger = require("../utils/logger");
 const db = require("../models");
 const questionService = require("../services/questionServices");
 const attachmentService = require("../services/attachmentServices");
+const { HttpError } = require("../utils/httpError");
 
 // streams an attachment's bytes, but only after re-checking the same
 // tag-based visibility rule that gates the owning question itself - the
@@ -10,18 +11,18 @@ const getAttachmentFile = async (req, res, next) => {
   try {
     const { id } = req.params;
     const attachment = await db.Attachment.findByPk(id);
-    if (!attachment) return res.status(404).json({ error: "Attachment not found" });
+    if (!attachment) throw new HttpError(404, "Attachment not found");
 
     let questionId = attachment.question_id;
     if (!questionId && attachment.comment_id) {
       const comment = await db.Comment.findByPk(attachment.comment_id, { attributes: ["question_id"] });
       questionId = comment?.question_id;
     }
-    if (!questionId) return res.status(404).json({ error: "Attachment not found" });
+    if (!questionId) throw new HttpError(404, "Attachment not found");
 
     const viewerTag = req.user?.normalized_role_tag ?? null;
     const canView = await questionService.canUserViewQuestion(questionId, req.user.id, viewerTag);
-    if (!canView) return res.status(404).json({ error: "Attachment not found" });
+    if (!canView) throw new HttpError(404, "Attachment not found");
 
     res.setHeader("Content-Type", attachment.mime_type);
     res.setHeader(
@@ -35,7 +36,7 @@ const getAttachmentFile = async (req, res, next) => {
     // legacy rows that haven't been backfilled onto disk yet
     if (attachment.data) return res.end(attachment.data);
 
-    return res.status(404).json({ error: "Attachment file is missing" });
+    throw new HttpError(404, "Attachment file is missing");
   } catch (error) {
     logger.error(`Caught in getAttachmentFile controller: ${error.message}`);
     next(error);

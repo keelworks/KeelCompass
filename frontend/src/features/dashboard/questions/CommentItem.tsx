@@ -9,6 +9,7 @@ import {
  deleteComment,
  createReply
 } from '../../../utils/store';
+import Button from '../../../components/ui/Button';
 import ThreeDotsMenu from '../../../components/ui/ThreeDotsMenu';
 import AuthorHeader from '../../../components/ui/AuthorHeader';
 import LikeButton from '../../../components/ui/LikeButton';
@@ -308,18 +309,12 @@ function CommentItem({
                rows={2}
              />
              <div className="flex gap-2 justify-end">
-               <button
-                 className="px-3 py-1 bg-gray-200 dark:bg-gray-600 dark:text-gray-100 rounded"
-                 onClick={handleCancelCommentEdit}
-               >
+               <Button variant="secondary" onClick={handleCancelCommentEdit}>
                  Cancel
-               </button>
-               <button
-                 className="px-3 py-1 bg-blue-500 text-white rounded"
-                 onClick={handleSubmitCommentEdit}
-               >
+               </Button>
+               <Button variant="primary" onClick={handleSubmitCommentEdit}>
                  Save
-               </button>
+               </Button>
              </div>
            </div>
          ) : (
@@ -329,7 +324,7 @@ function CommentItem({
 
          {/* NEW: Reply Input */}
          {!isDeleted && isReplying && (
-           <div className="relative mt-3 bg-white dark:bg-gray-800 p-3 rounded border-2 border-blue-200 dark:border-blue-800">
+           <div className="relative mt-3 bg-white dark:bg-gray-800 p-3 rounded border-2 border-brand-100 dark:border-teal-800">
              <div className="relative">
                <MentionOverlay
                  text={replyContent}
@@ -345,7 +340,7 @@ function CommentItem({
                  }
                  onKeyDown={(e) => replyMention.handleKeyDown(e)}
                  placeholder={`Reply to ${comment.user.username}... (type @ to mention someone)`}
-                 className="relative w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-900 text-transparent caret-gray-900 dark:caret-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-blue-400 resize-none overflow-y-auto no-scrollbar"
+                 className="relative w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-900 text-transparent caret-gray-900 dark:caret-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 dark:focus:border-teal-500 resize-none overflow-y-auto no-scrollbar"
                  rows={2}
                />
              </div>
@@ -359,18 +354,12 @@ function CommentItem({
                />
              )}
              <div className="flex justify-end space-x-2 mt-2">
-               <button
-                 className="px-3 py-1 bg-gray-200 dark:bg-gray-600 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-500 rounded text-xs"
-                 onClick={handleCancelReply}
-               >
+               <Button variant="secondary" size="xs" onClick={handleCancelReply}>
                  Cancel
-               </button>
-               <button
-                 className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-xs"
-                 onClick={handleReply}
-               >
+               </Button>
+               <Button variant="primary" size="xs" onClick={handleReply}>
                  Reply
-               </button>
+               </Button>
              </div>
            </div>
          )}
@@ -389,7 +378,7 @@ function CommentItem({
              {/*  Reply button */}
              {canReply && (
                <button
-                 className="text-sm font-bold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 cursor-pointer select-none transition-colors duration-150"
+                 className="text-sm font-bold text-brand-700 dark:text-teal-300 hover:text-brand-600 dark:hover:text-teal-200 cursor-pointer select-none transition-colors duration-150"
                  onClick={handleStartReply}
                >
                  Reply

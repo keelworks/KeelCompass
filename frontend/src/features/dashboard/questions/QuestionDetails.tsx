@@ -25,6 +25,7 @@ import {
   unmuteQuestion,
   getMe,
 } from "../../../utils/store";
+import Button from "../../../components/ui/Button";
 import ThreeDotsMenu from "../../../components/ui/ThreeDotsMenu";
 import AuthorHeader from "../../../components/ui/AuthorHeader";
 import LikeButton from "../../../components/ui/LikeButton";
@@ -55,6 +56,9 @@ interface QuestionDetailsProps {
   // when provided, shows a collapse control (used when this is an expanded
   // row in an accordion-style list, as opposed to the standalone page route)
   onCollapse?: () => void;
+  // fires once the question's title is known/changes, so a standalone page
+  // route can reflect it in the browser tab title
+  onTitleChange?: (title: string) => void;
 }
 
 // walk the threaded comment tree to find the chain of ancestor ids leading
@@ -97,6 +101,7 @@ function QuestionDetails({
   onClose,
   variant = "modal",
   onCollapse,
+  onTitleChange,
 }: QuestionDetailsProps) {
   const isPage = variant === "page";
   const userId = Number(localStorage.getItem("userId"));
@@ -126,6 +131,11 @@ function QuestionDetails({
   const [editHistoryOpen, setEditHistoryOpen] = useState(false);
 
   useAutoGrowTextarea(editDescriptionRef, editForm.description, 400);
+
+  useEffect(() => {
+    if (question?.title) onTitleChange?.(question.title);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question?.title]);
 
   // the existing attachment (if any) is only ever metadata + a URL now - the
   // bytes live on the server's disk, fetched through an authenticated
@@ -626,12 +636,12 @@ function QuestionDetails({
             {/* Edit buttons */}
             {editMode && (
               <div className="flex justify-end gap-2 mt-2">
-                <button className="px-3 py-1 bg-gray-200 rounded" onClick={handleCancelQuestionEdit}>
+                <Button variant="secondary" onClick={handleCancelQuestionEdit}>
                   Cancel
-                </button>
-                <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={handleSubmitQuestionEdit}>
+                </Button>
+                <Button variant="primary" onClick={handleSubmitQuestionEdit}>
                   Save
-                </button>
+                </Button>
               </div>
             )}
 

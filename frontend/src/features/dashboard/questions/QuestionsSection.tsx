@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FiSearch, FiMessageSquare } from "react-icons/fi";
 import { CommentSearchResult, Interest } from "../../../utils/types";
 import { QuestionListItem, QuestionsResponse } from "../../../utils/types";
 import { formatDateTime } from "../../../utils/format";
@@ -8,6 +9,7 @@ import QuestionItem from "./QuestionItem";
 import QuestionDetails from "./QuestionDetails";
 import SmoothExpand from "../../../components/ui/SmoothExpand";
 import { QuestionCardSkeleton } from "../../../components/ui/Skeleton";
+import EmptyState from "../../../components/ui/EmptyState";
 
 interface QuestionsSectionProps {
   questions: QuestionsResponse;
@@ -175,7 +177,19 @@ function QuestionsSection({
             <QuestionCardSkeleton />
           </>
         ) : questions.questions.length === 0 ? (
-          <p className="text-gray-600 dark:text-gray-300">No posts found.</p>
+          searchActive ? (
+            <EmptyState
+              icon={FiSearch}
+              title="No results found"
+              description="Try a different search term or filter."
+            />
+          ) : (
+            <EmptyState
+              icon={FiMessageSquare}
+              title="No posts yet"
+              description="Be the first to start a conversation."
+            />
+          )
         ) : (
           questions.questions.map((question, index) => {
             const isExpanded = expandedQuestionId === question.id;

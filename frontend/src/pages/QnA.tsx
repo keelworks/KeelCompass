@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { usePageTitle } from "../utils/usePageTitle";
 import MainLayout from "../components/wrappers/MainLayout";
 import CategoryFilter from "../features/qna/CategoryFilter";
 import QnACard2 from "../features/qna/QnACard";
@@ -7,6 +8,7 @@ import FilterTab from "../features/qna/FilterTab";
 import api from "../utils/api";
 
 const QnA = () => {
+  usePageTitle("Browse");
   const navigate = useNavigate();
 
   const defaultCategories = [

@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { FiBookmark } from "react-icons/fi";
 import BookmarkIcon from "../../../assets/bookmark.svg";
 import QuestionDetails from "../questions/QuestionDetails";
 import { Interest, QuestionListItem } from "../../../utils/types";
 import { formatDate } from "../../../utils/format";
 import InterestItem from "./InterestItem";
+import EmptyState from "../../../components/ui/EmptyState";
 
 interface MyInterstProps {
   interests: Interest[];
@@ -139,7 +141,12 @@ const MyInterests = ({
             })
           ) : (
             <div className="flex justify-center items-center flex-grow">
-              <p className="text-gray-500 dark:text-gray-400">No interests found</p>
+              <EmptyState
+                icon={FiBookmark}
+                title="No interests yet"
+                description="Bookmark a post to find it here later."
+                compact
+              />
             </div>
           )}
         </div>

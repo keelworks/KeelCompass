@@ -33,8 +33,8 @@ function LikeButton({ liked, count, onToggle, size = "sm" }: LikeButtonProps) {
       onClick={onToggle}
       className={`flex items-center gap-1.5 text-sm select-none transition-colors duration-150 active:scale-95 ${
         liked
-          ? "text-blue-600 dark:text-blue-400"
-          : "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+          ? "text-brand-700 dark:text-teal-300"
+          : "text-gray-600 dark:text-gray-300 hover:text-brand-700 dark:hover:text-teal-300"
       }`}
     >
       <span className={`inline-flex ${popping ? "animate-like-pop" : ""}`}>

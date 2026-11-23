@@ -17,7 +17,10 @@ export function useMentionAutocomplete<T extends HTMLInputElement | HTMLTextArea
   const mentionedRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
-    if (query === null) {
+    // an empty query (just typed "@" with nothing after it yet) has no
+    // matches by definition - skip the network round-trip entirely rather
+    // than hitting the search endpoint, which now rejects an empty q
+    if (query === null || query === "") {
       setResults([]);
       return;
     }

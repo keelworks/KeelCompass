@@ -6,6 +6,7 @@ import { googleAuth } from "../utils/store";
 import Snackbar from "../components/Snackbar";
 import ShipMark from "../assets/ship-mark.png";
 import { getErrorMessage } from "../utils/getErrorMessage";
+import { usePageTitle } from "../utils/usePageTitle";
 
 export const persistSession = (token: string) => {
   localStorage.setItem("token", token);
@@ -25,6 +26,7 @@ export const persistSession = (token: string) => {
 };
 
 const Auth = () => {
+  usePageTitle("Sign in");
   const navigate = useNavigate();
   const [notice, setNotice] = useState<{ message: string; variant: "success" | "error" } | null>(null);
 

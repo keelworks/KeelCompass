@@ -3,8 +3,10 @@ import { UserStats } from "../utils/types";
 import { getMyStats } from "../utils/store";
 import MainLayout from "../components/wrappers/MainLayout";
 import { Skeleton } from "../components/ui/Skeleton";
+import { usePageTitle } from "../utils/usePageTitle";
 
 const Stats = () => {
+  usePageTitle("My Stats");
   const [stats, setStats] = useState<UserStats | null>(null);
 
   useEffect(() => {
