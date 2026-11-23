@@ -286,6 +286,13 @@ const Dashboard = () => {
       showAsk={showAsk}
       questionTitle={questionTitle}
       onHomeClick={handleHomeClickFromSidebar}
+      onAskQuestionClick={() => {
+        setAskDisabled(true);
+        setShowAsk(true);
+        setShowAllNotifications(false);
+      }}
+      askDisabled={askDisabled}
+      searchActive={searchActive}
     >
       {/* Middle Column - Questions */}
       <div className="col-span-2 flex flex-col h-full overflow-hidden">
@@ -347,8 +354,11 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Right Column - My Interests */}
-      <div className="col-span-1 flex flex-col gap-6">
+      {/* Right Column - My Interests. Hidden on mobile: "Ask Question" is a
+          header icon there instead (see MainLayout), and My Interests is
+          reached from the hamburger menu's own nav link to keep the feed
+          from being buried under this column on a small screen. */}
+      <div className="hidden lg:flex col-span-1 flex-col gap-6">
         <div className="pt-[20px] pr-[4px]">
           <AskQuestionButton
             disabled={askDisabled}

@@ -9,9 +9,10 @@ type SearchRequest = {
 
 type SearchBarProps = {
   onSearchChange: (searchRequest: SearchRequest | null) => void;
+  autoFocus?: boolean;
 };
 
-function SearchBar({ onSearchChange }: SearchBarProps) {
+function SearchBar({ onSearchChange, autoFocus = false }: SearchBarProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -246,6 +247,7 @@ function SearchBar({ onSearchChange }: SearchBarProps) {
               className="w-full min-w-0 outline-none bg-white dark:bg-gray-800 dark:text-gray-100 pl-3 text-sm"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
+              autoFocus={autoFocus}
             />
             <button
               type="submit"

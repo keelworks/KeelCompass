@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../navigation/Sidebar";
-import { FiChevronDown, FiLogOut, FiMenu, FiSun, FiMoon } from "react-icons/fi";
+import { FiChevronDown, FiLogOut, FiMenu, FiSun, FiMoon, FiSearch, FiPlus, FiX } from "react-icons/fi";
 import { getMe } from "../../utils/store";
 import { useTheme } from "../../utils/theme";
 import NotificationsPanel from "../notifications/NotificationsPanel";
 import FeedbackModal from "../feedback/FeedbackModal";
 import { getSocket, disconnectSocket } from "../../utils/socket";
+import SmoothExpand from "../ui/SmoothExpand";
+import { useIsMobile } from "../../utils/useIsMobile";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -14,6 +16,11 @@ interface MainLayoutProps {
   showAsk?: boolean;
   questionTitle?: string;
   onHomeClick?: () => void;
+  // mobile-only header affordances - on desktop the search bar stays inline
+  // and "Ask Question" is its own button in the content, same as before
+  onAskQuestionClick?: () => void;
+  askDisabled?: boolean;
+  searchActive?: boolean;
 }
 
 const MainLayout = ({
@@ -22,6 +29,9 @@ const MainLayout = ({
   showAsk = false,
   questionTitle,
   onHomeClick,
+  onAskQuestionClick,
+  askDisabled = false,
+  searchActive = false,
 }: MainLayoutProps) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [username, setUsername] = useState<string | null>("User");
@@ -30,9 +40,43 @@ const MainLayout = ({
   const [pictureUrl, setPictureUrl] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [contentScrolled, setContentScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const contentScrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const isMobile = useIsMobile();
+
+  // The actual scrollable element is whichever inner list (QuestionsSection,
+  // MyInterests, ...) happens to render under this wrapper, not the wrapper
+  // itself - scroll events don't bubble, so listening here requires the
+  // capture phase to see them at all, regardless of which descendant scrolls.
+
+  // slid-down mobile search auto-dismisses on scroll, but only while it's
+  // empty - once there's an active query/filter the results are what's
+  // being scrolled through, so yanking the search bar away would be wrong
+  useEffect(() => {
+    if (!mobileSearchOpen || searchActive) return;
+    const el = contentScrollRef.current;
+    if (!el) return;
+    const handleScroll = () => setMobileSearchOpen(false);
+    el.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+    return () => el.removeEventListener("scroll", handleScroll, true);
+  }, [mobileSearchOpen, searchActive]);
+
+  // subtle header elevation once the content underneath has scrolled, so
+  // the header reads as floating above the feed instead of blending into it
+  useEffect(() => {
+    const el = contentScrollRef.current;
+    if (!el) return;
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement;
+      setContentScrolled(target.scrollTop > 4);
+    };
+    el.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+    return () => el.removeEventListener("scroll", handleScroll, true);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -97,28 +141,72 @@ const MainLayout = ({
 
       {/* Content Area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden py-4 px-4 sm:px-6 lg:pl-8 lg:px-6 max-w-7xl mx-auto w-full">
-        {/* Header: hamburger + icons on their own row on mobile; search bar wraps to its own row */}
-        <div className="flex flex-wrap items-center gap-3 mb-4 lg:mb-2">
+        {/* Header: hamburger + icons on their own row; the search bar is
+            always inline on desktop, but only a toggle icon on mobile - the
+            actual mobile search panel slides down in its own row below.
+            Gains a subtle bottom border/shadow once the feed underneath has
+            scrolled, so it reads as floating above the content. */}
+        <div
+          className={`flex flex-wrap items-center gap-3 mb-4 lg:mb-2 pb-3 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 lg:pb-0 border-b transition-all duration-200 ${
+            contentScrolled
+              ? "border-gray-200 dark:border-gray-800 shadow-sm lg:shadow-none lg:border-transparent"
+              : "border-transparent"
+          }`}
+        >
           {/* Hamburger (mobile only) */}
           <button
             onClick={() => setMobileNavOpen(true)}
             aria-label="Open menu"
-            className="order-1 shrink-0 flex items-center justify-center w-9 h-9 rounded-md text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-white/10 lg:hidden"
+            className="order-1 shrink-0 flex items-center justify-center w-9 h-9 rounded-md text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-white/10 transition-all duration-150 active:scale-90 lg:hidden"
           >
             <FiMenu size={22} />
           </button>
 
-          <div className="order-3 lg:order-2 w-full lg:w-auto lg:flex-1 min-w-0">
-            {searchBar}
-          </div>
+          {/* Desktop search bar - unchanged, always inline. Only mounted
+              here when not on mobile, so there's never a second live
+              instance of it sitting hidden in the mobile panel below */}
+          {!isMobile && (
+            <div className="order-2 lg:flex-1 min-w-0">
+              {searchBar}
+            </div>
+          )}
 
           {/* Icon cluster */}
           <div className="order-2 lg:order-3 ml-auto lg:ml-0 flex items-center gap-3 lg:gap-4 shrink-0">
+            {/* Mobile-only search toggle - the search bar itself lives inline
+                on desktop, so this (and the panel below) only ever render
+                on mobile */}
+            {searchBar && (
+              <button
+                onClick={() => setMobileSearchOpen((s) => !s)}
+                aria-label={mobileSearchOpen ? "Close search" : "Search"}
+                aria-expanded={mobileSearchOpen}
+                className={`flex items-center justify-center -m-2 p-2 rounded-full text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200 active:scale-90 lg:hidden ${
+                  mobileSearchOpen ? "bg-brand-50 text-brand-600 dark:bg-teal-900/30 dark:text-teal-300" : ""
+                }`}
+              >
+                {mobileSearchOpen ? <FiX size={20} /> : <FiSearch size={20} />}
+              </button>
+            )}
+
+            {/* Mobile-only "Ask Question" trigger - opens the fullscreen
+                composer the same way the desktop button does */}
+            {onAskQuestionClick && !showAsk && (
+              <button
+                onClick={onAskQuestionClick}
+                disabled={askDisabled}
+                aria-label="Ask a question"
+                className="flex items-center justify-center -m-2 p-2 rounded-full text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200 active:scale-90 disabled:opacity-40 disabled:pointer-events-none lg:hidden"
+              >
+                <FiPlus size={20} />
+              </button>
+            )}
+
             {/* Dark mode toggle */}
             <button
               onClick={toggleTheme}
               aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              className="flex items-center justify-center text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-all duration-200 hover:scale-110 hover:rotate-12 active:scale-95"
+              className="flex items-center justify-center -m-2 p-2 rounded-full text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200 hover:rotate-12 active:scale-90"
             >
               {theme === "dark" ? <FiSun size={20} /> : <FiMoon size={20} />}
             </button>
@@ -178,8 +266,28 @@ const MainLayout = ({
           </div>
         </div>
 
+        {/* Mobile search panel - slides down below the header when toggled,
+            and collapses again via the effect above if the user scrolls
+            away without typing anything. Only mounted on mobile, so this is
+            the one and only SearchBar instance in that layout. */}
+        {searchBar && isMobile && (
+          <div className="lg:hidden -mt-1 mb-2">
+            <SmoothExpand>
+              {mobileSearchOpen && (
+                <div className="animate-card-in">
+                  {React.isValidElement(searchBar)
+                    ? React.cloneElement(searchBar as React.ReactElement<{ autoFocus?: boolean }>, {
+                        autoFocus: true,
+                      })
+                    : searchBar}
+                </div>
+              )}
+            </SmoothExpand>
+          </div>
+        )}
+
         {/* Main Content Grid - moved closer to top */}
-        <div className="flex-1 overflow-auto mt-0 pt-0 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div ref={contentScrollRef} className="flex-1 overflow-auto mt-0 pt-0 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {children}
         </div>
       </div>

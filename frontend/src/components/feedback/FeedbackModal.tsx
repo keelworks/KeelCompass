@@ -35,7 +35,7 @@ function FeedbackModal() {
       <button
         onClick={() => setOpen(true)}
         aria-label="Send feedback"
-        className="flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-transform duration-150 hover:scale-110 active:scale-95"
+        className="flex items-center justify-center -m-2 p-2 rounded-full text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200 active:scale-90"
       >
         <BsQuestionCircle size={20} />
       </button>

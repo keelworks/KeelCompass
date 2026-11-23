@@ -202,14 +202,16 @@ function NotificationsPanel() {
       <button
         onClick={() => setOpen((s) => !s)}
         aria-label="Notifications"
-        className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-transform duration-150 hover:scale-110 active:scale-95"
+        className="flex items-center justify-center -m-2 p-2 rounded-full text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200 active:scale-90"
       >
-        <MdNotificationsNone size={20} />
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-yellow-400 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center animate-bounce-in">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
+        <span className="relative inline-flex">
+          <MdNotificationsNone size={20} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-yellow-400 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center animate-bounce-in">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </span>
       </button>
 
       {open && (
