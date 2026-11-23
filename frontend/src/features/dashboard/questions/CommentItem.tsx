@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { FaRegCommentDots, FaCheckCircle } from 'react-icons/fa';
 import { formatDateTime } from '../../../utils/format';
 import { Comment, UserActionType } from '../../../utils/types';
+import { ReactionType } from '../../../utils/reactions';
 import {
  createUserCommentAction,
  deleteUserCommentAction,
@@ -12,7 +13,7 @@ import {
 import Button from '../../../components/ui/Button';
 import ThreeDotsMenu from '../../../components/ui/ThreeDotsMenu';
 import AuthorHeader from '../../../components/ui/AuthorHeader';
-import LikeButton from '../../../components/ui/LikeButton';
+import ReactionButton from '../../../components/ui/ReactionButton';
 import MentionDropdown from '../../../components/ui/MentionDropdown';
 import MentionOverlay from '../../../components/ui/MentionOverlay';
 import EditHistoryModal from '../../../components/ui/EditHistoryModal';
@@ -60,7 +61,10 @@ function CommentItem({
  const { showError, showSuccess, toastNode } = useToast();
 
 
- const [liked, setLiked] = useState(!!comment.hasLiked);
+ const [myReaction, setMyReaction] = useState<ReactionType | null>(
+   (comment.myReaction ?? null) as ReactionType | null
+ );
+ const [reactionCounts, setReactionCounts] = useState(comment.reactionCounts);
  const [likeCount, setLikeCount] = useState(
    typeof comment.likeCount === 'number' ? comment.likeCount : 0
  );
@@ -137,26 +141,37 @@ function CommentItem({
  };
 
 
- const handleCommentLike = async () => {
-   const prevLiked = liked;
-   setLiked(!prevLiked);
-   setLikeCount((prev) => prev + (prevLiked ? -1 : 1));
+ const handleReactToComment = async (type: ReactionType) => {
+   const previousReaction = myReaction;
+   const previousCounts = reactionCounts;
+   const previousLikeCount = likeCount;
+   const isRemoving = previousReaction === type;
+   const newReaction = isRemoving ? null : type;
+
+   const newCounts = { ...(previousCounts || {}) };
+   if (previousReaction) {
+     newCounts[previousReaction] = Math.max(0, (newCounts[previousReaction] || 0) - 1);
+   }
+   if (newReaction) {
+     newCounts[newReaction] = (newCounts[newReaction] || 0) + 1;
+   }
+   const newLikeCount = Object.values(newCounts).reduce((sum: number, n) => sum + (n || 0), 0);
+
+   setMyReaction(newReaction);
+   setReactionCounts(newCounts);
+   setLikeCount(newLikeCount);
+
    try {
-     if (!prevLiked) {
-       await createUserCommentAction({
-         commentId: comment.id,
-         actionType: UserActionType.Like,
-       });
+     if (isRemoving) {
+       await deleteUserCommentAction({ commentId: comment.id, actionType: type });
      } else {
-       await deleteUserCommentAction({
-         commentId: comment.id,
-         actionType: UserActionType.Like,
-       });
+       await createUserCommentAction({ commentId: comment.id, actionType: type });
      }
    } catch {
-     setLiked(prevLiked);
-     setLikeCount((prev) => prev + (prevLiked ? 1 : -1));
-     showError('Failed to update like status.');
+     setMyReaction(previousReaction);
+     setReactionCounts(previousCounts);
+     setLikeCount(previousLikeCount);
+     showError('Failed to update your reaction.');
    }
  };
 
@@ -400,7 +415,14 @@ function CommentItem({
 
 
            <div className="flex items-center gap-6">
-             {!isDeleted && <LikeButton liked={liked} count={likeCount} onToggle={handleCommentLike} />}
+             {!isDeleted && (
+               <ReactionButton
+                 myReaction={myReaction}
+                 reactionCounts={reactionCounts}
+                 totalCount={likeCount}
+                 onReact={handleReactToComment}
+               />
+             )}
              <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
                <FaRegCommentDots className="mr-1" />
                {replyCount} {replyCount === 1 ? 'Reply' : 'Replies'}

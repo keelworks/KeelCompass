@@ -17,11 +17,6 @@ interface QuestionsSectionProps {
     updatedQuestion: Partial<QuestionListItem> & { id: number }
   ) => void;
   onQuestionDelete: (deletedId: number) => void;
-  onQuestionLike: (
-    questionId: number,
-    hasLiked: boolean,
-    likeCount: number
-  ) => void;
   interests: Interest[];
   setInterests: (interests: Interest[]) => void;
   onInterestUpdate: () => void;
@@ -44,7 +39,6 @@ function QuestionsSection({
   questions,
   onQuestionUpdate,
   onQuestionDelete,
-  onQuestionLike,
   interests,
   setInterests,
   onInterestUpdate,
@@ -213,7 +207,6 @@ function QuestionsSection({
                         setExpandedQuestionId(null);
                         onQuestionDelete(deletedId);
                       }}
-                      onQuestionLike={onQuestionLike}
                       interests={interests}
                       setInterests={setInterests}
                       onInterestsUpdate={onInterestUpdate}
@@ -223,7 +216,6 @@ function QuestionsSection({
                   ) : (
                     <QuestionItem
                       question={question}
-                      onQuestionLike={onQuestionLike}
                       interests={interests}
                       setInterests={setInterests}
                       onInterestUpdate={onInterestUpdate}

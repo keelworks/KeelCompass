@@ -127,19 +127,6 @@ const Dashboard = () => {
     setInterests((prev) => prev.filter((interest) => interest.question_id !== deletedId));
   };
 
-  const handleQuestionLike = (
-    questionId: number,
-    hasLiked: boolean,
-    likeCount: number
-  ) => {
-    setQuestions((prev) => ({
-      ...prev,
-      questions: prev.questions.map((q) =>
-        q.id === questionId ? { ...q, hasLiked, likeCount } : q
-      ),
-    }));
-  };
-
   const handleInterestUpdate = async () => {
     setInterests(await getUserInterests());
   };
@@ -334,7 +321,6 @@ const Dashboard = () => {
               }}
               onQuestionUpdate={handleQuestionUpdate}
               onQuestionDelete={handleQuestionDelete}
-              onQuestionLike={handleQuestionLike}
               interests={interests}
               setInterests={setInterests}
               onInterestUpdate={handleInterestUpdate}
@@ -377,7 +363,6 @@ const Dashboard = () => {
           questions={questions.questions}
           onQuestionUpdate={handleQuestionUpdate}
           onQuestionDelete={handleQuestionDelete}
-          onQuestionLike={handleQuestionLike}
           setInterests={setInterests}
           onInterestUpdate={handleInterestUpdate}
           onCommentCreate={handleCommentCreate}

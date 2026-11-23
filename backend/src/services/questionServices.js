@@ -3,6 +3,7 @@ const logEverything = require("../utils/logEverything");
 const { HttpError } = require("../utils/httpError");
 const { normalizeTag, mentionKey } = require("../utils/roleTags");
 const { snippet } = require("../utils/textUtils");
+const { summarizeReactions } = require("../utils/reactionUtils");
 
 const db = require("../models");
 const User = db.User;
@@ -132,10 +133,7 @@ const getRecentQuestions = async (userId, count = 10, offset = 0, viewerTag = nu
         : null;
       const isInterested = !!userInterest;
       const interestId = isInterested ? userInterest.id : null;
-      const hasLiked = uqas.some(
-        (a) => a.action_type === "like" && a.user_id === userId
-      );
-      const likeCount = uqas.filter((a) => a.action_type === "like").length;
+      const { hasLiked, likeCount, myReaction, reactionCounts } = summarizeReactions(uqas, userId);
       const comments = Array.isArray(q.comments) ? q.comments : [];
       const commentCount = comments.length;
 
@@ -163,6 +161,8 @@ const getRecentQuestions = async (userId, count = 10, offset = 0, viewerTag = nu
         interestId,
         hasLiked,
         likeCount,
+        myReaction,
+        reactionCounts,
         commentCount,
         categories, // Add this line
         tags,
@@ -225,10 +225,7 @@ const getPopularQuestions = async (userId, count = 10, offset = 0, viewerTag = n
         : null;
       const isInterested = !!userInterest;
       const interestId = userInterest ? userInterest.id : null;
-      const hasLiked = uqas.some(
-        (a) => a.action_type === "like" && a.user_id === userId
-      );
-      const likeCount = uqas.filter((a) => a.action_type === "like").length;
+      const { hasLiked, likeCount, myReaction, reactionCounts } = summarizeReactions(uqas, userId);
       const comments = Array.isArray(q.comments) ? q.comments : [];
       const commentCount = comments.length;
       const popularityScore = likeCount + commentCount;
@@ -251,6 +248,8 @@ const getPopularQuestions = async (userId, count = 10, offset = 0, viewerTag = n
         interestId,
         hasLiked,
         likeCount,
+        myReaction,
+        reactionCounts,
         commentCount,
         popularityScore,
         tags,
@@ -328,10 +327,7 @@ const getPendingQuestions = async (userId, count = 10, offset = 0) => {
         : null;
       const isInterested = !!userInterest;
       const interestId = isInterested ? userInterest.id : null;
-      const hasLiked = uqas.some(
-        (a) => a.action_type === "like" && a.user_id === userId
-      );
-      const likeCount = uqas.filter((a) => a.action_type === "like").length;
+      const { hasLiked, likeCount, myReaction, reactionCounts } = summarizeReactions(uqas, userId);
       const comments = Array.isArray(q.comments) ? q.comments : [];
       const commentCount = comments.length;
       return {
@@ -352,6 +348,8 @@ const getPendingQuestions = async (userId, count = 10, offset = 0) => {
         interestId,
         hasLiked,
         likeCount,
+        myReaction,
+        reactionCounts,
         commentCount,
       };
     });
@@ -430,19 +428,18 @@ const getQuestion = async (userId, questionId, viewerTag = null) => {
       : null;
     const isInterested = !!userInterest;
     const interestId = isInterested ? userInterest.id : null;
-    const hasLiked = uqas.some(
-      (a) => a.action_type === "like" && a.user_id === userId
-    );
-    const likeCount = uqas.filter((a) => a.action_type === "like").length;
+    const { hasLiked, likeCount, myReaction, reactionCounts } = summarizeReactions(uqas, userId);
     const comments = Array.isArray(question.comments)
       ? question.comments.map((c) => {
           const ucas = Array.isArray(c.userCommentActions)
             ? c.userCommentActions
             : [];
-          const likeCount = ucas.filter((a) => a.action_type === "like").length;
-          const hasLiked = ucas.some(
-            (a) => a.action_type === "like" && a.user_id === userId
-          );
+          const {
+            hasLiked: commentHasLiked,
+            likeCount: commentLikeCount,
+            myReaction: commentMyReaction,
+            reactionCounts: commentReactionCounts,
+          } = summarizeReactions(ucas, userId);
           const isDeleted = !!c.deleted_at;
           return {
             id: c.id,
@@ -469,8 +466,10 @@ const getQuestion = async (userId, questionId, viewerTag = null) => {
                   url: `/attachments/${c.attachment.id}/file`,
                 }
               : null,
-            hasLiked,
-            likeCount,
+            hasLiked: commentHasLiked,
+            likeCount: commentLikeCount,
+            myReaction: commentMyReaction,
+            reactionCounts: commentReactionCounts,
             isAccepted: question.accepted_comment_id === c.id,
           };
         })
@@ -505,6 +504,8 @@ const getQuestion = async (userId, questionId, viewerTag = null) => {
       interestId,
       hasLiked,
       likeCount,
+      myReaction,
+      reactionCounts,
       comments,
       commentCount,
       categories,
@@ -739,13 +740,13 @@ const deleteQuestion = async (userId, questionId, isAdmin = false) => {
     // and every one of its comments (soft-delete leaves the comment rows in
     // place, so this has to be done explicitly rather than relying on cascade)
     try {
-      for (const sourceType of ["question_like", "question_report", "question_mention", "answer_accepted"]) {
+      for (const sourceType of ["question_reaction", "question_report", "question_mention", "answer_accepted"]) {
         await notificationService.deleteNotificationsBySource(sourceType, question.id);
       }
       const comments = await Comment.findAll({ where: { question_id: question.id }, attributes: ["id"], raw: true });
       for (const { id } of comments) {
         await notificationService.deleteNotificationsBySource("comment_created", id);
-        await notificationService.deleteNotificationsBySource("comment_like", id);
+        await notificationService.deleteNotificationsBySource("comment_reaction", id);
         await notificationService.deleteNotificationsBySource("comment_report", id);
       }
     } catch (err) {

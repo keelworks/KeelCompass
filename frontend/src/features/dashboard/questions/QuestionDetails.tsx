@@ -7,8 +7,10 @@ import {
   Comment,
   Interest,
   QuestionDetail,
+  QuestionListItem,
   UserActionType,
 } from "../../../utils/types";
+import { ReactionType } from "../../../utils/reactions";
 import { useAttachmentBlobUrl } from "../../../utils/useAttachmentBlobUrl";
 import { useAutoGrowTextarea } from "../../../utils/useAutoGrowTextarea";
 import {
@@ -28,7 +30,7 @@ import {
 import Button from "../../../components/ui/Button";
 import ThreeDotsMenu from "../../../components/ui/ThreeDotsMenu";
 import AuthorHeader from "../../../components/ui/AuthorHeader";
-import LikeButton from "../../../components/ui/LikeButton";
+import ReactionButton from "../../../components/ui/ReactionButton";
 import ImageLightbox from "../../../components/ui/ImageLightbox";
 import EditHistoryModal from "../../../components/ui/EditHistoryModal";
 import ConfirmDialog from "../../../components/ui/ConfirmDialog";
@@ -40,9 +42,8 @@ import { useToast } from "../../../utils/useToast";
 
 interface QuestionDetailsProps {
   questionId: number;
-  onQuestionUpdate?: (updated: { id: number; title: string; description: string }) => void;
+  onQuestionUpdate?: (updated: Partial<QuestionListItem> & { id: number }) => void;
   onQuestionDelete?: (deletedId: number) => void;
-  onQuestionLike?: (questionId: number, hasLiked: boolean, likeCount: number) => void;
   interests: Interest[];
   setInterests: (interests: Interest[]) => void;
   onInterestsUpdate: () => void;
@@ -92,7 +93,6 @@ function QuestionDetails({
   questionId,
   onQuestionUpdate,
   onQuestionDelete,
-  onQuestionLike,
   interests,
   setInterests,
   onInterestsUpdate,
@@ -242,21 +242,47 @@ function QuestionDetails({
     if (file) setRemoveExistingAttachment(false);
   };
 
-  const handleQuestionLike = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleReactToQuestion = async (type: ReactionType) => {
     if (!question) return;
-    const newLiked = !question.hasLiked;
-    const newLikes = question.likeCount + (question.hasLiked ? -1 : 1);
-    setQuestion({ ...question, hasLiked: newLiked, likeCount: newLikes });
-    onQuestionLike?.(question.id, newLiked, newLikes);
+    const previousReaction = (question.myReaction ?? null) as ReactionType | null;
+    const previousCounts = question.reactionCounts;
+    const isRemoving = previousReaction === type;
+    const newReaction = isRemoving ? null : type;
+
+    const newCounts = { ...(previousCounts || {}) };
+    if (previousReaction) {
+      newCounts[previousReaction] = Math.max(0, (newCounts[previousReaction] || 0) - 1);
+    }
+    if (newReaction) {
+      newCounts[newReaction] = (newCounts[newReaction] || 0) + 1;
+    }
+    const newLikeCount = Object.values(newCounts).reduce((sum: number, n) => sum + (n || 0), 0);
+
+    const patch = {
+      hasLiked: newReaction !== null,
+      likeCount: newLikeCount,
+      myReaction: newReaction,
+      reactionCounts: newCounts,
+    };
+    setQuestion({ ...question, ...patch });
+    onQuestionUpdate?.({ id: question.id, ...patch });
+
     try {
-      if (!question.hasLiked) {
-        await createUserQuestionAction({ questionId: question.id, actionType: UserActionType.Like });
+      if (isRemoving) {
+        await deleteUserQuestionAction({ questionId: question.id, actionType: type });
       } else {
-        await deleteUserQuestionAction({ questionId: question.id, actionType: UserActionType.Like });
+        await createUserQuestionAction({ questionId: question.id, actionType: type });
       }
     } catch {
-      showError("Failed to update like status.");
+      showError("Failed to update your reaction.");
+      const revertPatch = {
+        hasLiked: previousReaction !== null,
+        likeCount: question.likeCount,
+        myReaction: previousReaction,
+        reactionCounts: previousCounts,
+      };
+      setQuestion({ ...question, ...revertPatch });
+      onQuestionUpdate?.({ id: question.id, ...revertPatch });
     }
   };
 
@@ -666,7 +692,13 @@ function QuestionDetails({
                 ))}
               </div>
               <div className="flex items-center space-x-4 shrink-0">
-                <LikeButton liked={question.hasLiked} count={question.likeCount} onToggle={handleQuestionLike} size="md" />
+                <ReactionButton
+                  myReaction={(question.myReaction ?? null) as ReactionType | null}
+                  reactionCounts={question.reactionCounts}
+                  totalCount={question.likeCount}
+                  onReact={handleReactToQuestion}
+                  size="md"
+                />
                 <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
                   <FaRegCommentDots className="mr-1" /> {question.commentCount} Comments
                 </div>

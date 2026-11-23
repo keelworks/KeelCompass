@@ -1,6 +1,5 @@
 import { formatDate, capitalizeWords } from "../../../utils/format";
 import {
-  UserActionType,
   QuestionListItem,
   Interest,
 } from "../../../utils/types";
@@ -17,29 +16,24 @@ import bookmarked from "../../../assets/bookmarked.svg";
 import { Pin, PinOff } from "lucide-react";
 import Tooltip from "../../../components/ui/Tooltip";
 import AuthorHeader from "../../../components/ui/AuthorHeader";
-import LikeButton from "../../../components/ui/LikeButton";
+import ReactionButton from "../../../components/ui/ReactionButton";
 import RichContent from "../../../components/ui/RichContent";
 import { useToast } from "../../../utils/useToast";
+import { ReactionType } from "../../../utils/reactions";
 
 interface QuestionItemProps {
   question: QuestionListItem;
-  onQuestionLike: (
-    questionId: number,
-    hasLiked: boolean,
-    likeCount: number
-  ) => void;
   interests: Interest[];
   setInterests: (interests: Interest[]) => void;
   onInterestUpdate: () => void;
   setSelectedQuestionId: (id: number | null) => void;
   index?: number;
   isAdmin?: boolean;
-  onQuestionUpdate?: (updated: Partial<QuestionListItem> & { id: number }) => void;
+  onQuestionUpdate: (updated: Partial<QuestionListItem> & { id: number }) => void;
 }
 
 function QuestionItem({
   question,
-  onQuestionLike,
   interests,
   setInterests,
   onInterestUpdate,
@@ -57,8 +51,9 @@ function QuestionItem({
     title,
     description,
     createdAt,
-    hasLiked,
     likeCount,
+    myReaction,
+    reactionCounts,
     commentCount,
     categories,
     tags,
@@ -80,25 +75,44 @@ function QuestionItem({
     title.length <= TITLE_LENGTH_THRESHOLD;
 
 
-  const handleLikeQuestion = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newLiked = !hasLiked;
-    const newLikes = likeCount + (hasLiked ? -1 : 1);
-    onQuestionLike(id, newLiked, newLikes);
+  const handleReactToQuestion = async (type: ReactionType) => {
+    const previousReaction = (myReaction ?? null) as ReactionType | null;
+    const previousCounts = reactionCounts;
+    const isRemoving = previousReaction === type;
+    const newReaction = isRemoving ? null : type;
+
+    const newCounts = { ...(previousCounts || {}) };
+    if (previousReaction) {
+      newCounts[previousReaction] = Math.max(0, (newCounts[previousReaction] || 0) - 1);
+    }
+    if (newReaction) {
+      newCounts[newReaction] = (newCounts[newReaction] || 0) + 1;
+    }
+    const newLikeCount = Object.values(newCounts).reduce((sum: number, n) => sum + (n || 0), 0);
+
+    onQuestionUpdate({
+      id,
+      hasLiked: newReaction !== null,
+      likeCount: newLikeCount,
+      myReaction: newReaction,
+      reactionCounts: newCounts,
+    });
+
     try {
-      if (!hasLiked) {
-        await createUserQuestionAction({
-          questionId: id,
-          actionType: UserActionType.Like,
-        });
+      if (isRemoving) {
+        await deleteUserQuestionAction({ questionId: id, actionType: type });
       } else {
-        await deleteUserQuestionAction({
-          questionId: id,
-          actionType: UserActionType.Like,
-        });
+        await createUserQuestionAction({ questionId: id, actionType: type });
       }
     } catch {
-      showError("Failed to update like status.");
+      showError("Failed to update your reaction.");
+      onQuestionUpdate({
+        id,
+        hasLiked: previousReaction !== null,
+        likeCount,
+        myReaction: previousReaction,
+        reactionCounts: previousCounts,
+      });
     }
   };
 
@@ -274,7 +288,12 @@ function QuestionItem({
           className="flex items-center gap-4 shrink-0"
           onClick={(e) => e.stopPropagation()}
         >
-          <LikeButton liked={hasLiked} count={likeCount} onToggle={handleLikeQuestion} />
+          <ReactionButton
+            myReaction={(myReaction ?? null) as ReactionType | null}
+            reactionCounts={reactionCounts}
+            totalCount={likeCount}
+            onReact={handleReactToQuestion}
+          />
           <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
             {commentCount} {commentCount === 1 ? "Comment" : "Comments"}
           </span>

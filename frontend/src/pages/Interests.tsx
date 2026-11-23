@@ -80,16 +80,6 @@ const InterestsPage = () => {
     setInterests((prev) => prev.filter((interest) => interest.question_id !== deletedId));
   };
 
-  const handleQuestionLike = (
-    questionId: number,
-    hasLiked: boolean,
-    likeCount: number
-  ) => {
-    setInterestQuestions((prev) =>
-      prev.map((q) => (q.id === questionId ? { ...q, hasLiked, likeCount } : q))
-    );
-  };
-
   const handleCommentCreate = (questionId: number) => {
     setInterestQuestions((prev) =>
       prev.map((q) =>
@@ -131,7 +121,6 @@ const InterestsPage = () => {
                 <div key={question.id}>
                   <QuestionItem
                     question={question}
-                    onQuestionLike={handleQuestionLike}
                     interests={interests}
                     setInterests={setInterests}
                     onInterestUpdate={refreshInterests}
@@ -151,7 +140,6 @@ const InterestsPage = () => {
             questionId={selectedQuestionId}
             onQuestionUpdate={handleQuestionUpdate}
             onQuestionDelete={handleQuestionDelete}
-            onQuestionLike={handleQuestionLike}
             interests={interests}
             setInterests={setInterests}
             onInterestsUpdate={refreshInterests}

@@ -186,7 +186,7 @@ const deleteCommentById = async (userId, commentId, isAdmin = false) => {
     // untouched and keep their own notifications, since they're not deleted)
     try {
       await notificationService.deleteNotificationsBySource("comment_created", commentId);
-      await notificationService.deleteNotificationsBySource("comment_like", commentId);
+      await notificationService.deleteNotificationsBySource("comment_reaction", commentId);
       await notificationService.deleteNotificationsBySource("comment_report", commentId);
     } catch (err) {
       logger.error(`Failed to clean up notifications for deleted comment ${commentId}: ${err.message}`);

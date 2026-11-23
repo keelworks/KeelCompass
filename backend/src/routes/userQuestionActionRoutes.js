@@ -1,6 +1,7 @@
 const express = require("express");
 const { body } = require("express-validator");
 const { handleValidationErrors } = require("../utils/validationUtils");
+const { IsValidAction } = require("../utils/actionTypes");
 const isUser = require("../middlewares/isUser");
 const userQuestionActionController = require("../controllers/userQuestionActionControllers");
 
@@ -9,7 +10,8 @@ router.use(isUser);
 
 const questionActionValidation = [
   body("questionId").isInt({ gt: 0 }).withMessage("invalid questionId").bail(),
-  body("actionType").notEmpty().withMessage("actionType is required").bail(),
+  body("actionType").notEmpty().withMessage("actionType is required").bail()
+    .custom(IsValidAction).withMessage("Invalid actionType").bail(),
   handleValidationErrors,
 ];
 

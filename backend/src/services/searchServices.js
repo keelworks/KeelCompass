@@ -2,6 +2,7 @@ const logger = require("../utils/logger");
 const logEverything = require("../utils/logEverything");
 const { HttpError } = require("../utils/httpError");
 const ActionTypes = require("../constants/actionTypes");
+const { REACTION_TYPES } = require("../constants/reactionTypes");
 const { Op } = require("sequelize");
 
 const db = require("../models");
@@ -77,10 +78,12 @@ const searchQuestionByKeyword = async (
     // never which rows come back
     const escapedQuery = trimmedQuery ? db.sequelize.escape(trimmedQuery) : null;
 
+    const reactionList = REACTION_TYPES.map((t) => `'${t}'`).join(",");
+
     const findOptions = {
       attributes: {
         include: [
-          [Sequelize.literal(`(SELECT COUNT(*) FROM UserQuestionActions WHERE UserQuestionActions.question_id = Question.id AND UserQuestionActions.action_type = '${ActionTypes.LIKE}')`), 'likeCount'],
+          [Sequelize.literal(`(SELECT COUNT(*) FROM UserQuestionActions WHERE UserQuestionActions.question_id = Question.id AND UserQuestionActions.action_type IN (${reactionList}))`), 'likeCount'],
           [Sequelize.literal(`(SELECT COUNT(*) FROM UserQuestionActions WHERE UserQuestionActions.question_id = Question.id AND UserQuestionActions.action_type = '${ActionTypes.REPORT}')`), 'reportCount'],
           ...(escapedQuery
             ? [[Sequelize.literal(`MATCH(Question.title, Question.description) AGAINST(${escapedQuery} IN NATURAL LANGUAGE MODE)`), 'relevance']]
@@ -142,6 +145,7 @@ const searchQuestionByKeyword = async (
       isInterested: false, // Not available in search context
       interestId: null,    // Not available in search context
       hasLiked: false,     // Not available in search context
+      myReaction: null,    // Not available in search context
       likeCount: q.dataValues.likeCount ?? 0,
       commentCount: Array.isArray(q.comments) ? q.comments.length : 0,
       categories: Array.isArray(q.Categories) ? q.Categories.map((c) => ({ id: c.id, name: c.name })) : [],

@@ -14,11 +14,6 @@ interface MyInterstProps {
     updatedQuestion: Partial<QuestionListItem> & { id: number },
   ) => void;
   onQuestionDelete?: (deletedId: number) => void;
-  onQuestionLike?: (
-    questionId: number,
-    hasLiked: boolean,
-    likeCount: number,
-  ) => void;
   setInterests?: (interests: Interest[]) => void;
   onInterestUpdate?: () => void;
   onCommentCreate?: (questionId: number) => void;
@@ -30,7 +25,6 @@ const MyInterests = ({
   questions,
   onQuestionUpdate,
   onQuestionDelete,
-  onQuestionLike,
   setInterests,
   onInterestUpdate,
   onCommentCreate,
@@ -54,16 +48,6 @@ const MyInterests = ({
       onQuestionDelete(deletedId);
     }
     setSelectedQuestionId(null);
-  };
-
-  const handleQuestionLikeLocal = (
-    questionId: number,
-    hasLiked: boolean,
-    likeCount: number,
-  ) => {
-    if (onQuestionLike) {
-      onQuestionLike(questionId, hasLiked, likeCount);
-    }
   };
 
   const handleCommentCreateLocal = (questionId: number) => {
@@ -201,7 +185,6 @@ const MyInterests = ({
             questionId={selectedQuestionId}
             onQuestionUpdate={handleQuestionUpdateLocal}
             onQuestionDelete={handleQuestionDeleteLocal}
-            onQuestionLike={handleQuestionLikeLocal}
             interests={interests}
             setInterests={setInterests || (() => {})}
             onInterestsUpdate={handleInterestUpdateLocal}

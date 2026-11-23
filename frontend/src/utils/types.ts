@@ -11,6 +11,11 @@ export enum QuestionStatus {
 
 export enum UserActionType {
   Like = "like",
+  Celebrate = "celebrate",
+  Support = "support",
+  Love = "love",
+  Insightful = "insightful",
+  Curious = "curious",
   Report = "report",
 }
 
@@ -101,6 +106,8 @@ export interface QuestionListItem {
   interestId: number | null;
   hasLiked: boolean;
   likeCount: number;
+  myReaction?: UserActionType | null;
+  reactionCounts?: Partial<Record<UserActionType, number>>;
   commentCount: number;
   popularityScore?: number;
   categories?: Category[];
@@ -150,6 +157,8 @@ export interface Comment {
   attachment?: Attachment | null;
   hasLiked: boolean;
   likeCount: number;
+  myReaction?: UserActionType | null;
+  reactionCounts?: Partial<Record<UserActionType, number>>;
   parentId?: number | null;
   replies?: Comment[];
   isAccepted?: boolean;
