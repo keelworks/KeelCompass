@@ -279,63 +279,66 @@ function ReactionButton({
             : "text-gray-600 dark:text-gray-300 hover:text-brand-700 dark:hover:text-teal-300"
         }`}
       >
-        <span className={`inline-flex ${popping ? "animate-like-pop" : ""}`}>
+        <span className={`relative inline-flex ${popping ? "animate-like-pop" : ""}`}>
           {activeMeta ? (
             <span aria-hidden="true" className="text-base leading-none">{activeMeta.emoji}</span>
           ) : (
             <FaRegThumbsUp size={iconSize} />
+          )}
+
+          {/* effects are anchored to this icon specifically (not the whole
+              button) so they burst/ripple/float from the emoji itself
+              instead of some arbitrary point between it and the count text */}
+          {burstParticles && (
+            <span className="pointer-events-none absolute inset-0 overflow-visible" aria-hidden="true">
+              {burstParticles.map((p) => (
+                <span
+                  key={p.key}
+                  className="absolute left-1/2 top-1/2 text-sm animate-confetti-burst"
+                  style={
+                    {
+                      "--confetti-tx": `${p.tx}px`,
+                      "--confetti-ty": `${p.ty}px`,
+                      "--confetti-rot": `${p.rot}deg`,
+                      animationDelay: `${p.delay}ms`,
+                    } as React.CSSProperties
+                  }
+                >
+                  {p.emoji}
+                </span>
+              ))}
+            </span>
+          )}
+
+          {heartParticles && (
+            <span className="pointer-events-none absolute inset-0 overflow-visible" aria-hidden="true">
+              {heartParticles.map((p) => (
+                <span
+                  key={p.key}
+                  className="absolute left-1/2 top-1/2 text-sm animate-heart-float"
+                  style={{ "--heart-drift": `${p.dx}px`, animationDelay: `${p.delay}ms` } as React.CSSProperties}
+                >
+                  {p.emoji}
+                </span>
+              ))}
+            </span>
+          )}
+
+          {ripples.length > 0 && (
+            <span className="pointer-events-none absolute inset-0 overflow-visible" aria-hidden="true">
+              {ripples.map((id) => (
+                <span
+                  key={id}
+                  className="absolute left-1/2 top-1/2 w-6 h-6 -ml-3 -mt-3 rounded-full border-2 border-brand-500 dark:border-teal-400 animate-ripple-pulse"
+                />
+              ))}
+            </span>
           )}
         </span>
         <span>
           {safeCount} {safeCount === 1 ? "Reaction" : "Reactions"}
         </span>
       </button>
-
-      {burstParticles && (
-        <div className="pointer-events-none absolute inset-0 overflow-visible" aria-hidden="true">
-          {burstParticles.map((p) => (
-            <span
-              key={p.key}
-              className="absolute left-1/2 top-1/2 text-sm animate-confetti-burst"
-              style={
-                {
-                  "--confetti-tx": `${p.tx}px`,
-                  "--confetti-ty": `${p.ty}px`,
-                  "--confetti-rot": `${p.rot}deg`,
-                  animationDelay: `${p.delay}ms`,
-                } as React.CSSProperties
-              }
-            >
-              {p.emoji}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {heartParticles && (
-        <div className="pointer-events-none absolute inset-0 overflow-visible" aria-hidden="true">
-          {heartParticles.map((p) => (
-            <span
-              key={p.key}
-              className="absolute left-1/2 top-1/2 text-sm animate-heart-float"
-              style={{ "--heart-drift": `${p.dx}px`, animationDelay: `${p.delay}ms` } as React.CSSProperties}
-            >
-              {p.emoji}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {ripples.length > 0 && (
-        <div className="pointer-events-none absolute inset-0 overflow-visible" aria-hidden="true">
-          {ripples.map((id) => (
-            <span
-              key={id}
-              className="absolute left-1/2 top-1/2 w-6 h-6 -ml-3 -mt-3 rounded-full border-2 border-brand-500 dark:border-teal-400 animate-ripple-pulse"
-            />
-          ))}
-        </div>
-      )}
 
       {shouldRender &&
         coords &&
