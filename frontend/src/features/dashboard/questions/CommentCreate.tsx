@@ -4,21 +4,26 @@ import { createComment } from "../../../utils/store";
 import { useToast } from "../../../utils/useToast";
 import { useMentionAutocomplete } from "../../../utils/useMentionAutocomplete";
 import { useAutoGrowTextarea } from "../../../utils/useAutoGrowTextarea";
+import { useKnownTags } from "../../../utils/useKnownTags";
 import MentionDropdown from "../../../components/ui/MentionDropdown";
 import MentionOverlay from "../../../components/ui/MentionOverlay";
 
 interface CommentCreateProps {
   questionId: number,
+  // the post's own visibility tags, if any - restricts which groups can be
+  // @mentioned here to just those (see useMentionAutocomplete)
+  postTags?: string[],
   onCommentCreate: (questionId: number) => void
 }
 
 const DRAFT_KEY_PREFIX = "keelcompass_comment_draft_";
 
-function CommentCreate({ questionId, onCommentCreate }: CommentCreateProps) {
+function CommentCreate({ questionId, postTags, onCommentCreate }: CommentCreateProps) {
   const draftKey = `${DRAFT_KEY_PREFIX}${questionId}`;
   const [comment, setComment] = useState(() => localStorage.getItem(draftKey) || "");
   const { showError, toastNode } = useToast();
-  const mention = useMentionAutocomplete<HTMLTextAreaElement>(comment, setComment);
+  const knownTags = useKnownTags();
+  const mention = useMentionAutocomplete<HTMLTextAreaElement>(comment, setComment, { allowedGroupTags: postTags });
   useAutoGrowTextarea(mention.inputRef, comment, 140);
 
   // autosave so an accidental reload/navigation doesn't lose an in-progress
@@ -69,6 +74,7 @@ function CommentCreate({ questionId, onCommentCreate }: CommentCreateProps) {
           text={comment}
           mode="textarea"
           scrollSourceRef={mention.inputRef}
+          knownTags={knownTags}
           className="text-[#374151] dark:text-gray-100"
           style={{ fontSize: "0.95rem", padding: "8px 0", lineHeight: "1.4" }}
         />

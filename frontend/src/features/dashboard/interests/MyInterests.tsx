@@ -183,6 +183,7 @@ const MyInterests = ({
         selectedQuestionId > 0 && (
           <QuestionDetails
             questionId={selectedQuestionId}
+            initialData={questions.find((q) => q.id === selectedQuestionId)}
             onQuestionUpdate={handleQuestionUpdateLocal}
             onQuestionDelete={handleQuestionDeleteLocal}
             interests={interests}

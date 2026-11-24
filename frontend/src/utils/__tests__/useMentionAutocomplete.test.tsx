@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { act, render } from "@testing-library/react";
 import { useState } from "react";
-import { useMentionAutocomplete, MentionCandidate } from "../useMentionAutocomplete";
+import { useMentionAutocomplete, MentionCandidate, UseMentionAutocompleteOptions } from "../useMentionAutocomplete";
 
 vi.mock("../store", () => ({
   searchMentionUsers: vi.fn().mockResolvedValue([]),
@@ -11,14 +11,38 @@ vi.mock("../useKnownTags", () => ({
   loadKnownTags: vi.fn().mockResolvedValue(["sd", "prod mgr"]),
 }));
 
+type MentionApi = ReturnType<typeof useMentionAutocomplete<HTMLTextAreaElement>>;
+
 // exposes the hook's live return value on a ref the test can read/call into,
 // backed by a real <textarea> so selectionStart/setSelectionRange behave
 // like they would in the browser
-function Harness({ api }: { api: { current: ReturnType<typeof useMentionAutocomplete<HTMLTextAreaElement>> | null } }) {
-  const [text, setText] = useState("Hello @s");
-  const mention = useMentionAutocomplete<HTMLTextAreaElement>(text, setText);
+function Harness({
+  api,
+  initialText = "Hello @s",
+  options,
+}: {
+  api: { current: MentionApi | null };
+  initialText?: string;
+  options?: UseMentionAutocompleteOptions;
+}) {
+  const [text, setText] = useState(initialText);
+  const mention = useMentionAutocomplete<HTMLTextAreaElement>(text, setText, options);
   api.current = mention;
   return <textarea ref={mention.inputRef} value={text} onChange={() => {}} />;
+}
+
+function pressBackspace(textarea: HTMLTextAreaElement, api: MentionApi) {
+  let handled = false;
+  const fakeEvent = {
+    key: "Backspace",
+    preventDefault: () => {
+      handled = true;
+    },
+  } as unknown as React.KeyboardEvent;
+  act(() => {
+    api.handleKeyDown(fakeEvent);
+  });
+  return handled;
 }
 
 describe("useMentionAutocomplete", () => {
@@ -79,5 +103,97 @@ describe("useMentionAutocomplete", () => {
     expect(textarea.value).toBe("Hello @Jane Doe ");
     expect(textarea.selectionStart).toBe(textarea.value.length);
     expect(api.current!.getMentionedUserIds(textarea.value)).toEqual([42]);
+  });
+
+  it("backspace right after the trailing space of a picked mention is left alone (not intercepted)", () => {
+    const api: { current: MentionApi | null } = { current: null };
+    const { container } = render(<Harness api={api} />);
+    const textarea = container.querySelector("textarea") as HTMLTextAreaElement;
+    act(() => {
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    });
+    act(() => {
+      api.current!.selectMention({ kind: "group", tag: "sd" });
+    });
+    expect(textarea.value).toBe("Hello @sd ");
+
+    // caret at the very end, right after the trailing space the picker
+    // appended - a real backspace here should just delete that space
+    // normally, not the chip (matching Slack/Google Chat: one extra
+    // backspace to "enter" the chip boundary before it deletes atomically)
+    act(() => {
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    });
+    const handled = pressBackspace(textarea, api.current!);
+    expect(handled).toBe(false);
+  });
+
+  it("backspace right after a picked group mention (before its trailing space) deletes the whole chip at once", () => {
+    const api: { current: MentionApi | null } = { current: null };
+    const { container } = render(<Harness api={api} />);
+    const textarea = container.querySelector("textarea") as HTMLTextAreaElement;
+    act(() => {
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    });
+    act(() => {
+      api.current!.selectMention({ kind: "group", tag: "sd" });
+    });
+    expect(textarea.value).toBe("Hello @sd ");
+
+    // caret sitting right after "sd", before the trailing space
+    act(() => {
+      textarea.setSelectionRange("Hello @sd".length, "Hello @sd".length);
+    });
+    const handled = pressBackspace(textarea, api.current!);
+    expect(handled).toBe(true);
+    expect(textarea.value).toBe("Hello  ");
+    expect(textarea.selectionStart).toBe("Hello ".length);
+    expect(api.current!.getMentionedGroupTags(textarea.value)).toEqual([]);
+  });
+
+  it("backspace in the middle of a picked person mention still deletes the whole chip", () => {
+    const api: { current: MentionApi | null } = { current: null };
+    const { container } = render(<Harness api={api} />);
+    const textarea = container.querySelector("textarea") as HTMLTextAreaElement;
+    act(() => {
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    });
+    act(() => {
+      api.current!.selectMention({ kind: "user", id: 7, displayName: "Jane Doe" });
+    });
+    expect(textarea.value).toBe("Hello @Jane Doe ");
+
+    // caret somewhere inside "@Jane Doe" (not at the very start boundary)
+    act(() => {
+      textarea.setSelectionRange("Hello @Jane D".length, "Hello @Jane D".length);
+    });
+    const handled = pressBackspace(textarea, api.current!);
+    expect(handled).toBe(true);
+    expect(textarea.value).toBe("Hello  ");
+    expect(api.current!.getMentionedUserIds(textarea.value)).toEqual([]);
+  });
+
+  it("restricts group suggestions to the post's own tags when allowedGroupTags is set", async () => {
+    vi.useFakeTimers();
+    try {
+      const api: { current: MentionApi | null } = { current: null };
+      render(<Harness api={api} initialText="Hello @p" options={{ allowedGroupTags: ["prod mgr"] }} />);
+
+      act(() => {
+        api.current!.handleChange("Hello @p", 8);
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(250);
+      });
+
+      const groupTags = api.current!.results.filter((c) => c.kind === "group").map((c) => (c as { tag: string }).tag);
+      expect(groupTags).toEqual(["prod mgr"]);
+      expect(groupTags).not.toContain("sd");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

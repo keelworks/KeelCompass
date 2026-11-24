@@ -138,6 +138,7 @@ const InterestsPage = () => {
         {typeof selectedQuestionId === "number" && !isNaN(selectedQuestionId) && (
           <QuestionDetails
             questionId={selectedQuestionId}
+            initialData={interestQuestions.find((q) => q.id === selectedQuestionId)}
             onQuestionUpdate={handleQuestionUpdate}
             onQuestionDelete={handleQuestionDelete}
             interests={interests}

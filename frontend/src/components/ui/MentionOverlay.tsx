@@ -14,6 +14,9 @@ interface MentionOverlayProps {
   // scroll offset or its (unclipped) highlighted text visibly spills past
   // the real control's box instead of scrolling along with it
   scrollSourceRef?: React.RefObject<HTMLTextAreaElement | HTMLInputElement | null>;
+  // known role tags, so a group mention like "@sd" highlights too, not just
+  // person mentions - see useKnownTags()
+  knownTags?: string[];
 }
 
 // sits absolutely over a same-sized, same-padded real <input>/<textarea>
@@ -21,7 +24,7 @@ interface MentionOverlayProps {
 // so a mention picked from the dropdown appears highlighted immediately
 // while composing - not just after the comment/post is submitted. Needs no
 // changes to how the real control reads/writes its value or caret position.
-function MentionOverlay({ text, mode, className = "", style, scrollSourceRef }: MentionOverlayProps) {
+function MentionOverlay({ text, mode, className = "", style, scrollSourceRef, knownTags = [] }: MentionOverlayProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,7 +49,7 @@ function MentionOverlay({ text, mode, className = "", style, scrollSourceRef }: 
         mode === "textarea" ? "whitespace-pre-wrap break-words [overflow-wrap:anywhere]" : "whitespace-pre"
       } ${className}`}
     >
-      {text ? highlightMentionsReact(text) : null}
+      {text ? highlightMentionsReact(text, knownTags, "inline") : null}
     </div>
   );
 }

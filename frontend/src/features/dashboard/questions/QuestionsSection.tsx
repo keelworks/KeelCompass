@@ -200,6 +200,7 @@ function QuestionsSection({
                   {isExpanded ? (
                     <QuestionDetails
                       questionId={question.id}
+                      initialData={question}
                       variant="page"
                       onCollapse={() => setExpandedQuestionId(null)}
                       onQuestionUpdate={onQuestionUpdate}

@@ -44,6 +44,13 @@ import { useToast } from "../../../utils/useToast";
 
 interface QuestionDetailsProps {
   questionId: number;
+  // the matching row from a list that's already in memory (the feed, "my
+  // interests", etc.) - when provided, it seeds the initial render so
+  // title/description/tags/reactions show up instantly instead of staying
+  // blank/skeleton until the fetch below resolves. Only genuinely new data
+  // (comments, attachment, accepted answer, mute state) is missing until
+  // then - fetchQuestion() still runs and fully replaces this once it does.
+  initialData?: QuestionListItem;
   onQuestionUpdate?: (updated: Partial<QuestionListItem> & { id: number }) => void;
   onQuestionDelete?: (deletedId: number) => void;
   interests: Interest[];
@@ -93,6 +100,7 @@ function findCommentById(nodes: Comment[], targetId: number): Comment | null {
 
 function QuestionDetails({
   questionId,
+  initialData,
   onQuestionUpdate,
   onQuestionDelete,
   interests,
@@ -114,7 +122,14 @@ function QuestionDetails({
   const { showError, showSuccess, toastNode } = useToast();
   const knownTags = useKnownTags();
 
-  const [question, setQuestion] = useState<QuestionDetail | null>(null);
+  // seeded from the list row we already had, if any - missing QuestionDetail
+  // -only fields (comments, attachment, acceptedCommentId, user.id) just
+  // read as undefined until fetchQuestion() below replaces this with the
+  // real response, which is fine everywhere they're used (e.g. "accept
+  // answer" briefly not showing for the true author rather than crashing)
+  const [question, setQuestion] = useState<QuestionDetail | null>(
+    initialData ? (initialData as QuestionDetail) : null
+  );
   // a newly-chosen replacement file while editing (not sent at all unless
   // the author actually picks one - see handleSubmitQuestionEdit)
   const [newAttachment, setNewAttachment] = useState<File | null>(null);
@@ -774,6 +789,7 @@ function QuestionDetails({
                     setOpenMenuId={setOpenMenuId}
                     onCommentDelete={handleReplyAdded}
                     questionId={questionId}
+                    postTags={question.tags}
                     onReplyAdded={handleReplyAdded}
                     canAcceptAnswer={question.user.id === userId}
                     onAcceptAnswer={handleAcceptAnswer}
@@ -811,7 +827,7 @@ function QuestionDetails({
       {/* Create Comment */}
       {question && (
         <div className="w-full flex justify-center mt-6">
-          <CommentCreate questionId={questionId} onCommentCreate={handleCommentCreateLocal} />
+          <CommentCreate questionId={questionId} postTags={question.tags} onCommentCreate={handleCommentCreateLocal} />
         </div>
       )}
 

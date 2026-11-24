@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaFileAlt } from "react-icons/fa";
+import { FaFileAlt, FaEye } from "react-icons/fa";
 import { Category } from "../utils/types";
 import { capitalizeWords } from "../utils/format";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
@@ -29,6 +29,7 @@ import { useMentionAutocomplete } from "../utils/useMentionAutocomplete";
 import MentionDropdown from "../components/ui/MentionDropdown";
 import MentionOverlay from "../components/ui/MentionOverlay";
 import RichContent from "../components/ui/RichContent";
+import PostPreviewModal from "../components/ui/PostPreviewModal";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { usePageTitle } from "../utils/usePageTitle";
 
@@ -265,6 +266,8 @@ function QuestionCreate({
   const [draftRestored, setDraftRestored] = useState(false);
   const [useMarkdown, setUseMarkdown] = useState(false);
   const [markdownText, setMarkdownText] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState("");
   const markdownMention = useMentionAutocomplete<HTMLTextAreaElement>(markdownText, (value) => {
     setMarkdownText(value);
     setDescription(value);
@@ -843,6 +846,16 @@ function QuestionCreate({
 
   const hasTagSelection = selectedTags.length > 0;
 
+  // same derivation used at actual submit time (handleSubmitCreateQuestion
+  // above) so the preview can never drift from what really gets posted
+  const openPreview = () => {
+    const descriptionHtml = useMarkdown
+      ? (marked.parse(markdownText, { async: false }) as string)
+      : description || descriptionEditableRef.current?.innerHTML || "";
+    setPreviewHtml(descriptionHtml);
+    setPreviewOpen(true);
+  };
+
   /* ---------------- RETURN UI ---------------- */
   return (
     <div className="w-full h-screen overflow-y-auto bg-[#F9F9F9] dark:bg-[#0F1113]">
@@ -850,6 +863,14 @@ function QuestionCreate({
         isOpen={showDiscardModal}
         onCancel={cancelDiscard}
         onConfirm={confirmDiscard}
+      />
+
+      <PostPreviewModal
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={title}
+        html={previewHtml}
+        initialTheme={theme}
       />
 
       <div className="p-8">
@@ -960,24 +981,33 @@ function QuestionCreate({
                 Description <span className="text-red-600">*</span>{" "}
                 <span className="text-gray-500 dark:text-gray-400 font-normal">(required)</span>
               </label>
-              <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md w-fit p-0.5 border border-gray-300 dark:border-gray-600">
-                {(["Rich Text", "Markdown"] as const).map((mode) => {
-                  const isMarkdownMode = mode === "Markdown";
-                  return (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => setUseMarkdown(isMarkdownMode)}
-                      className={`px-3 py-1 text-xs font-medium rounded transition ${
-                        useMarkdown === isMarkdownMode
-                          ? "bg-white dark:bg-gray-900 text-brand-550 dark:text-teal-300 shadow-sm"
-                          : "bg-transparent text-[#5F6C7B] dark:text-gray-300"
-                      }`}
-                    >
-                      {mode}
-                    </button>
-                  );
-                })}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md w-fit p-0.5 border border-gray-300 dark:border-gray-600">
+                  {(["Rich Text", "Markdown"] as const).map((mode) => {
+                    const isMarkdownMode = mode === "Markdown";
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setUseMarkdown(isMarkdownMode)}
+                        className={`px-3 py-1 text-xs font-medium rounded transition ${
+                          useMarkdown === isMarkdownMode
+                            ? "bg-white dark:bg-gray-900 text-brand-550 dark:text-teal-300 shadow-sm"
+                            : "bg-transparent text-[#5F6C7B] dark:text-gray-300"
+                        }`}
+                      >
+                        {mode}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  onClick={openPreview}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 text-[#5F6C7B] dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors duration-150"
+                >
+                  <FaEye size={12} /> Preview
+                </button>
               </div>
             </div>
 
@@ -992,6 +1022,7 @@ function QuestionCreate({
                   text={markdownText}
                   mode="textarea"
                   scrollSourceRef={markdownMention.inputRef}
+                  knownTags={knownTags}
                   className="rounded-[10px] px-3 py-3 text-gray-900 dark:text-gray-100"
                   style={{ minHeight: MIN_DESC_HEIGHT }}
                 />

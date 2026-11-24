@@ -31,6 +31,9 @@ interface CommentItemProps {
  openMenuId: string | null;
  setOpenMenuId: (id: string | null) => void;
  questionId: number;
+ // the post's own visibility tags, if any - restricts which groups can be
+ // @mentioned in a reply here to just those (see useMentionAutocomplete)
+ postTags?: string[];
  level?: number; // 0 = top level, increments with depth - no cap, threads can go as deep as Reddit-style ladders
  onReplyAdded?: () => void;
  canAcceptAnswer?: boolean;
@@ -49,6 +52,7 @@ function CommentItem({
  openMenuId,
  setOpenMenuId,
  questionId,
+ postTags,
  level = 0,
  onReplyAdded,
  canAcceptAnswer = false,
@@ -99,7 +103,9 @@ function CommentItem({
  useEffect(() => {
    if (forceExpandIds?.has(comment.id)) setShowReplies(true);
  }, [forceExpandIds, comment.id]);
- const replyMention = useMentionAutocomplete<HTMLTextAreaElement>(replyContent, setReplyContent);
+ const replyMention = useMentionAutocomplete<HTMLTextAreaElement>(replyContent, setReplyContent, {
+   allowedGroupTags: postTags,
+ });
  useAutoGrowTextarea(replyMention.inputRef, replyContent, 240);
  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
  useAutoGrowTextarea(editTextareaRef, editForm.content, 240);
@@ -360,6 +366,7 @@ function CommentItem({
                  text={replyContent}
                  mode="textarea"
                  scrollSourceRef={replyMention.inputRef}
+                 knownTags={knownTags}
                  className="p-2 text-sm text-gray-900 dark:text-gray-100 leading-normal"
                />
                <textarea
@@ -475,6 +482,7 @@ function CommentItem({
                  setOpenMenuId={setOpenMenuId}
                  onCommentDelete={onReplyAdded}
                  questionId={questionId}
+                 postTags={postTags}
                  level={level + 1}
                  onReplyAdded={onReplyAdded}
                  canAcceptAnswer={canAcceptAnswer}

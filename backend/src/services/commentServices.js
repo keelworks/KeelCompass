@@ -6,6 +6,7 @@ const db = require("../models");
 const Question = db.Question;
 const Comment = db.Comment;
 const User = db.User;
+const QuestionTag = db.QuestionTag;
 const attachmentService = require("./attachmentServices");
 const interestService = require("./interestServices");
 const notificationService = require("./notificationServices");
@@ -107,10 +108,23 @@ const createComment = async (
       // source tag so deleting the comment cleans these up too. Individual
       // people and role-tag groups both resolve into the same user-id set so
       // nobody gets double-notified for being named both ways.
+      //
+      // a tagged (restricted-visibility) post may only have its own tags
+      // mentioned as a group here - mentioning an unrelated group would
+      // notify people who can't even see the post. This re-checks server
+      // side regardless of what the picker offered, the same way visibility
+      // itself isn't just a UI-level restriction. An untagged (open/
+      // everyone) post has nothing to restrict.
+      const postTagRows = await QuestionTag.findAll({ where: { question_id: questionId }, attributes: ["tag"] });
+      const postTags = postTagRows.map((r) => r.tag.toLowerCase());
+      const requestedGroupTags = (mentionedGroupTags || []).filter((tag) => typeof tag === "string" && tag.trim());
+      const allowedGroupTags =
+        postTags.length > 0
+          ? requestedGroupTags.filter((tag) => postTags.includes(tag.toLowerCase()))
+          : requestedGroupTags;
+
       const explicitIds = (mentionedUserIds || []).map(Number).filter((id) => id && id !== userId);
-      const groupIdSets = await Promise.all(
-        (mentionedGroupTags || []).filter((tag) => typeof tag === "string" && tag.trim()).map(resolveUsersByRoleTag)
-      );
+      const groupIdSets = await Promise.all(allowedGroupTags.map(resolveUsersByRoleTag));
       const mentionIds = [...new Set([...explicitIds, ...groupIdSets.flat()])].filter((id) => id !== userId);
       if (mentionIds.length > 0) {
         await notificationService.createNotificationsForUsers(

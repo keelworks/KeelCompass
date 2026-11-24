@@ -55,4 +55,23 @@ describe("highlightMentionsReact", () => {
     const { container } = render(<>{highlightMentionsReact("ping @sd please", [])}</>);
     expect(container.querySelector("span")).toBeNull();
   });
+
+  it("the 'inline' variant styles a mention without adding width (no padding/background classes)", () => {
+    const { container } = render(<>{highlightMentionsReact("Hey @Jane Doe", [], "inline")}</>);
+    const span = container.querySelector("span");
+    expect(span?.className).not.toMatch(/px-|py-|bg-|rounded-full|ring-/);
+  });
+
+  it("the 'inline' variant still uppercases and highlights a group mention", () => {
+    const { container } = render(<>{highlightMentionsReact("Hey @sd", ["sd"], "inline")}</>);
+    const span = container.querySelector("span");
+    expect(span?.textContent).toBe("@SD");
+    expect(span?.className).not.toMatch(/px-|py-|bg-|rounded-full|ring-/);
+  });
+
+  it("defaults to the padded 'chip' variant when none is given (posted-content rendering)", () => {
+    const { container } = render(<>{highlightMentionsReact("Hey @Jane Doe", [])}</>);
+    const span = container.querySelector("span");
+    expect(span?.className).toMatch(/rounded-full/);
+  });
 });

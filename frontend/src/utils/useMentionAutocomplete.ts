@@ -4,6 +4,14 @@ import { loadKnownTags } from "./useKnownTags";
 
 export type MentionCandidate = ({ kind: "user" } & MentionUser) | { kind: "group"; tag: string };
 
+export interface UseMentionAutocompleteOptions {
+  // when the post this mention lives on has its own visibility tags, group
+  // mentions here should only be able to notify those same groups - not an
+  // unrelated one, which would notify people who can't even see the post.
+  // undefined/null/empty = no restriction (an untagged, fully-open post)
+  allowedGroupTags?: string[] | null;
+}
+
 // Reusable @mention autocomplete for a plain <input>/<textarea>. Tracks the
 // "@partial" token right before the caret, debounces a directory search
 // against it (people AND role-tag groups - picking a group lets a comment or
@@ -13,12 +21,17 @@ export type MentionCandidate = ({ kind: "user" } & MentionUser) | { kind: "group
 // getMentionedUserIds / getMentionedGroupTags).
 export function useMentionAutocomplete<T extends HTMLInputElement | HTMLTextAreaElement>(
   text: string,
-  setText: (value: string) => void
+  setText: (value: string) => void,
+  options: UseMentionAutocompleteOptions = {}
 ) {
+  const { allowedGroupTags } = options;
   const [query, setQuery] = useState<string | null>(null);
   const [results, setResults] = useState<MentionCandidate[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<T | null>(null);
+  // keyed by the exact inserted text ("@Noumaan Ahmed (SD |OPT)" or "@sd"),
+  // not just the bare display name - that's also what makes atomic-chip
+  // backspace below possible, since it needs the precise substring to erase
   const mentionedRef = useRef<Map<string, number>>(new Map());
   const mentionedGroupsRef = useRef<Set<string>>(new Set());
   // caret position to restore once the DOM actually reflects the text we
@@ -41,7 +54,11 @@ export function useMentionAutocomplete<T extends HTMLInputElement | HTMLTextArea
         const [users, tags] = await Promise.all([searchMentionUsers(query), loadKnownTags()]);
         if (cancelled) return;
         const q = query.toLowerCase();
-        const groupMatches: MentionCandidate[] = tags
+        const tagPool =
+          allowedGroupTags && allowedGroupTags.length > 0
+            ? tags.filter((tag) => allowedGroupTags.some((allowed) => allowed.toLowerCase() === tag.toLowerCase()))
+            : tags;
+        const groupMatches: MentionCandidate[] = tagPool
           .filter((tag) => tag.toLowerCase().includes(q))
           .slice(0, 5)
           .map((tag) => ({ kind: "group", tag }));
@@ -56,7 +73,8 @@ export function useMentionAutocomplete<T extends HTMLInputElement | HTMLTextArea
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, allowedGroupTags?.join("|")]);
 
   const detectQuery = (value: string, caretPos: number) => {
     const uptoCaret = value.slice(0, caretPos);
@@ -85,17 +103,18 @@ export function useMentionAutocomplete<T extends HTMLInputElement | HTMLTextArea
     const before = text.slice(0, atIndex);
     const after = text.slice(caretPos);
 
-    let insertion: string;
+    let core: string;
     if (candidate.kind === "group") {
-      insertion = `@${candidate.tag} `;
+      core = `@${candidate.tag}`;
       mentionedGroupsRef.current.add(candidate.tag);
     } else {
       // include the role tag in the inserted text itself (e.g. "@Noumaan Ahmed
       // (SD |OPT)") so the highlighter below can pick it up and render the
       // whole thing as one chip, not just the bare name
-      insertion = `@${candidate.displayName}${candidate.fullRoleTag ? ` (${candidate.fullRoleTag})` : ""} `;
-      mentionedRef.current.set(candidate.displayName, candidate.id);
+      core = `@${candidate.displayName}${candidate.fullRoleTag ? ` (${candidate.fullRoleTag})` : ""}`;
+      mentionedRef.current.set(core, candidate.id);
     }
+    const insertion = `${core} `;
     const newText = before + insertion + after;
 
     pendingCaretRef.current = (before + insertion).length;
@@ -117,13 +136,13 @@ export function useMentionAutocomplete<T extends HTMLInputElement | HTMLTextArea
     el.setSelectionRange(caret, caret);
   }, [text]);
 
-  // only count a mention as "real" if its @name is still literally present
-  // in the final text - guards against someone picking a mention and then
-  // backspacing over it before submitting
+  // only count a mention as "real" if its exact inserted text is still
+  // literally present in the final text - guards against someone picking a
+  // mention and then editing/backspacing it away before submitting
   const getMentionedUserIds = (finalText: string): number[] => {
     const ids: number[] = [];
-    mentionedRef.current.forEach((id, name) => {
-      if (finalText.includes(`@${name}`)) ids.push(id);
+    mentionedRef.current.forEach((id, core) => {
+      if (finalText.includes(core)) ids.push(id);
     });
     return ids;
   };
@@ -142,9 +161,44 @@ export function useMentionAutocomplete<T extends HTMLInputElement | HTMLTextArea
     mentionedGroupsRef.current.clear();
   };
 
+  // every occurrence of every currently-tracked mention's exact text, so a
+  // single backspace can erase one whole mention at once (Slack/Google Chat
+  // style) instead of chewing through it one character at a time
+  const getAtomicMentionRanges = (value: string): { start: number; end: number }[] => {
+    const cores = [
+      ...mentionedRef.current.keys(),
+      ...Array.from(mentionedGroupsRef.current, (tag) => `@${tag}`),
+    ];
+    const ranges: { start: number; end: number }[] = [];
+    for (const core of cores) {
+      if (!core) continue;
+      let idx = value.indexOf(core);
+      while (idx !== -1) {
+        ranges.push({ start: idx, end: idx + core.length });
+        idx = value.indexOf(core, idx + 1);
+      }
+    }
+    return ranges;
+  };
+
   // returns true if it handled the keypress (so the caller should skip its
   // own handling, e.g. not submit the form on Enter while picking a mention)
   const handleKeyDown = (e: React.KeyboardEvent): boolean => {
+    if (e.key === "Backspace") {
+      const el = inputRef.current;
+      if (el && el.selectionStart != null && el.selectionStart === el.selectionEnd) {
+        const caret = el.selectionStart;
+        const hit = getAtomicMentionRanges(text).find((r) => caret > r.start && caret <= r.end);
+        if (hit) {
+          e.preventDefault();
+          const newText = text.slice(0, hit.start) + text.slice(hit.end);
+          pendingCaretRef.current = hit.start;
+          setText(newText);
+          return true;
+        }
+      }
+    }
+
     if (query === null || results.length === 0) return false;
     if (e.key === "ArrowDown") {
       e.preventDefault();

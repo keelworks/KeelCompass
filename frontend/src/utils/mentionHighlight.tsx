@@ -13,6 +13,16 @@ const MENTION_SPAN_CLASS =
   "font-semibold text-teal-700 dark:text-teal-200 bg-teal-50 dark:bg-teal-900/40 ring-1 ring-teal-100 dark:ring-teal-800/60 shadow-sm px-2 py-0.5 rounded-full";
 const GROUP_SPAN_CLASS =
   "font-semibold text-amber-700 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/40 ring-1 ring-amber-100 dark:ring-amber-800/60 shadow-sm px-2 py-0.5 rounded-full";
+// width-neutral styling for the live-editing overlay (MentionOverlay) - no
+// padding/background/ring that would add horizontal width the real,
+// invisible-text control underneath doesn't have. Using the padded "chip"
+// classes there made the overlay's text drift rightward after every mention,
+// so the real (correctly-placed) caret visually appeared to sit inside the
+// name instead of after it - a rendering mismatch, not a caret-position bug.
+const MENTION_INLINE_CLASS = "font-semibold text-teal-700 dark:text-teal-200";
+const GROUP_INLINE_CLASS = "font-semibold text-amber-700 dark:text-amber-200";
+
+export type MentionHighlightVariant = "chip" | "inline";
 
 interface MentionMatch {
   index: number;
@@ -64,9 +74,15 @@ function findMentionMatches(text: string, knownTags: string[]): MentionMatch[] {
 // highlight @mentions in plain-text content (comments) as React nodes.
 // knownTags (from useKnownTags()) lets group mentions like "@sd" render as a
 // distinct "group" chip instead of being ignored by the name-only pattern.
-export function highlightMentionsReact(text: string, knownTags: string[] = []): React.ReactNode {
+export function highlightMentionsReact(
+  text: string,
+  knownTags: string[] = [],
+  variant: MentionHighlightVariant = "chip"
+): React.ReactNode {
   const matches = findMentionMatches(text, knownTags);
   if (matches.length === 0) return text;
+  const mentionClass = variant === "inline" ? MENTION_INLINE_CLASS : MENTION_SPAN_CLASS;
+  const groupClass = variant === "inline" ? GROUP_INLINE_CLASS : GROUP_SPAN_CLASS;
 
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
@@ -74,13 +90,13 @@ export function highlightMentionsReact(text: string, knownTags: string[] = []): 
     if (m.index > lastIndex) parts.push(text.slice(lastIndex, m.index));
     if (m.kind === "tag") {
       parts.push(
-        <span key={`mention-${key}`} className={GROUP_SPAN_CLASS}>
+        <span key={`mention-${key}`} className={groupClass}>
           @{m.tag!.toUpperCase()}
         </span>
       );
     } else {
       parts.push(
-        <span key={`mention-${key}`} className={MENTION_SPAN_CLASS}>
+        <span key={`mention-${key}`} className={mentionClass}>
           @{m.name}
           {m.roleTag ? ` (${m.roleTag})` : ""}
         </span>
@@ -95,18 +111,24 @@ export function highlightMentionsReact(text: string, knownTags: string[] = []): 
 // same highlighting, applied to an HTML string (post descriptions) before
 // sanitizing - DOMPurify is what ultimately decides what survives, this
 // just injects the highlight span for it to keep
-export function highlightMentionsHtml(html: string, knownTags: string[] = []): string {
+export function highlightMentionsHtml(
+  html: string,
+  knownTags: string[] = [],
+  variant: MentionHighlightVariant = "chip"
+): string {
   const matches = findMentionMatches(html, knownTags);
   if (matches.length === 0) return html;
+  const mentionClass = variant === "inline" ? MENTION_INLINE_CLASS : MENTION_SPAN_CLASS;
+  const groupClass = variant === "inline" ? GROUP_INLINE_CLASS : GROUP_SPAN_CLASS;
 
   let result = "";
   let lastIndex = 0;
   for (const m of matches) {
     result += html.slice(lastIndex, m.index);
     if (m.kind === "tag") {
-      result += `<span class="${GROUP_SPAN_CLASS}">@${m.tag!.toUpperCase()}</span>`;
+      result += `<span class="${groupClass}">@${m.tag!.toUpperCase()}</span>`;
     } else {
-      result += `<span class="${MENTION_SPAN_CLASS}">@${m.name}${m.roleTag ? ` (${m.roleTag})` : ""}</span>`;
+      result += `<span class="${mentionClass}">@${m.name}${m.roleTag ? ` (${m.roleTag})` : ""}</span>`;
     }
     lastIndex = m.index + m.length;
   }
