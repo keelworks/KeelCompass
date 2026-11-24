@@ -31,7 +31,7 @@ function Harness({
   return <textarea ref={mention.inputRef} value={text} onChange={() => {}} />;
 }
 
-function pressBackspace(textarea: HTMLTextAreaElement, api: MentionApi) {
+function pressBackspace(api: MentionApi) {
   let handled = false;
   const fakeEvent = {
     key: "Backspace",
@@ -125,7 +125,7 @@ describe("useMentionAutocomplete", () => {
     act(() => {
       textarea.setSelectionRange(textarea.value.length, textarea.value.length);
     });
-    const handled = pressBackspace(textarea, api.current!);
+    const handled = pressBackspace(api.current!);
     expect(handled).toBe(false);
   });
 
@@ -146,7 +146,7 @@ describe("useMentionAutocomplete", () => {
     act(() => {
       textarea.setSelectionRange("Hello @sd".length, "Hello @sd".length);
     });
-    const handled = pressBackspace(textarea, api.current!);
+    const handled = pressBackspace(api.current!);
     expect(handled).toBe(true);
     expect(textarea.value).toBe("Hello  ");
     expect(textarea.selectionStart).toBe("Hello ".length);
@@ -170,7 +170,7 @@ describe("useMentionAutocomplete", () => {
     act(() => {
       textarea.setSelectionRange("Hello @Jane D".length, "Hello @Jane D".length);
     });
-    const handled = pressBackspace(textarea, api.current!);
+    const handled = pressBackspace(api.current!);
     expect(handled).toBe(true);
     expect(textarea.value).toBe("Hello  ");
     expect(api.current!.getMentionedUserIds(textarea.value)).toEqual([]);
