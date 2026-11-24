@@ -28,7 +28,7 @@ function SmoothExpand({ children, className = "" }: SmoothExpandProps) {
 
   return (
     <div
-      style={{ height, overflowY: "hidden", transition: "height 320ms cubic-bezier(0.4, 0, 0.2, 1)" }}
+      style={{ height, overflowY: "hidden", transition: "height 320ms cubic-bezier(0.16, 1, 0.3, 1)" }}
       className={className}
     >
       <div ref={innerRef}>{children}</div>

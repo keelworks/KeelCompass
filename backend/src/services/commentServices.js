@@ -11,11 +11,22 @@ const interestService = require("./interestServices");
 const notificationService = require("./notificationServices");
 const editHistoryService = require("./editHistoryServices");
 const { snippet } = require("../utils/textUtils");
+const { resolveUsersByRoleTag } = require("../utils/mentionUtils");
 
 // create comment. `mentionedUserIds` are the people explicitly tagged via
 // the @mention autocomplete while composing - a direct, reliable way to
-// notify specific people, instead of re-parsing free text after the fact
-const createComment = async (userId, questionId, content, parentId = null, attachment = null, mentionedUserIds = []) => {
+// notify specific people, instead of re-parsing free text after the fact.
+// `mentionedGroupTags` are role tags (e.g. "SD") picked the same way, which
+// notify everyone currently holding that tag.
+const createComment = async (
+  userId,
+  questionId,
+  content,
+  parentId = null,
+  attachment = null,
+  mentionedUserIds = [],
+  mentionedGroupTags = []
+) => {
   try {
     const question = await Question.findByPk(questionId);
     if (!question) throw new HttpError(404, "Question not found");
@@ -93,10 +104,14 @@ const createComment = async (userId, questionId, content, parentId = null, attac
       }
 
       // explicit @mentions from the autocomplete - reuses the comment's own
-      // source tag so deleting the comment cleans these up too
-      const mentionIds = [...new Set((mentionedUserIds || []).map(Number))].filter(
-        (id) => id && id !== userId
+      // source tag so deleting the comment cleans these up too. Individual
+      // people and role-tag groups both resolve into the same user-id set so
+      // nobody gets double-notified for being named both ways.
+      const explicitIds = (mentionedUserIds || []).map(Number).filter((id) => id && id !== userId);
+      const groupIdSets = await Promise.all(
+        (mentionedGroupTags || []).filter((tag) => typeof tag === "string" && tag.trim()).map(resolveUsersByRoleTag)
       );
+      const mentionIds = [...new Set([...explicitIds, ...groupIdSets.flat()])].filter((id) => id !== userId);
       if (mentionIds.length > 0) {
         await notificationService.createNotificationsForUsers(
           mentionIds,

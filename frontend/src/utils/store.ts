@@ -226,6 +226,7 @@ export async function createComment(params: {
   parentId?: number | null;
   attachment?: File | null;
   mentionedUserIds?: number[];
+  mentionedGroupTags?: string[];
 }): Promise<number> {
   const formData = new FormData();
   formData.append('questionId', String(params.questionId));
@@ -235,6 +236,8 @@ export async function createComment(params: {
   if (params.attachment) formData.append('attachment', params.attachment);
   if (params.mentionedUserIds && params.mentionedUserIds.length > 0)
     formData.append('mentionedUserIds', JSON.stringify(params.mentionedUserIds));
+  if (params.mentionedGroupTags && params.mentionedGroupTags.length > 0)
+    formData.append('mentionedGroupTags', JSON.stringify(params.mentionedGroupTags));
   const res = await axiosInstance.post<number>('/comments', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
@@ -246,12 +249,14 @@ export async function createReply(params: {
   content: string;
   parentId: number;
   mentionedUserIds?: number[];
+  mentionedGroupTags?: string[];
 }): Promise<number> {
   const res = await axiosInstance.post<number>('/comments', {
     questionId: params.questionId,
     content: params.content,
     parentId: params.parentId,
     mentionedUserIds: params.mentionedUserIds,
+    mentionedGroupTags: params.mentionedGroupTags,
   });
   return res.data;
 }

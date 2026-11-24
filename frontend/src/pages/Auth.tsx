@@ -5,6 +5,7 @@ import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { googleAuth } from "../utils/store";
 import Snackbar from "../components/Snackbar";
 import ShipMark from "../assets/ship-mark.png";
+import AuthBackdrop from "../components/ui/AuthBackdrop";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { usePageTitle } from "../utils/usePageTitle";
 
@@ -56,7 +57,7 @@ const Auth = () => {
         <div className="grid w-full items-center gap-10 lg:grid-cols-2">
           <div className="text-center" style={{ zIndex: 10 }}>
             <div className="mb-6 flex items-center justify-center gap-2">
-              <img src={ShipMark} alt="" className="h-12 w-auto" />
+              <img src={ShipMark} alt="" className="h-12 w-auto origin-bottom animate-ship-sway" />
               <span className="text-4xl font-bold text-white">KeelCompass</span>
             </div>
             <h1 className="mb-4 text-4xl font-bold leading-tight" style={{ color: "hsl(189, 60%, 95%)" }}>
@@ -70,8 +71,7 @@ const Auth = () => {
           </div>
 
           <div className="relative">
-            <div className="auth-shape-1 absolute rounded-full shadow-lg"></div>
-            <div className="auth-shape-2 absolute shadow-lg"></div>
+            <AuthBackdrop />
 
             <div className="auth-glass relative rounded-2xl shadow-xl">
               <div className="px-6 py-10 md:px-10">

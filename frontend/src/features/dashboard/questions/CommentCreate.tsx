@@ -39,6 +39,7 @@ function CommentCreate({ questionId, onCommentCreate }: CommentCreateProps) {
         questionId,
         content: comment,
         mentionedUserIds: mention.getMentionedUserIds(comment),
+        mentionedGroupTags: mention.getMentionedGroupTags(comment),
       });
       setComment("");
       mention.resetMentions();

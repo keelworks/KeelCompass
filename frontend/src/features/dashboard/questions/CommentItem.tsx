@@ -22,6 +22,7 @@ import { useToast } from '../../../utils/useToast';
 import { useMentionAutocomplete } from '../../../utils/useMentionAutocomplete';
 import { useAutoGrowTextarea } from '../../../utils/useAutoGrowTextarea';
 import { highlightMentionsReact } from '../../../utils/mentionHighlight';
+import { useKnownTags } from '../../../utils/useKnownTags';
 
 
 interface CommentItemProps {
@@ -59,6 +60,7 @@ function CommentItem({
  const menuRef = useRef<HTMLDivElement>(null);
  const cardRef = useRef<HTMLDivElement>(null);
  const { showError, showSuccess, toastNode } = useToast();
+ const knownTags = useKnownTags();
 
 
  const [myReaction, setMyReaction] = useState<ReactionType | null>(
@@ -196,6 +198,7 @@ function CommentItem({
        content: replyContent,
        parentId: comment.id,
        mentionedUserIds: replyMention.getMentionedUserIds(replyContent),
+       mentionedGroupTags: replyMention.getMentionedGroupTags(replyContent),
      });
      setReplyContent('');
      replyMention.resetMentions();
@@ -345,7 +348,7 @@ function CommentItem({
              </div>
            </div>
          ) : (
-           <div className="mt-2 text-sm text-[#616161] dark:text-gray-300">{highlightMentionsReact(comment.content)}</div>
+           <div className="mt-2 text-sm text-[#616161] dark:text-gray-300">{highlightMentionsReact(comment.content, knownTags)}</div>
          )}
 
 

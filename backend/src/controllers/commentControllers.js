@@ -2,9 +2,10 @@ const logger = require("../utils/logger");
 
 const commentService = require("../services/commentServices");
 
-// mentionedUserIds arrives as a real array over JSON (the reply path) or a
-// JSON-encoded string over multipart/form-data (the top-level comment box)
-const parseMentionedUserIds = (raw) => {
+// mentionedUserIds/mentionedGroupTags arrive as a real array over JSON (the
+// reply path) or a JSON-encoded string over multipart/form-data (the
+// top-level comment box)
+const parseMentionedList = (raw) => {
   if (raw === undefined) return [];
   if (Array.isArray(raw)) return raw;
   try {
@@ -19,7 +20,7 @@ const parseMentionedUserIds = (raw) => {
 const createComment = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { questionId, content, parentId, mentionedUserIds } = req.body;
+    const { questionId, content, parentId, mentionedUserIds, mentionedGroupTags } = req.body;
     const attachment = req.file;
 
     const parsedParentId = parentId ? parentId : null;
@@ -29,7 +30,8 @@ const createComment = async (req, res, next) => {
       content,
       parsedParentId,
       attachment,
-      parseMentionedUserIds(mentionedUserIds)
+      parseMentionedList(mentionedUserIds),
+      parseMentionedList(mentionedGroupTags)
     );
     res.status(201).json(commentId);
   } catch (error) {

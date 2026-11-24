@@ -37,7 +37,9 @@ import ConfirmDialog from "../../../components/ui/ConfirmDialog";
 import CommentItem from "./CommentItem";
 import CommentCreate from "./CommentCreate";
 import RichContent from "../../../components/ui/RichContent";
+import { Skeleton } from "../../../components/ui/Skeleton";
 import { highlightMentionsReact } from "../../../utils/mentionHighlight";
+import { useKnownTags } from "../../../utils/useKnownTags";
 import { useToast } from "../../../utils/useToast";
 
 interface QuestionDetailsProps {
@@ -110,6 +112,7 @@ function QuestionDetails({
   const menuRef = useRef<HTMLDivElement>(null);
   const editDescriptionRef = useRef<HTMLTextAreaElement>(null);
   const { showError, showSuccess, toastNode } = useToast();
+  const knownTags = useKnownTags();
 
   const [question, setQuestion] = useState<QuestionDetail | null>(null);
   // a newly-chosen replacement file while editing (not sent at all unless
@@ -719,7 +722,7 @@ function QuestionDetails({
                 roleTag={acceptedComment.user.fullRoleTag}
                 dateLabel={formatDateTime(acceptedComment.createdAt)}
               />
-              <div className="mt-2 text-sm text-[#616161] dark:text-gray-300">{highlightMentionsReact(acceptedComment.content)}</div>
+              <div className="mt-2 text-sm text-[#616161] dark:text-gray-300">{highlightMentionsReact(acceptedComment.content, knownTags)}</div>
               <button
                 type="button"
                 onClick={() => jumpToComment(acceptedComment.id)}
@@ -782,6 +785,20 @@ function QuestionDetails({
             </div>
           )}
         </>
+      )}
+
+      {!question && !notFound && (
+        <div className="w-full animate-card-in">
+          <div className="flex items-center gap-2 mb-3">
+            <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+            <Skeleton className="h-3 w-40" />
+          </div>
+          <Skeleton className="h-5 w-2/3 mb-3" />
+          <Skeleton className="h-3 w-full mb-1.5" />
+          <Skeleton className="h-3 w-full mb-1.5" />
+          <Skeleton className="h-3 w-4/5 mb-4" />
+          <Skeleton className="h-9 w-full rounded" />
+        </div>
       )}
 
       {notFound && (

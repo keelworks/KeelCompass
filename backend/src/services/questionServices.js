@@ -1,9 +1,10 @@
 const logger = require("../utils/logger");
 const logEverything = require("../utils/logEverything");
 const { HttpError } = require("../utils/httpError");
-const { normalizeTag, mentionKey } = require("../utils/roleTags");
+const { normalizeTag } = require("../utils/roleTags");
 const { snippet } = require("../utils/textUtils");
 const { summarizeReactions } = require("../utils/reactionUtils");
+const { resolveUsersByRoleTag } = require("../utils/mentionUtils");
 
 const db = require("../models");
 const User = db.User;
@@ -562,14 +563,8 @@ const notifyMentions = async (text, questionId, authorUserId) => {
     const roleMentions = [...mentions].filter((m) => m !== "everyone");
     if (roleMentions.length === 0) return;
 
-    const users = await User.findAll({ attributes: ["id", "raw_role_tag"] });
-    const matchedUserIds = users
-      .filter((u) => {
-        const key = mentionKey(u.raw_role_tag);
-        return key && roleMentions.includes(key);
-      })
-      .map((u) => u.id)
-      .filter((id) => id !== authorUserId);
+    const matchedIdSets = await Promise.all(roleMentions.map((tag) => resolveUsersByRoleTag(tag)));
+    const matchedUserIds = [...new Set(matchedIdSets.flat())].filter((id) => id !== authorUserId);
 
     if (matchedUserIds.length > 0) {
       await notificationService.createNotificationsForUsers(

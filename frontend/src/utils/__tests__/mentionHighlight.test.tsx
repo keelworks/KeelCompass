@@ -38,4 +38,21 @@ describe("highlightMentionsReact", () => {
     const { container } = render(<>{highlightMentionsReact("no mentions here")}</>);
     expect(container.querySelector("span")).toBeNull();
   });
+
+  it("renders a group mention as an uppercased chip when the tag is known", () => {
+    const { container } = render(<>{highlightMentionsReact("Hey @sd can someone take a look?", ["sd", "prod mgr"])}</>);
+    const span = container.querySelector("span");
+    expect(span?.textContent).toBe("@SD");
+  });
+
+  it("prefers the longer multi-word tag over a shorter prefix of it", () => {
+    const { container } = render(<>{highlightMentionsReact("@prod mgr please check", ["prod", "prod mgr"])}</>);
+    const span = container.querySelector("span");
+    expect(span?.textContent).toBe("@PROD MGR");
+  });
+
+  it("without a matching known tag, a bare lowercase @token is left as plain text", () => {
+    const { container } = render(<>{highlightMentionsReact("ping @sd please", [])}</>);
+    expect(container.querySelector("span")).toBeNull();
+  });
 });

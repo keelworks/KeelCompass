@@ -93,6 +93,30 @@
   background: radial-gradient(#04403f, #14b8a6);
 }
 
+/* small drifting circles behind the auth card - size/position/timing are
+   randomized per-instance via inline custom properties (see Auth.tsx) */
+.auth-bubble {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 30% 30%, hsla(178, 90%, 80%, 0.85), hsla(178, 70%, 45%, 0.15));
+  bottom: -20px;
+  left: var(--bubble-left, 50%);
+  width: var(--bubble-size, 10px);
+  height: var(--bubble-size, 10px);
+  animation: bubble-rise 7s ease-in-out infinite;
+  animation-delay: var(--bubble-delay, 0s);
+  animation-duration: var(--bubble-duration, 7s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ship-sway,
+  .animate-blob-drift-1,
+  .animate-blob-drift-2,
+  .auth-bubble {
+    animation: none !important;
+  }
+}
+
 .auth-glass {
   background-color: hsla(0, 0%, 100%, 0.9);
   backdrop-filter: saturate(200%) blur(25px);

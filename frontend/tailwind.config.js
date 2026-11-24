@@ -20,6 +20,11 @@ export default {
         "confetti-burst": "confetti-burst 700ms ease-out forwards",
         "ripple-pulse": "ripple-pulse 600ms ease-out forwards",
         "heart-float": "heart-float 900ms ease-out forwards",
+        "ship-sway": "ship-sway 4.5s ease-in-out infinite",
+        "blob-drift-1": "blob-drift-1 14s ease-in-out infinite",
+        "blob-drift-2": "blob-drift-2 18s ease-in-out infinite",
+        "bubble-rise": "bubble-rise 7s ease-in-out infinite",
+        "content-drop": "content-drop 220ms cubic-bezier(0.16, 1, 0.3, 1) both",
       },
       keyframes: {
         "slide-in": {
@@ -63,6 +68,41 @@ export default {
             transform: "translate(var(--confetti-tx), var(--confetti-ty)) scale(0.4) rotate(var(--confetti-rot))",
             opacity: "0",
           },
+        },
+        "ship-sway": {
+          "0%": { transform: "rotate(-3deg) translateY(0px)" },
+          "25%": { transform: "rotate(1deg) translateY(-4px)" },
+          "50%": { transform: "rotate(3deg) translateY(0px)" },
+          "75%": { transform: "rotate(-1deg) translateY(-3px)" },
+          "100%": { transform: "rotate(-3deg) translateY(0px)" },
+        },
+        "blob-drift-1": {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "33%": { transform: "translate(24px, -28px) scale(1.08)" },
+          "66%": { transform: "translate(-16px, 18px) scale(0.95)" },
+        },
+        "blob-drift-2": {
+          "0%, 100%": {
+            transform: "translate(0, 0) scale(1)",
+            borderRadius: "38% 62% 63% 37% / 70% 33% 67% 30%",
+          },
+          "50%": {
+            transform: "translate(-26px, -22px) scale(1.06)",
+            borderRadius: "58% 42% 35% 65% / 40% 62% 38% 60%",
+          },
+        },
+        "bubble-rise": {
+          "0%": { transform: "translate(var(--bubble-x, 0px), 0) scale(0.6)", opacity: "0" },
+          "12%": { opacity: "var(--bubble-opacity, 0.6)" },
+          "88%": { opacity: "var(--bubble-opacity, 0.6)" },
+          "100%": {
+            transform: "translate(calc(var(--bubble-x, 0px) + 12px), -320px) scale(1)",
+            opacity: "0",
+          },
+        },
+        "content-drop": {
+          "0%": { opacity: "0", transform: "translateY(-6px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
       },
       colors: {

@@ -13,6 +13,11 @@ const createCommentValidation = [
   body("questionId").notEmpty().withMessage("Question ID is required.").bail().isInt({ gt: 0 }).withMessage("Invalid question ID."),
   body("content").notEmpty().withMessage("Content is required.").bail().isString().withMessage("Invalid content."),
   body("parentId").optional({ nullable: true }).isInt({ gt: 0 }).withMessage("Invalid parent ID."),
+  // mentionedUserIds/mentionedGroupTags arrive either as a real JSON array
+  // (reply path) or a JSON-encoded string (multipart top-level comment box),
+  // and are parsed leniently in the controller - no stricter shape check
+  // here, mirroring how mentionedUserIds has always been handled.
+  body("mentionedGroupTags").optional(),
   handleValidationErrors,
 ];
 

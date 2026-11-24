@@ -3,6 +3,7 @@ import hljs from "highlight.js";
 import "highlight.js/styles/atom-one-dark.css";
 import { sanitizePostHtml } from "../../utils/sanitizeHtml";
 import { highlightMentionsHtml } from "../../utils/mentionHighlight";
+import { useKnownTags } from "../../utils/useKnownTags";
 
 interface RichContentProps {
   html: string;
@@ -16,7 +17,11 @@ interface RichContentProps {
 // behaves identically
 function RichContent({ html, className = "", style }: RichContentProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const sanitized = useMemo(() => sanitizePostHtml(highlightMentionsHtml(html || "")), [html]);
+  const knownTags = useKnownTags();
+  const sanitized = useMemo(
+    () => sanitizePostHtml(highlightMentionsHtml(html || "", knownTags)),
+    [html, knownTags]
+  );
 
   useEffect(() => {
     if (!containerRef.current) return;
