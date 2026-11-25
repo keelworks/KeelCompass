@@ -56,17 +56,28 @@ describe("highlightMentionsReact", () => {
     expect(container.querySelector("span")).toBeNull();
   });
 
-  it("the 'inline' variant styles a mention without adding width (no padding/background classes)", () => {
+  it("the 'inline' variant styles a mention with no className and no width-changing style properties", () => {
     const { container } = render(<>{highlightMentionsReact("Hey @Jane Doe", [], "inline")}</>);
     const span = container.querySelector("span");
-    expect(span?.className).not.toMatch(/px-|py-|bg-|rounded-full|ring-/);
+    // no Tailwind classes at all - every visual is carried by `style` instead
+    expect(span?.className).toBe("");
+    // padding/border/font-weight/font-size all change glyph advance width,
+    // which is exactly what made the caret look misplaced relative to the
+    // real, invisible-text control this overlay sits on top of
+    const style = span?.getAttribute("style") ?? "";
+    expect(style).not.toMatch(/padding|border-width|font-weight|font-size/);
+    // box-shadow/background-color/border-radius are pure paint, safe to use
+    expect(style).toMatch(/box-shadow/);
+    expect(style).toMatch(/background-color/);
   });
 
   it("the 'inline' variant still uppercases and highlights a group mention", () => {
     const { container } = render(<>{highlightMentionsReact("Hey @sd", ["sd"], "inline")}</>);
     const span = container.querySelector("span");
     expect(span?.textContent).toBe("@SD");
-    expect(span?.className).not.toMatch(/px-|py-|bg-|rounded-full|ring-/);
+    const style = span?.getAttribute("style") ?? "";
+    expect(style).not.toMatch(/padding|font-weight/);
+    expect(style).toMatch(/box-shadow/);
   });
 
   it("defaults to the padded 'chip' variant when none is given (posted-content rendering)", () => {

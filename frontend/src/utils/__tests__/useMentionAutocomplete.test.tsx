@@ -105,9 +105,12 @@ describe("useMentionAutocomplete", () => {
     expect(api.current!.getMentionedUserIds(textarea.value)).toEqual([42]);
   });
 
-  it("backspace right after the trailing space of a picked mention is left alone (not intercepted)", () => {
+  it("backspace right after the trailing space of a picked mention is left alone (not intercepted)", async () => {
     const api: { current: MentionApi | null } = { current: null };
     const { container } = render(<Harness api={api} />);
+    // let the hook's eager known-tags warm-up resolve, same as it would by
+    // the time a real user has typed/picked anything
+    await act(async () => {});
     const textarea = container.querySelector("textarea") as HTMLTextAreaElement;
     act(() => {
       textarea.focus();
@@ -129,9 +132,10 @@ describe("useMentionAutocomplete", () => {
     expect(handled).toBe(false);
   });
 
-  it("backspace right after a picked group mention (before its trailing space) deletes the whole chip at once", () => {
+  it("backspace right after a picked group mention (before its trailing space) deletes the whole chip at once", async () => {
     const api: { current: MentionApi | null } = { current: null };
     const { container } = render(<Harness api={api} />);
+    await act(async () => {});
     const textarea = container.querySelector("textarea") as HTMLTextAreaElement;
     act(() => {
       textarea.focus();
@@ -153,9 +157,10 @@ describe("useMentionAutocomplete", () => {
     expect(api.current!.getMentionedGroupTags(textarea.value)).toEqual([]);
   });
 
-  it("backspace in the middle of a picked person mention still deletes the whole chip", () => {
+  it("backspace in the middle of a picked person mention still deletes the whole chip", async () => {
     const api: { current: MentionApi | null } = { current: null };
     const { container } = render(<Harness api={api} />);
+    await act(async () => {});
     const textarea = container.querySelector("textarea") as HTMLTextAreaElement;
     act(() => {
       textarea.focus();
@@ -174,6 +179,23 @@ describe("useMentionAutocomplete", () => {
     expect(handled).toBe(true);
     expect(textarea.value).toBe("Hello  ");
     expect(api.current!.getMentionedUserIds(textarea.value)).toEqual([]);
+  });
+
+  it("atomically deletes a mention that's already in the text but was never picked via selectMention this session (e.g. a restored draft)", async () => {
+    const api: { current: MentionApi | null } = { current: null };
+    const { container } = render(<Harness api={api} initialText="Hello @sd please help" />);
+    await act(async () => {});
+    const textarea = container.querySelector("textarea") as HTMLTextAreaElement;
+
+    // caret right after "sd", before the trailing space - never went through
+    // selectMention, so mentionedGroupsRef is empty; recognition has to come
+    // from the text pattern itself (see findMentionMatches), not the picker ref
+    act(() => {
+      textarea.setSelectionRange("Hello @sd".length, "Hello @sd".length);
+    });
+    const handled = pressBackspace(api.current!);
+    expect(handled).toBe(true);
+    expect(textarea.value).toBe("Hello  please help");
   });
 
   it("restricts group suggestions to the post's own tags when allowedGroupTags is set", async () => {

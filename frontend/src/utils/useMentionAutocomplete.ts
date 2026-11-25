@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { searchMentionUsers, MentionUser } from "./store";
 import { loadKnownTags } from "./useKnownTags";
+import { findMentionMatches } from "./mentionHighlight";
 
 export type MentionCandidate = ({ kind: "user" } & MentionUser) | { kind: "group"; tag: string };
 
@@ -39,6 +40,20 @@ export function useMentionAutocomplete<T extends HTMLInputElement | HTMLTextArea
   // bare requestAnimationFrame, which could fire before React had committed
   // the new value and land the caret mid-mention instead of after it
   const pendingCaretRef = useRef<number | null>(null);
+  // warmed eagerly (not just while a dropdown query is active) so atomic
+  // backspace - which relies on recognizing a mention from its text alone,
+  // not just session-tracked picks - still works immediately on a restored
+  // draft that already contains a group mention from a previous session
+  const knownTagsRef = useRef<string[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    loadKnownTags().then((tags) => {
+      if (!cancelled) knownTagsRef.current = tags;
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     // an empty query (just typed "@" with nothing after it yet) has no
@@ -161,25 +176,15 @@ export function useMentionAutocomplete<T extends HTMLInputElement | HTMLTextArea
     mentionedGroupsRef.current.clear();
   };
 
-  // every occurrence of every currently-tracked mention's exact text, so a
+  // every mention the text itself is recognized as containing (the same
+  // pattern-matching used to highlight one - see mentionHighlight.tsx), so a
   // single backspace can erase one whole mention at once (Slack/Google Chat
-  // style) instead of chewing through it one character at a time
-  const getAtomicMentionRanges = (value: string): { start: number; end: number }[] => {
-    const cores = [
-      ...mentionedRef.current.keys(),
-      ...Array.from(mentionedGroupsRef.current, (tag) => `@${tag}`),
-    ];
-    const ranges: { start: number; end: number }[] = [];
-    for (const core of cores) {
-      if (!core) continue;
-      let idx = value.indexOf(core);
-      while (idx !== -1) {
-        ranges.push({ start: idx, end: idx + core.length });
-        idx = value.indexOf(core, idx + 1);
-      }
-    }
-    return ranges;
-  };
+  // style) instead of chewing through it one character at a time. Based on
+  // the visible pattern rather than only the session-tracked picker refs, so
+  // it still works for a mention restored from a draft, not just one just
+  // picked from the dropdown a moment ago.
+  const getAtomicMentionRanges = (value: string): { start: number; end: number }[] =>
+    findMentionMatches(value, knownTagsRef.current).map((m) => ({ start: m.index, end: m.index + m.length }));
 
   // returns true if it handled the keypress (so the caller should skip its
   // own handling, e.g. not submit the form on Enter while picking a mention)
